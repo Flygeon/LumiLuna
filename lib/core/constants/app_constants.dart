@@ -1,0 +1,54 @@
+import '../../models/media_type.dart';
+
+/// Central place for supported file extensions and layout defaults.
+class AppConstants {
+  AppConstants._();
+
+  static const String appName = 'LumiLuna';
+
+  /// Supported image file extensions (lowercase, no dot).
+  static const Set<String> imageExtensions = {
+    'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic', 'heif', 'tiff', 'tif', 'ico',
+  };
+
+  /// Supported video file extensions.
+  static const Set<String> videoExtensions = {
+    'mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv', 'webm', 'm4v', 'mpeg', 'mpg', 'ts', '3gp',
+  };
+
+  /// Supported audio file extensions.
+  static const Set<String> audioExtensions = {
+    'mp3', 'flac', 'wav', 'aac', 'm4a', 'ogg', 'wma', 'opus', 'aiff', 'ape',
+  };
+
+  /// Resolve a media type from a file extension (lowercase, no dot).
+  /// Returns null when the extension is not a recognised media file.
+  static MediaType? typeForExtension(String ext) {
+    final e = ext.toLowerCase();
+    if (imageExtensions.contains(e)) return MediaType.image;
+    if (videoExtensions.contains(e)) return MediaType.video;
+    if (audioExtensions.contains(e)) return MediaType.audio;
+    return null;
+  }
+
+  /// All recognised extensions combined.
+  static Set<String> get allExtensions =>
+      {...imageExtensions, ...videoExtensions, ...audioExtensions};
+
+  // Grid layout: target tile width used to compute responsive column count.
+  static const double gridTargetTileWidth = 180;
+  static const double gridMinColumns = 2;
+  static const double gridMaxColumns = 8;
+
+  // Thumbnail decode cache width (px) to limit memory usage for large images.
+  static const int thumbnailCacheWidth = 300;
+
+  // Max recursion depth when scanning folders (guards against huge trees).
+  static const int maxScanDepth = 8;
+
+  // SharedPreferences keys.
+  static const String prefThemeMode = 'pref_theme_mode';
+  static const String prefViewMode = 'pref_view_mode';
+  static const String prefScanFolders = 'pref_scan_folders';
+  static const String prefGroupMode = 'pref_group_mode';
+}
