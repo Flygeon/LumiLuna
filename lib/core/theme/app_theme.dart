@@ -25,6 +25,9 @@ class AppTheme {
   static ThemeData _base(ColorScheme scheme) {
     return ThemeData(
       useMaterial3: true,
+      // Bundled Simplified-Chinese font (Noto Sans SC / 思源黑体) declared
+      // in pubspec.yaml. Improves Chinese rendering on Windows desktop.
+      fontFamily: 'NotoSansSC',
       colorScheme: scheme,
       scaffoldBackgroundColor: scheme.surface,
       appBarTheme: AppBarTheme(

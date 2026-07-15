@@ -19,22 +19,32 @@ class VideoPlayerScreen extends ConsumerWidget {
       playbackControllerProvider.select((s) => s.current),
     );
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
+    return PopScope(
+      // Pause playback when the user leaves this screen (e.g. via the back
+      // button or gesture) so the video does not keep playing in the
+      // background after returning to the home screen.
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (didPop) {
+          controller.pause();
+        }
+      },
+      child: Scaffold(
         backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        title: Text(
-          current?.name ?? '视频',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 16),
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          title: Text(
+            current?.name ?? '视频',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 16),
+          ),
         ),
-      ),
-      body: Center(
-        child: Video(
-          controller: controller.videoController,
-          controls: AdaptiveVideoControls,
+        body: Center(
+          child: Video(
+            controller: controller.videoController,
+            controls: AdaptiveVideoControls,
+          ),
         ),
       ),
     );

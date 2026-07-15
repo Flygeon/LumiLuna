@@ -11,6 +11,11 @@ import '../settings/settings_screen.dart';
 
 /// Root screen with a Material 3 navigation bar for switching media types,
 /// plus search, grid/list toggle, refresh and a settings entry.
+///
+/// Tab switching is animated with a horizontal slide via [PageView] +
+/// [PageController], so the content glides between media types instead of
+/// snapping instantly. Visited pages stay mounted, preserving their scroll
+/// position and state.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -22,9 +27,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _tab = 0;
   bool _searching = false;
   final TextEditingController _searchController = TextEditingController();
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _tab);
+  }
 
   @override
   void dispose() {
+    _pageController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -35,6 +48,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     setState(() => _searching = false);
     _searchController.clear();
     ref.read(searchQueryProvider.notifier).state = '';
+  }
+
+  /// Animate the body to [index] and keep the nav bar highlight in sync.
+  void _onTabSelected(int index) {
+    if (index == _tab) return;
+    setState(() => _tab = index);
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeInOutCubic,
+    );
   }
 
   @override
@@ -97,8 +121,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ],
       ),
-      body: IndexedStack(
-        index: _tab,
+      body: PageView(
+        controller: _pageController,
+        // Tap-driven animation only; the body is a vertical-scrolling media
+        // list, so we disable swipe to avoid accidental page changes.
+        physics: const NeverScrollableScrollPhysics(),
         children: const [
           MediaTypeScreen(type: MediaType.image),
           MediaTypeScreen(type: MediaType.video),
@@ -108,7 +135,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
-        onDestinationSelected: (i) => setState(() => _tab = i),
+        onDestinationSelected: _onTabSelected,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.image_outlined),

@@ -12,6 +12,9 @@ Future<void> main() async {
   // Required by media_kit before any Player is created.
   MediaKit.ensureInitialized();
 
+  // The bundled Noto Sans SC font is declared in pubspec.yaml and loaded
+  // automatically by Flutter — no runtime initialization needed here.
+
   final settingsService = await SettingsService.create();
 
   runApp(
