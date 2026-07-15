@@ -1,0 +1,39 @@
+name: lumiluna
+description: LumiLuna — a Material Design media library app for Windows desktop, browsing and playing local images, videos and music.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # Unified audio + video playback (native Windows support)
+  media_kit: ^1.1.11
+  media_kit_video: ^1.2.5
+  media_kit_libs_video: ^1.0.5
+
+  # Local file system media scanning
+  file_picker: ^8.1.2
+  path_provider: ^2.1.4
+
+  # Persistence
+  shared_preferences: ^2.3.2
+
+  # Date / duration formatting
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
