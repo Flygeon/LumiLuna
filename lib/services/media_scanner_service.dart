@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import '../core/constants/app_constants.dart';
 import '../models/media_item.dart';
@@ -11,43 +12,14 @@ import '../models/media_type.dart';
 
 /// Scans local folders for media files on a background isolate.
 class MediaScannerService {
-  /// Request storage permissions on Android (no-op on other platforms).
+  /// Resolve the default media directories to scan (Pictures / Videos / Music).
   ///
-  /// Returns `true` if the required permissions are granted.
-  static Future<bool> ensurePermissions() async {
-    if (!Platform.isAndroid) return true;
-
-    // Android 11+ (API 30+): MANAGE_EXTERNAL_STORAGE grants full file access.
-    // The Permission.manageExternalStorage property is available at compile
-    // time on all platforms but only grants on Android.
-    final status = await Permission.manageExternalStorage.request();
-    return status.isGranted;
-  }
-
-  /// Resolve the default media directories to scan.
-  ///
-  /// On Android we use the well-known public storage paths; on desktop we
-  /// derive them from the user profile directory.
+  /// [path_provider] does not expose these on Windows directly, so we derive
+  /// them from the user profile directory and fall back gracefully.
   static Future<List<String>> defaultFolders() async {
     final result = <String>[];
 
-    if (Platform.isAndroid) {
-      // Android public storage directories.
-      const candidates = [
-        '/storage/emulated/0/DCIM',
-        '/storage/emulated/0/Pictures',
-        '/storage/emulated/0/Movies',
-        '/storage/emulated/0/Music',
-        '/storage/emulated/0/Download',
-      ];
-      for (final path in candidates) {
-        final dir = Directory(path);
-        if (await dir.exists()) result.add(path);
-      }
-      return result;
-    }
-
-    // Desktop: try USERPROFILE / HOME + well-known subdirectories.
+    // Try USERPROFILE / HOME based well-known folders (Windows/macOS/Linux).
     final home = _homeDir();
     if (home != null) {
       for (final sub in const ['Pictures', 'Videos', 'Music']) {
@@ -66,6 +38,13 @@ class MediaScannerService {
       }
     }
 
+    // #region debug-point H2:default-folders
+    unawaited(HttpClient().postUrl(Uri.parse('http://192.168.1.7:7777/event')).then((request) {
+      request.headers.contentType = ContentType.json;
+      request.write(jsonEncode({'sessionId': 'android-media-scan', 'runId': 'pre', 'hypothesisId': 'H2', 'location': 'media_scanner_service.dart:defaultFolders', 'msg': '[DEBUG] Default folders resolved', 'data': {'platform': Platform.operatingSystem, 'home': _homeDir(), 'folders': result}}));
+      return request.close();
+    }).catchError((_) {}));
+    // #endregion
     return result;
   }
 
@@ -82,7 +61,21 @@ class MediaScannerService {
   /// enriched in parallel on worker isolates.
   static Future<List<MediaItem>> scan(List<String> folders) async {
     if (folders.isEmpty) return const [];
+    // #region debug-point H1:H3:scan-entry
+    unawaited(HttpClient().postUrl(Uri.parse('http://192.168.1.7:7777/event')).then((request) {
+      request.headers.contentType = ContentType.json;
+      request.write(jsonEncode({'sessionId': 'android-media-scan', 'runId': 'pre', 'hypothesisId': 'H1', 'location': 'media_scanner_service.dart:scan', 'msg': '[DEBUG] Scan started', 'data': {'folders': folders}}));
+      return request.close();
+    }).catchError((_) {}));
+    // #endregion
     final items = await compute(_scanIsolate, folders);
+    // #region debug-point H4:H5:scan-result
+    unawaited(HttpClient().postUrl(Uri.parse('http://192.168.1.7:7777/event')).then((request) {
+      request.headers.contentType = ContentType.json;
+      request.write(jsonEncode({'sessionId': 'android-media-scan', 'runId': 'pre', 'hypothesisId': 'H4', 'location': 'media_scanner_service.dart:scan', 'msg': '[DEBUG] Scan completed', 'data': {'count': items.length, 'types': {for (final type in MediaType.values) type.name: items.where((item) => item.type == type).length}}}));
+      return request.close();
+    }).catchError((_) {}));
+    // #endregion
     return _enrichAudioMetadataParallel(items);
   }
 
