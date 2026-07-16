@@ -31,6 +31,8 @@ class DatabaseService {
 
   static Future<Database> _initDatabase() async {
     // Initialize FFI bindings for SQLite on desktop.
+    // This must be set before calling the global openDatabase() API.
+    databaseFactory = databaseFactoryFfi;
     sqfliteFfiInit();
 
     final dir = await getApplicationSupportDirectory();
