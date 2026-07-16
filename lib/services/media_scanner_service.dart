@@ -17,18 +17,11 @@ class MediaScannerService {
   static Future<bool> ensurePermissions() async {
     if (!Platform.isAndroid) return true;
 
-    // Android 11+ (API 30+):  need MANAGE_EXTERNAL_STORAGE for full access,
-    // or scoped media permissions for reading specific media types.
-    // We try the scoped permissions first; if the OS rejects them we have
-    // MANAGE_EXTERNAL_STORAGE as a fallback.
+    // Android 11+ (API 30+): MANAGE_EXTERNAL_STORAGE grants full file access.
+    // The Permission.manageExternalStorage property is available at compile
+    // time on all platforms but only grants on Android.
     final status = await Permission.manageExternalStorage.request();
-    if (status.isGranted) return true;
-
-    // Fallback: try individual media permissions (Android 13+).
-    final image = await Permission.photos.request();
-    final audio = await Permission.audio.request();
-    final video = await Permission.video.request();
-    return image.isGranted || audio.isGranted || video.isGranted;
+    return status.isGranted;
   }
 
   /// Resolve the default media directories to scan.
