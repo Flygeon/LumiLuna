@@ -75,10 +75,12 @@ Widget _placeholder(BuildContext context, MediaItem item, [double iconSize = 40]
 
 /// Extracts and caches a single video frame on demand.
 ///
+/// The disk-cache check runs immediately in [initState] so that thumbnails
+/// that were generated in a previous session show without delay.
 /// The (native, CPU-bound) extraction is deferred: it only runs when this
 /// video's tab is the active one AND the tab-switch slide has finished. That
 /// keeps the frame-extraction burst off the animation frames and stops
-/// off-screen tabs from doing work. Already-generated frames are reused.
+/// off-screen tabs from doing work.
 class _VideoThumbnail extends ConsumerStatefulWidget {
   final MediaItem item;
   final BoxFit fit;
@@ -97,17 +99,38 @@ class _VideoThumbnail extends ConsumerStatefulWidget {
 class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
   static final _plugin = FcNativeVideoThumbnail();
   String? _thumbPath;
-  bool _started = false;
+  bool _extractionScheduled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFromDiskCache();
+  }
+
+  /// Check the disk cache immediately so already-cached thumbnails show
+  /// without waiting for the tab-animation deferral.
+  Future<void> _loadFromDiskCache() async {
+    try {
+      final base = await getTemporaryDirectory();
+      final dir = Directory('${base.path}/lumiluna_thumbs');
+      if (!await dir.exists()) return;
+      final key = widget.item.path.hashCode.abs().toString();
+      final dest = '${dir.path}${Platform.pathSeparator}$key.jpg';
+      if (await File(dest).exists() && mounted) {
+        setState(() => _thumbPath = dest);
+      }
+    } catch (_) {
+      // ignore
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // React to tab state so we start extracting the moment this tab becomes
-    // the active, settled one.
-    final shouldRun = ref.watch(activeTypeProvider) == widget.item.type &&
+    // Only trigger the native extraction when this tab is active + settled.
+    final canExtract = ref.watch(activeTypeProvider) == widget.item.type &&
         !ref.watch(tabAnimatingProvider);
-    if (shouldRun && !_started) {
-      _started = true;
-      // Defer the actual work one frame so we never call setState during build.
+    if (canExtract && _thumbPath == null && !_extractionScheduled) {
+      _extractionScheduled = true;
       WidgetsBinding.instance.addPostFrameCallback((_) => _generate());
     }
 
@@ -117,7 +140,8 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
         fit: widget.fit,
         gaplessPlayback: true,
         filterQuality: FilterQuality.low,
-        errorBuilder: (_, __, ___) => _placeholder(context, widget.item, widget.iconSize),
+        errorBuilder: (_, __, ___) =>
+            _placeholder(context, widget.item, widget.iconSize),
       );
     }
     // Loading, deferred or failed: keep the themed icon placeholder.
@@ -131,9 +155,9 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
       final thumbDir = Directory('${cacheDir.path}/lumiluna_thumbs');
       await thumbDir.create(recursive: true);
 
-      // Stable, collision-free cache key derived from the video path.
+      // Stable cache key derived from the video path.
       final key = widget.item.path.hashCode.abs().toString();
-      final dest = '${thumbDir.path}/$key.jpg';
+      final dest = '${thumbDir.path}${Platform.pathSeparator}$key.jpg';
 
       if (await File(dest).exists()) {
         if (mounted) setState(() => _thumbPath = dest);
