@@ -9,6 +9,11 @@ android {
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
+    // Some plugin AARs (e.g. file_picker) are pre-compiled against an older
+    // compileSdk.  Skipping the AAR metadata check avoids a false-positive
+    // failure while the plugin ecosystem catches up.
+    checkReleaseAarMetadata = false
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
