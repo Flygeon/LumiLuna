@@ -294,6 +294,18 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
+  Future<Set<String>> findDuplicateMediaPaths(List<MediaItem> items) async {
+    if (items.isEmpty) return {};
+    final rows = await select(mediaItems).get();
+    final keys =
+        rows.map((row) => '${row.path}|${row.name}|${row.size}').toSet();
+    return items
+        .where(
+            (item) => keys.contains('${item.path}|${item.name}|${item.size}'))
+        .map((item) => item.path)
+        .toSet();
+  }
+
   static String _normalizePath(String value) =>
       value.replaceAll('\\', '/').replaceAll(RegExp(r'/+'), '/').toLowerCase();
 

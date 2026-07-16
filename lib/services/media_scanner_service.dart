@@ -69,6 +69,19 @@ class MediaScannerService {
     return _enrichAudioMetadataParallel(items);
   }
 
+  static Future<List<MediaItem>> scanFiles(List<String> paths) async {
+    final items = <MediaItem>[];
+    for (final path in paths) {
+      try {
+        final file = File(path);
+        if (!await file.exists()) continue;
+        final item = MediaItem.fromPath(path, stat: await file.stat());
+        if (item != null) items.add(item);
+      } catch (_) {}
+    }
+    return _enrichAudioMetadataParallel(items);
+  }
+
   /// Public helper: enrich audio metadata for a small batch of items.
   ///
   /// Used by [FolderWatcherService] for incremental single-file updates.

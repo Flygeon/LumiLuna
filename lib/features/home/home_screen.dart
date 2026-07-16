@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:desktop_drop/desktop_drop.dart';
+import 'dart:io';
 
 import '../../l10n/l10n.dart';
 import '../../models/media_folder.dart';
@@ -16,6 +18,8 @@ import '../media/media_type_screen.dart';
 import '../playlists/playlist_list_screen.dart';
 import '../settings/settings_screen.dart';
 import '../trash/trash_screen.dart';
+import '../../services/media_scanner_service.dart';
+import '../../services/database/app_database.dart';
 
 /// Root screen with a Material 3 navigation bar for switching media types,
 /// plus search, grid/list toggle, refresh and a settings entry.
@@ -34,6 +38,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _tab = 0;
   bool _searching = false;
+  bool _dragging = false;
   final TextEditingController _searchController = TextEditingController();
   late final PageController _pageController;
 
@@ -82,13 +87,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     setState(() => _tab = index);
     _pageController
         .animateToPage(
-          index,
-          duration: const Duration(milliseconds: 320),
-          curve: Curves.easeInOutCubic,
-        )
+      index,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeInOutCubic,
+    )
         .then((_) {
-          if (mounted) ref.read(tabAnimatingProvider.notifier).state = false;
-        });
+      if (mounted) ref.read(tabAnimatingProvider.notifier).state = false;
+    });
   }
 
   void _showMoreMenu(BuildContext context) {
@@ -105,7 +110,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               onTap: () {
                 Navigator.of(ctx).pop();
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const CollectionListScreen()),
+                  MaterialPageRoute(
+                      builder: (_) => const CollectionListScreen()),
                 );
               },
             ),
@@ -134,6 +140,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _importDroppedFiles(List<DropItem> files) async {
+    if (!Platform.isWindows) return;
+    final paths = files
+        .map((file) => file.path)
+        .where((path) => path.isNotEmpty)
+        .toList();
+    final items = await MediaScannerService.scanFiles(paths);
+    final db = ref.read(appDatabaseProvider);
+    final duplicates = await db.findDuplicateMediaPaths(items);
+    final imported =
+        items.where((item) => !duplicates.contains(item.path)).toList();
+    if (imported.isNotEmpty) {
+      await db.upsertMediaItems(imported);
+      ref.invalidate(mediaProvider);
+    }
+    if (!mounted) return;
+    final message = duplicates.isEmpty
+        ? context.l10n.importedFiles(imported.length)
+        : context.l10n
+            .importSkippedDuplicates(imported.length, duplicates.length);
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -202,24 +232,52 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: PageView(
-              controller: _pageController,
-              physics: const NeverScrollableScrollPhysics(),
-              children: const [
-                RepaintBoundary(child: MediaTypeScreen(type: MediaType.image)),
-                RepaintBoundary(child: MediaTypeScreen(type: MediaType.video)),
-                RepaintBoundary(child: MediaTypeScreen(type: MediaType.audio)),
-                RepaintBoundary(child: FoldersScreen()),
-                RepaintBoundary(child: TrashScreen()),
+      body: DropTarget(
+        onDragEntered: (_) => setState(() => _dragging = true),
+        onDragExited: (_) => setState(() => _dragging = false),
+        onDragDone: (detail) {
+          setState(() => _dragging = false);
+          _importDroppedFiles(detail.files);
+        },
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: const [
+                      RepaintBoundary(
+                          child: MediaTypeScreen(type: MediaType.image)),
+                      RepaintBoundary(
+                          child: MediaTypeScreen(type: MediaType.video)),
+                      RepaintBoundary(
+                          child: MediaTypeScreen(type: MediaType.audio)),
+                      RepaintBoundary(child: FoldersScreen()),
+                      RepaintBoundary(child: TrashScreen()),
+                    ],
+                  ),
+                ),
+                // Mini player capsule (animated show/hide when music is playing).
+                const MiniPlayerCapsule(),
               ],
             ),
-          ),
-          // Mini player capsule (animated show/hide when music is playing).
-          const MiniPlayerCapsule(),
-        ],
+            if (_dragging)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withValues(alpha: 0.12)),
+                    child: Center(child: Text(context.l10n.dropFilesHere)),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,

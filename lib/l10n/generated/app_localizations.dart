@@ -565,6 +565,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Right-click any file and select \"Favorite\" to add it here.'**
   String get favoritesEmptyHint;
+
+  /// No description provided for @dropFilesHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Release to import media files'**
+  String get dropFilesHere;
+
+  /// No description provided for @importedFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {count} media files'**
+  String importedFiles(Object count);
+
+  /// No description provided for @importSkippedDuplicates.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {imported} files and skipped {duplicates} duplicates'**
+  String importSkippedDuplicates(Object duplicates, Object imported);
 }
 
 class _AppLocalizationsDelegate

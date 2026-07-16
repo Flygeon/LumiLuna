@@ -268,4 +268,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get favoritesEmptyHint =>
       'Right-click any file and select \"Favorite\" to add it here.';
+
+  @override
+  String get dropFilesHere => 'Release to import media files';
+
+  @override
+  String importedFiles(Object count) {
+    return 'Imported $count media files';
+  }
+
+  @override
+  String importSkippedDuplicates(Object duplicates, Object imported) {
+    return 'Imported $imported files and skipped $duplicates duplicates';
+  }
 }

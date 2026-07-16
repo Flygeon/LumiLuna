@@ -90,5 +90,8 @@
   "operationFailed": "操作失败：{message}",
 
   "favoritesEmpty": "还没有收藏",
-  "favoritesEmptyHint": "右键点击任意文件，选择「收藏」即可将其添加到这里。"
+  "favoritesEmptyHint": "右键点击任意文件，选择「收藏」即可将其添加到这里。",
+  "dropFilesHere": "松开鼠标即可导入媒体文件",
+  "importedFiles": "已导入 {count} 个媒体文件",
+  "importSkippedDuplicates": "已导入 {imported} 个文件，跳过 {duplicates} 个重复文件"
 }
