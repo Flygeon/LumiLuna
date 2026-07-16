@@ -1,6 +1,4 @@
-import 'dart:async';
 import 'dart:io';
-import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -26,26 +24,11 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
         ? folders
         : await MediaScannerService.defaultFolders();
 
-    // #region debug-point H1:H3:provider-target
-    unawaited(HttpClient().postUrl(Uri.parse('http://192.168.1.7:7777/event')).then((request) {
-      request.headers.contentType = ContentType.json;
-      request.write(jsonEncode({'sessionId': 'android-media-scan', 'runId': 'pre', 'hypothesisId': 'H3', 'location': 'media_provider.dart:build', 'msg': '[DEBUG] Provider target selected', 'data': {'configuredFolders': folders, 'target': target}}));
-      return request.close();
-    }).catchError((_) {}));
-    // #endregion
-
     if (target.isEmpty) return const [];
 
     // Try loading from the database first.
     final db = ref.read(appDatabaseProvider);
     final dbItems = await db.getAllMediaItems();
-    // #region debug-point H5:database-branch
-    unawaited(HttpClient().postUrl(Uri.parse('http://192.168.1.7:7777/event')).then((request) {
-      request.headers.contentType = ContentType.json;
-      request.write(jsonEncode({'sessionId': 'android-media-scan', 'runId': 'pre', 'hypothesisId': 'H5', 'location': 'media_provider.dart:build', 'msg': '[DEBUG] Database branch evaluated', 'data': {'count': dbItems.length, 'willScan': dbItems.isEmpty}}));
-      return request.close();
-    }).catchError((_) {}));
-    // #endregion
     if (dbItems.isNotEmpty) return dbItems;
 
     // Database empty — perform a full scan and persist.
