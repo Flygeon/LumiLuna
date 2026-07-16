@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +8,10 @@ import '../models/media_type.dart';
 import '../main.dart';
 
 import '../services/media_scanner_service.dart';
+import '../services/database/app_database.dart';
+import '../services/media_permission_service.dart';
 import 'settings_provider.dart';
+import 'folder_watcher_provider.dart';
 
 /// Holds all scanned media items. Rescans when the folder list changes.
 ///
@@ -24,17 +28,33 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
         ? folders
         : await MediaScannerService.defaultFolders();
 
+    await MediaPermissionService.requestForScanning();
+
     if (target.isEmpty) return const [];
 
     // Try loading from the database first.
     final db = ref.read(appDatabaseProvider);
     final dbItems = await db.getAllMediaItems();
-    if (dbItems.isNotEmpty) return dbItems;
+    final watcher = ref.read(folderWatcherProvider);
+    if (dbItems.isNotEmpty) {
+      unawaited(watcher.start(target));
+      unawaited(_refreshIndex(db, target));
+      return dbItems;
+    }
 
     // Database empty — perform a full scan and persist.
     final items = await MediaScannerService.scan(target);
-    await db.upsertMediaItems(items);
+    await db.syncMediaItems(items, target);
+    await watcher.start(target);
     return items;
+  }
+
+  Future<void> _refreshIndex(AppDatabase db, List<String> folders) async {
+    try {
+      final items = await MediaScannerService.scan(folders);
+      await db.syncMediaItems(items, folders);
+      state = AsyncValue.data(await db.getAllMediaItems());
+    } catch (_) {}
   }
 
   /// Force a rescan of the current folders.
@@ -48,7 +68,8 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
       if (target.isEmpty) return const <MediaItem>[];
       final items = await MediaScannerService.scan(target);
       final db = ref.read(appDatabaseProvider);
-      await db.upsertMediaItems(items);
+      await db.syncMediaItems(items, target);
+      await ref.read(folderWatcherProvider).start(target);
       return items;
     });
   }
@@ -75,8 +96,8 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
     final dot = item.name.lastIndexOf('.');
     final ext = dot >= 0 ? item.name.substring(dot) : '';
     final finalName = newName.endsWith(ext) ? newName : '$newName$ext';
-    final parent = item.path
-        .substring(0, item.path.lastIndexOf(Platform.pathSeparator));
+    final parent =
+        item.path.substring(0, item.path.lastIndexOf(Platform.pathSeparator));
     final newPath = '$parent${Platform.pathSeparator}$finalName';
 
     // Rename on disk.

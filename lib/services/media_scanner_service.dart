@@ -17,6 +17,19 @@ class MediaScannerService {
   static Future<List<String>> defaultFolders() async {
     final result = <String>[];
 
+    if (Platform.isAndroid) {
+      for (final path in const [
+        '/storage/emulated/0/Pictures',
+        '/storage/emulated/0/DCIM',
+        '/storage/emulated/0/Movies',
+        '/storage/emulated/0/Music',
+      ]) {
+        final dir = Directory(path);
+        if (await dir.exists()) result.add(dir.path);
+      }
+      if (result.isNotEmpty) return result;
+    }
+
     // Try USERPROFILE / HOME based well-known folders (Windows/macOS/Linux).
     final home = _homeDir();
     if (home != null) {
@@ -198,13 +211,15 @@ class MediaScannerService {
           }
           artPath = dest;
         }
-        results.add(item.copyWith(
-          title: meta.title,
-          artist: meta.artist,
-          album: meta.album,
-          durationMs: meta.duration?.inMilliseconds,
-          artworkPath: artPath,
-        ).toJson());
+        results.add(item
+            .copyWith(
+              title: meta.title,
+              artist: meta.artist,
+              album: meta.album,
+              durationMs: meta.duration?.inMilliseconds,
+              artworkPath: artPath,
+            )
+            .toJson());
       } catch (_) {
         // Single file failure → return item unchanged.
         results.add(item.toJson());

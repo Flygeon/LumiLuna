@@ -19,7 +19,11 @@ import 'media_scanner_service.dart';
 /// 4. When a folder is deleted or a batch of events is too large, it falls
 ///    back to a full re-scan of that folder.
 class FolderWatcherService {
-  FolderWatcherService();
+  FolderWatcherService({required AppDatabase database, required this.onChanged})
+      : _database = database;
+
+  final AppDatabase _database;
+  final Future<void> Function() onChanged;
 
   final Set<Directory> _watched = {};
   final List<StreamSubscription> _subscriptions = [];
@@ -32,11 +36,8 @@ class FolderWatcherService {
   bool get isWatching => _watching;
 
   /// Start watching all folders currently configured in [DatabaseService].
-  Future<void> start() async {
+  Future<void> start(List<String> folders) async {
     if (_watching) await stop();
-    final db = AppDatabase();
-    final folders = await db.getScanFolders();
-    db.close();
     for (final folderPath in folders) {
       _watchFolder(folderPath);
     }
@@ -57,9 +58,9 @@ class FolderWatcherService {
   }
 
   /// Restart (e.g. after scan-folder configuration change).
-  Future<void> restart() async {
+  Future<void> restart(List<String> folders) async {
     await stop();
-    await start();
+    await start(folders);
   }
 
   void _watchFolder(String folderPath) {
@@ -69,10 +70,10 @@ class FolderWatcherService {
 
     try {
       final sub = dir.watch(recursive: true).listen(
-        (event) => _onFileEvent(event, folderPath),
-        onError: (_) {},
-        cancelOnError: false,
-      );
+            (event) => _onFileEvent(event, folderPath),
+            onError: (_) {},
+            cancelOnError: false,
+          );
       _subscriptions.add(sub);
       _watched.add(dir);
     } catch (_) {
@@ -132,17 +133,15 @@ class FolderWatcherService {
       if (items.isNotEmpty) {
         // Enrich audio metadata for new audio files.
         final enriched = await MediaScannerService.enrichAudioItems(items);
-        final db = AppDatabase();
-        await db.upsertMediaItems(enriched);
-        db.close();
+        await _database.upsertMediaItems(enriched);
       }
     }
 
     // Remove deleted files.
     if (deletePaths.isNotEmpty) {
-      final db = AppDatabase();
-      await db.removeMediaItems(deletePaths);
-      db.close();
+      await _database.removeMediaItems(deletePaths);
     }
+
+    if (upsertPaths.isNotEmpty || deletePaths.isNotEmpty) await onChanged();
   }
 }
