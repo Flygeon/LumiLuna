@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/l10n.dart';
 import '../../models/media_folder.dart';
 import '../../providers/filter_provider.dart';
 import '../../providers/media_provider.dart';
@@ -16,6 +17,7 @@ class FoldersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final grouped = ref.watch(groupedMediaProvider);
     final mode = ref.watch(settingsProvider.select((s) => s.groupMode));
 
@@ -28,10 +30,10 @@ class FoldersScreen extends ConsumerWidget {
             onRetry: () => ref.read(mediaProvider.notifier).rescan(),
             builder: (folders) {
               if (folders.isEmpty) {
-                return const EmptyState(
+                return EmptyState(
                   icon: Icons.folder_outlined,
-                  title: '没有可显示的分组',
-                  message: '在设置中添加要扫描的文件夹后下拉刷新',
+                  title: l10n.noGroups,
+                  message: l10n.addFolderHint,
                 );
               }
               return RefreshIndicator(
@@ -75,7 +77,10 @@ class _GroupModeSelector extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
       child: SegmentedButton<GroupMode>(
         segments: GroupMode.values
-            .map((m) => ButtonSegment(value: m, label: Text(m.label)))
+            .map((m) => ButtonSegment(
+                  value: m,
+                  label: Text(groupModeName(context, m)),
+                ))
             .toList(),
         selected: {mode},
         onSelectionChanged: (set) =>
@@ -92,6 +97,7 @@ class _FolderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final cover = folder.cover;
     final scheme = Theme.of(context).colorScheme;
     return Card(
@@ -130,7 +136,7 @@ class _FolderCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${folder.count} 个项目',
+                    l10n.itemsCount(folder.count),
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall

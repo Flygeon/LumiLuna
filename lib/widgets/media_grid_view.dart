@@ -37,8 +37,10 @@ class MediaGridView extends StatelessWidget {
             childAspectRatio: 1,
           ),
           itemCount: items.length,
-          // Keep off-screen tiles cheap while scrolling large libraries.
-          cacheExtent: 600,
+          // Smaller cache window keeps the first-build / scroll burst low.
+          // Thumbnails that scroll back into view are cheap to re-show
+          // (images keep their own cache; video frames are cached to disk).
+          cacheExtent: 250,
           itemBuilder: (context, index) => _GridTile(
             item: items[index],
             onTap: () => onTap(index),

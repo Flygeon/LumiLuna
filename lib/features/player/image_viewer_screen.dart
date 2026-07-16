@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../../models/media_item.dart';
 
 /// Full-screen swipeable image viewer with pinch / double-tap zoom.
@@ -79,7 +80,10 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
               color: Colors.black.withValues(alpha: 0.4),
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text(
-                '${_index + 1} / ${widget.items.length}',
+                context.l10n.imageCounter(
+                  _index + 1,
+                  widget.items.length,
+                ),
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.white70),
               ),

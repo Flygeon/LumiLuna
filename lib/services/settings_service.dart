@@ -59,4 +59,11 @@ class SettingsService {
   Future<void> setGroupMode(GroupMode mode) async {
     await _prefs.setString(AppConstants.prefGroupMode, mode.name);
   }
+
+  // ---- UI language (empty string = follow system) ----
+  String getLocale() => _prefs.getString(AppConstants.prefLocale) ?? '';
+
+  Future<void> setLocale(String tag) async {
+    await _prefs.setString(AppConstants.prefLocale, tag);
+  }
 }

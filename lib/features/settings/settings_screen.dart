@@ -1,48 +1,62 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumiluna/l10n/generated/app_localizations.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
 
+import '../../core/constants/app_constants.dart';
+import '../../core/utils/format_utils.dart';
+import '../../l10n/l10n.dart';
 import '../../models/media_folder.dart';
 import '../../providers/media_provider.dart';
 import '../../providers/settings_provider.dart';
 
-/// Settings screen: theme mode, default view, group mode and scan folders.
+/// Provides the app's [PackageInfo] (version / build number) for the About page.
+final packageInfoProvider = FutureProvider<PackageInfo>((ref) => PackageInfo.fromPlatform());
+
+/// Settings screen: theme mode, default view, group mode, scan folders,
+/// language, cache management and an About / licenses section.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
     final scheme = Theme.of(context).colorScheme;
+    final pkg = ref.watch(packageInfoProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('设置')),
+      appBar: AppBar(title: Text(l10n.settings)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _SectionTitle('外观'),
+          _SectionTitle(l10n.appearance),
           _ThemeTile(settings: settings, notifier: notifier),
           SwitchListTile(
-            title: const Text('默认网格视图'),
-            subtitle: const Text('关闭则使用列表视图'),
+            title: Text(l10n.defaultGridView),
+            subtitle: Text(l10n.offListView),
             value: settings.isGridView,
             onChanged: (v) => notifier.setGridView(v),
           ),
           const Divider(),
-          _SectionTitle('媒体分组'),
+          _SectionTitle(l10n.mediaGrouping),
           ...GroupMode.values.map(
             (m) => RadioListTile<GroupMode>(
-              title: Text(m.label),
+              title: Text(groupModeName(context, m)),
               value: m,
               groupValue: settings.groupMode,
               onChanged: (v) => notifier.setGroupMode(v!),
             ),
           ),
           const Divider(),
-          _SectionTitle('扫描文件夹'),
+          _SectionTitle(l10n.scanFoldersTitle),
           Text(
-            '应用会递归扫描以下文件夹中的图片、视频和音乐。',
+            l10n.scanFoldersDesc,
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
@@ -50,9 +64,9 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           if (settings.scanFolders.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text('尚未配置，将扫描默认图片/视频/音乐目录。'),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(l10n.noFoldersConfigured),
             ),
           ...settings.scanFolders.map(
             (path) => ListTile(
@@ -67,8 +81,37 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           FilledButton.tonalIcon(
             icon: const Icon(Icons.add),
-            label: const Text('添加文件夹'),
+            label: Text(l10n.addFolder),
             onPressed: () => _pickFolder(ref, notifier),
+          ),
+          const Divider(),
+          _SectionTitle(l10n.language),
+          _LocaleTile(settings: settings, notifier: notifier),
+          const Divider(),
+          _SectionTitle(l10n.cacheTitle),
+          ListTile(
+            leading: const Icon(Icons.cleaning_services_outlined),
+            title: Text(l10n.clearCache),
+            onTap: () => _clearCache(context),
+          ),
+          const Divider(),
+          _SectionTitle(l10n.about),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: Text(l10n.version),
+            subtitle: pkg.when(
+              data: (p) => Text('${p.version} (${p.buildNumber})'),
+              loading: () => const Text('…'),
+              error: (_, __) => const Text(''),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.description_outlined),
+            title: Text(l10n.viewLicenses),
+            onTap: () => showLicensePage(
+              context: context,
+              applicationName: AppConstants.appName,
+            ),
           ),
         ],
       ),
@@ -86,6 +129,32 @@ class SettingsScreen extends ConsumerWidget {
       await ref.read(mediaProvider.notifier).rescan();
     }
   }
+
+  /// Delete the cached video thumbnails and audio cover-art directories and
+  /// report how much disk space was freed.
+  Future<void> _clearCache(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final cacheDir = await getTemporaryDirectory();
+      var freed = 0;
+      for (final name in const ['lumiluna_thumbs', 'lumiluna_artwork']) {
+        final dir = Directory('${cacheDir.path}/$name');
+        if (await dir.exists()) {
+          await for (final entity in dir.list(recursive: true)) {
+            if (entity is File) freed += await entity.length();
+          }
+          await dir.delete(recursive: true);
+        }
+      }
+      if (context.mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(context.l10n.cacheCleared(FormatUtils.fileSize(freed)))),
+        );
+      }
+    } catch (_) {
+      // Best-effort cleanup; ignore individual failures.
+    }
+  }
 }
 
 class _ThemeTile extends ConsumerWidget {
@@ -96,14 +165,15 @@ class _ThemeTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final entries = {
-      ThemeMode.system: '跟随系统',
-      ThemeMode.light: '浅色',
-      ThemeMode.dark: '深色',
+      ThemeMode.system: l10n.themeSystem,
+      ThemeMode.light: l10n.themeLight,
+      ThemeMode.dark: l10n.themeDark,
     };
     return ListTile(
       leading: const Icon(Icons.palette_outlined),
-      title: const Text('主题'),
+      title: Text(l10n.theme),
       trailing: DropdownButton<ThemeMode>(
         value: settings.themeMode,
         underline: const SizedBox.shrink(),
@@ -111,6 +181,36 @@ class _ThemeTile extends ConsumerWidget {
             .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
             .toList(),
         onChanged: (m) => notifier.setThemeMode(m!),
+      ),
+    );
+  }
+}
+
+class _LocaleTile extends ConsumerWidget {
+  final AppSettings settings;
+  final SettingsNotifier notifier;
+
+  const _LocaleTile({required this.settings, required this.notifier});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final current = settings.localeTag.isEmpty ? null : Locale(settings.localeTag);
+    final entries = <Locale?, String>{
+      null: l10n.langSystem,
+      const Locale('zh'): l10n.langChinese,
+      const Locale('en'): l10n.langEnglish,
+    };
+    return ListTile(
+      leading: const Icon(Icons.language_outlined),
+      title: Text(l10n.language),
+      trailing: DropdownButton<Locale?>(
+        value: current,
+        underline: const SizedBox.shrink(),
+        items: entries.entries
+            .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+            .toList(),
+        onChanged: (loc) => notifier.setLocale(loc == null ? '' : loc.languageCode),
       ),
     );
   }

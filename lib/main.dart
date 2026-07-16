@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:metadata_god/metadata_god.dart';
 import 'package:media_kit/media_kit.dart';
 
 import 'app.dart';
@@ -11,6 +12,9 @@ Future<void> main() async {
 
   // Required by media_kit before any Player is created.
   MediaKit.ensureInitialized();
+
+  // Initialise the metadata_god Rust backend so audio tags can be read.
+  await MetadataGod.initialize();
 
   // The bundled Noto Sans SC font is declared in pubspec.yaml and loaded
   // automatically by Flutter — no runtime initialization needed here.

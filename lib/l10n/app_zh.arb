@@ -1,0 +1,68 @@
+{
+  "homeTitle": "媒体库",
+  "searchHint": "搜索文件名…",
+  "search": "搜索",
+  "clear": "清除",
+  "gridView": "网格视图",
+  "listView": "列表视图",
+  "refresh": "刷新",
+  "settings": "设置",
+  "loadingError": "加载出错",
+  "retry": "重试",
+
+  "typeImage": "图片",
+  "typeVideo": "视频",
+  "typeMusic": "音乐",
+
+  "groupAlbum": "相册",
+  "groupFolder": "文件夹",
+  "groupDate": "日期",
+
+  "noItems": "没有 {type} 文件",
+  "noMatch": "没有匹配的 {type}",
+  "emptyAddFolderHint": "在右上角菜单进入设置，添加要扫描的文件夹后下拉刷新",
+  "tryAnotherKeyword": "换个关键词再试试",
+
+  "noGroups": "没有可显示的分组",
+  "addFolderHint": "在设置中添加要扫描的文件夹后下拉刷新",
+  "itemsCount": "{count} 个项目",
+
+  "nowPlaying": "正在播放",
+  "notPlaying": "未在播放",
+  "loopTooltip": "循环播放",
+  "stopTooltip": "停止",
+  "playlist": "播放列表",
+
+  "videoTitle": "视频",
+
+  "imageCounter": "{current} / {total}",
+
+  "appearance": "外观",
+  "defaultGridView": "默认网格视图",
+  "offListView": "关闭则使用列表视图",
+  "mediaGrouping": "媒体分组",
+  "scanFoldersTitle": "扫描文件夹",
+  "scanFoldersDesc": "应用会递归扫描以下文件夹中的图片、视频和音乐。",
+  "noFoldersConfigured": "尚未配置，将扫描默认图片 / 视频 / 音乐目录。",
+  "addFolder": "添加文件夹",
+
+  "theme": "主题",
+  "themeSystem": "跟随系统",
+  "themeLight": "浅色",
+  "themeDark": "深色",
+
+  "language": "语言",
+  "langSystem": "跟随系统",
+  "langChinese": "简体中文",
+  "langEnglish": "English",
+
+  "cacheTitle": "缓存",
+  "clearCache": "清理缓存",
+  "clearingCache": "正在清理…",
+  "cacheCleared": "已清理 {size} 缓存",
+
+  "about": "关于",
+  "aboutDesc": "一个 Material Design 媒体库，用于浏览与播放本地的图片、视频和音乐。",
+  "version": "版本",
+  "viewLicenses": "开源许可证"
+}

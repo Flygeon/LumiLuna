@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/l10n.dart';
+import '../../models/media_folder.dart';
 import '../../models/media_type.dart';
 import '../../providers/filter_provider.dart';
 import '../../providers/media_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../providers/tab_provider.dart';
 import '../folders/folders_screen.dart';
 import '../media/media_type_screen.dart';
 import '../settings/settings_screen.dart';
@@ -50,19 +53,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ref.read(searchQueryProvider.notifier).state = '';
   }
 
+  MediaType _typeForIndex(int index) {
+    switch (index) {
+      case 0:
+        return MediaType.image;
+      case 1:
+        return MediaType.video;
+      case 2:
+        return MediaType.audio;
+      default:
+        return MediaType.image; // folders tab: no video thumbnails
+    }
+  }
+
   /// Animate the body to [index] and keep the nav bar highlight in sync.
+  ///
+  /// Heavy, per-item work (video frame extraction) is paused while
+  /// [tabAnimatingProvider] is true, so it never competes with the slide.
   void _onTabSelected(int index) {
     if (index == _tab) return;
+    ref.read(activeTypeProvider.notifier).state = _typeForIndex(index);
+    ref.read(tabAnimatingProvider.notifier).state = true;
     setState(() => _tab = index);
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 320),
-      curve: Curves.easeInOutCubic,
-    );
+    _pageController
+        .animateToPage(
+          index,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeInOutCubic,
+        )
+        .then((_) {
+          if (mounted) ref.read(tabAnimatingProvider.notifier).state = false;
+        });
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final isGrid = ref.watch(settingsProvider.select((s) => s.isGridView));
 
     return Scaffold(
@@ -77,18 +103,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: '搜索文件名…',
+                decoration: InputDecoration(
+                  hintText: l10n.searchHint,
                   border: InputBorder.none,
                 ),
                 onChanged: (v) =>
                     ref.read(searchQueryProvider.notifier).state = v,
               )
-            : const Text('媒体库'),
+            : Text(l10n.homeTitle),
         actions: [
           if (_searching)
             IconButton(
-              tooltip: '清除',
+              tooltip: l10n.clear,
               icon: const Icon(Icons.close),
               onPressed: () {
                 _searchController.clear();
@@ -97,22 +123,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             )
           else ...[
             IconButton(
-              tooltip: '搜索',
+              tooltip: l10n.search,
               icon: const Icon(Icons.search),
               onPressed: _openSearch,
             ),
             IconButton(
-              tooltip: isGrid ? '列表视图' : '网格视图',
+              tooltip: isGrid ? l10n.listView : l10n.gridView,
               icon: Icon(isGrid ? Icons.view_list : Icons.grid_view),
               onPressed: () => ref.read(settingsProvider.notifier).toggleView(),
             ),
             IconButton(
-              tooltip: '刷新',
+              tooltip: l10n.refresh,
               icon: const Icon(Icons.refresh),
               onPressed: () => ref.read(mediaProvider.notifier).rescan(),
             ),
             IconButton(
-              tooltip: '设置',
+              tooltip: l10n.settings,
               icon: const Icon(Icons.settings_outlined),
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const SettingsScreen()),
@@ -127,35 +153,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         // list, so we disable swipe to avoid accidental page changes.
         physics: const NeverScrollableScrollPhysics(),
         children: const [
-          MediaTypeScreen(type: MediaType.image),
-          MediaTypeScreen(type: MediaType.video),
-          MediaTypeScreen(type: MediaType.audio),
-          FoldersScreen(),
+          RepaintBoundary(child: MediaTypeScreen(type: MediaType.image)),
+          RepaintBoundary(child: MediaTypeScreen(type: MediaType.video)),
+          RepaintBoundary(child: MediaTypeScreen(type: MediaType.audio)),
+          RepaintBoundary(child: FoldersScreen()),
         ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
         onDestinationSelected: _onTabSelected,
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.image_outlined),
-            selectedIcon: Icon(Icons.image),
-            label: '图片',
+            icon: const Icon(Icons.image_outlined),
+            selectedIcon: const Icon(Icons.image),
+            label: mediaTypeName(context, MediaType.image),
           ),
           NavigationDestination(
-            icon: Icon(Icons.movie_outlined),
-            selectedIcon: Icon(Icons.movie),
-            label: '视频',
+            icon: const Icon(Icons.movie_outlined),
+            selectedIcon: const Icon(Icons.movie),
+            label: mediaTypeName(context, MediaType.video),
           ),
           NavigationDestination(
-            icon: Icon(Icons.music_note_outlined),
-            selectedIcon: Icon(Icons.music_note),
-            label: '音乐',
+            icon: const Icon(Icons.music_note_outlined),
+            selectedIcon: const Icon(Icons.music_note),
+            label: mediaTypeName(context, MediaType.audio),
           ),
           NavigationDestination(
-            icon: Icon(Icons.folder_outlined),
-            selectedIcon: Icon(Icons.folder),
-            label: '文件夹',
+            icon: const Icon(Icons.folder_outlined),
+            selectedIcon: const Icon(Icons.folder),
+            label: groupModeName(context, GroupMode.folder),
           ),
         ],
       ),

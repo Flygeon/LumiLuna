@@ -6,18 +6,6 @@ enum MediaType {
   video,
   audio;
 
-  /// Human-readable label (Chinese).
-  String get label {
-    switch (this) {
-      case MediaType.image:
-        return '图片';
-      case MediaType.video:
-        return '视频';
-      case MediaType.audio:
-        return '音乐';
-    }
-  }
-
   /// Representative icon for the media type.
   IconData get icon {
     switch (this) {

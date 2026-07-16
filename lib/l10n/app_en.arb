@@ -1,0 +1,68 @@
+{
+  "homeTitle": "Library",
+  "searchHint": "Search files…",
+  "search": "Search",
+  "clear": "Clear",
+  "gridView": "Grid view",
+  "listView": "List view",
+  "refresh": "Refresh",
+  "settings": "Settings",
+  "loadingError": "Failed to load",
+  "retry": "Retry",
+
+  "typeImage": "Images",
+  "typeVideo": "Videos",
+  "typeMusic": "Music",
+
+  "groupAlbum": "Albums",
+  "groupFolder": "Folders",
+  "groupDate": "Date",
+
+  "noItems": "No {type} files",
+  "noMatch": "No matching {type}",
+  "emptyAddFolderHint": "Open Settings from the top-right menu, add folders to scan, then pull to refresh.",
+  "tryAnotherKeyword": "Try another keyword",
+
+  "noGroups": "No groups to show",
+  "addFolderHint": "Add folders to scan in Settings, then pull to refresh.",
+  "itemsCount": "{count} items",
+
+  "nowPlaying": "Now Playing",
+  "notPlaying": "Nothing playing",
+  "loopTooltip": "Loop",
+  "stopTooltip": "Stop",
+  "playlist": "Playlist",
+
+  "videoTitle": "Video",
+
+  "imageCounter": "{current} / {total}",
+
+  "appearance": "Appearance",
+  "defaultGridView": "Default grid view",
+  "offListView": "List view when turned off",
+  "mediaGrouping": "Media grouping",
+  "scanFoldersTitle": "Scan folders",
+  "scanFoldersDesc": "The app scans the following folders recursively for images, videos and music.",
+  "noFoldersConfigured": "Not configured — default Pictures / Videos / Music folders will be scanned.",
+  "addFolder": "Add folder",
+
+  "theme": "Theme",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+
+  "language": "Language",
+  "langSystem": "System",
+  "langChinese": "简体中文",
+  "langEnglish": "English",
+
+  "cacheTitle": "Cache",
+  "clearCache": "Clear cache",
+  "clearingCache": "Clearing…",
+  "cacheCleared": "Cleared {size} of cache",
+
+  "about": "About",
+  "aboutDesc": "A Material Design media library for browsing and playing local images, videos and music.",
+  "version": "Version",
+  "viewLicenses": "Open source licenses"
+}

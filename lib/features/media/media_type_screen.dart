@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/l10n.dart';
 import '../../models/media_item.dart';
 import '../../models/media_type.dart';
 import '../../providers/filter_provider.dart';
@@ -28,6 +29,7 @@ class MediaTypeScreen extends ConsumerWidget {
     final async = ref.watch(mediaByTypeProvider(type));
     final query = ref.watch(searchQueryProvider).trim().toLowerCase();
     final isGrid = ref.watch(settingsProvider.select((s) => s.isGridView));
+    final l10n = context.l10n;
 
     return AsyncView<List<MediaItem>>(
       value: async,
@@ -35,17 +37,23 @@ class MediaTypeScreen extends ConsumerWidget {
       builder: (all) {
         final items = query.isEmpty
             ? all
-            : all
-                .where((i) => i.name.toLowerCase().contains(query))
-                .toList();
+            : all.where((i) {
+                final q = query;
+                return i.name.toLowerCase().contains(q) ||
+                    (i.title?.toLowerCase().contains(q) ?? false) ||
+                    (i.artist?.toLowerCase().contains(q) ?? false);
+              }).toList();
 
         if (items.isEmpty) {
+          final typeLabel = mediaTypeName(context, type);
           return EmptyState(
             icon: type.icon,
-            title: query.isEmpty ? '没有${type.label}文件' : '没有匹配的${type.label}',
+            title: query.isEmpty
+                ? l10n.noItems(typeLabel)
+                : l10n.noMatch(typeLabel),
             message: query.isEmpty
-                ? '在右上角菜单进入设置，添加要扫描的文件夹后下拉刷新'
-                : '换个关键词再试试',
+                ? l10n.emptyAddFolderHint
+                : l10n.tryAnotherKeyword,
           );
         }
 

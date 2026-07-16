@@ -10,12 +10,26 @@ class MediaItem {
   final int size;
   final DateTime modified;
 
+  /// Audio metadata, filled in after scanning (null until then / for non-audio).
+  final String? title;
+  final String? artist;
+  final String? album;
+  final int? durationMs;
+
+  /// Cached embedded cover-art image path (audio only), if artwork exists.
+  final String? artworkPath;
+
   const MediaItem({
     required this.path,
     required this.name,
     required this.type,
     required this.size,
     required this.modified,
+    this.title,
+    this.artist,
+    this.album,
+    this.durationMs,
+    this.artworkPath,
   });
 
   /// The immediate parent directory path.
@@ -60,6 +74,28 @@ class MediaItem {
       type: type,
       size: s.size < 0 ? 0 : s.size,
       modified: s.modified,
+    );
+  }
+
+  /// Returns a copy with audio metadata filled in (used by the scanner).
+  MediaItem copyWith({
+    String? title,
+    String? artist,
+    String? album,
+    int? durationMs,
+    String? artworkPath,
+  }) {
+    return MediaItem(
+      path: path,
+      name: name,
+      type: type,
+      size: size,
+      modified: modified,
+      title: title ?? this.title,
+      artist: artist ?? this.artist,
+      album: album ?? this.album,
+      durationMs: durationMs ?? this.durationMs,
+      artworkPath: artworkPath ?? this.artworkPath,
     );
   }
 

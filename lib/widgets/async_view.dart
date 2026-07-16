@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/l10n.dart';
 import 'empty_state.dart';
 
 /// Renders an [AsyncValue] with consistent loading / error / data handling.
@@ -18,14 +19,15 @@ class AsyncView<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return value.when(
       data: builder,
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => EmptyState(
         icon: Icons.error_outline,
-        title: '加载出错',
+        title: l10n.loadingError,
         message: '$error',
-        actionLabel: onRetry != null ? '重试' : null,
+        actionLabel: onRetry != null ? l10n.retry : null,
         onAction: onRetry,
       ),
     );
