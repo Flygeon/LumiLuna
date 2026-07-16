@@ -25,6 +25,9 @@ class ScanCacheManager {
   }
 
   /// Persist [items] together with the [folders] that produced them.
+  ///
+  /// The CPU-intensive `jsonEncode` call is offloaded to a worker isolate
+  /// so the UI thread is not blocked by serialising thousands of items.
   static Future<void> save(List<MediaItem> items, List<String> folders) async {
     final data = {
       'version': 1,
@@ -32,8 +35,10 @@ class ScanCacheManager {
       'folders': folders,
       'items': items.map((e) => e.toJson()).toList(),
     };
+    // jsonEncode is CPU-bound — run it on a worker isolate.
+    final json = await compute(_jsonEncodeIsolate, data);
     final file = await _cacheFile();
-    await file.writeAsString(jsonEncode(data));
+    await file.writeAsString(json);
   }
 
   /// Load cached scan results if still valid for [currentFolders].
@@ -41,13 +46,16 @@ class ScanCacheManager {
   /// Returns `null` when no cache exists, the folder configuration changed,
   /// the cache is too old, or the file is corrupted. Callers should then
   /// perform a full scan.
+  ///
+  /// The CPU-intensive `jsonDecode` call is offloaded to a worker isolate.
   static Future<List<MediaItem>?> load(List<String> currentFolders) async {
     final file = await _cacheFile();
     if (!await file.exists()) return null;
 
     try {
       final raw = await file.readAsString();
-      final data = jsonDecode(raw) as Map<String, dynamic>;
+      // jsonDecode is CPU-bound — run it on a worker isolate.
+      final data = await compute(_jsonDecodeIsolate, raw);
 
       // Version must match exactly.
       if (data['version'] != 1) return null;
@@ -81,4 +89,21 @@ class ScanCacheManager {
       await file.delete();
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Isolate entry-points
+  // ---------------------------------------------------------------------------
+
+  /// Worker isolate: serialise [data] to a JSON string.
+  ///
+  /// [data] must be a map whose values are JSON-compatible (Strings, Lists,
+  /// Maps, ints, bools, null) so it can be transferred through SendPort.
+  @pragma('vm:entry-point')
+  static String _jsonEncodeIsolate(Map<String, dynamic> data) =>
+      jsonEncode(data);
+
+  /// Worker isolate: parse [raw] JSON string into a map.
+  @pragma('vm:entry-point')
+  static Map<String, dynamic> _jsonDecodeIsolate(String raw) =>
+      jsonDecode(raw) as Map<String, dynamic>;
 }
