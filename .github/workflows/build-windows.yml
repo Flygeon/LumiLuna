@@ -24,10 +24,8 @@ jobs:
       - name: Flutter version
         run: flutter --version
 
-      # Generate the Windows platform boilerplate (windows/ folder) in CI,
-      # so the repository only stores source code.
-      - name: Generate Windows platform files
-        run: flutter create --platforms=windows --project-name lumiluna .
+      # The windows/ platform directory is committed to the repository,
+      # so there is no need to run `flutter create --platforms=windows`.
 
       - name: Install dependencies
         run: flutter pub get
