@@ -18,6 +18,7 @@ import '../media/media_type_screen.dart';
 import '../playlists/playlist_list_screen.dart';
 import '../settings/settings_screen.dart';
 import '../trash/trash_screen.dart';
+import '../../main.dart';
 import '../../services/media_scanner_service.dart';
 import '../../services/database/app_database.dart';
 
