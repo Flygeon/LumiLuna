@@ -30,14 +30,6 @@ migrate_working_dir/
 /build/
 pubspec.lock
 
-# Generated platform folders (regenerated in CI via `flutter create`)
-/android/
-/ios/
-/linux/
-/macos/
-/windows/
-/web/
-
 # Symbolication related
 app.*.symbols
 
