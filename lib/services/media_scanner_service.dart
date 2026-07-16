@@ -56,6 +56,15 @@ class MediaScannerService {
     return _enrichAudioMetadataParallel(items);
   }
 
+  /// Public helper: enrich audio metadata for a small batch of items.
+  ///
+  /// Used by [FolderWatcherService] for incremental single-file updates.
+  /// Skips the isolate parallelism (single file is fast enough inline) and
+  /// runs synchronously on the calling isolate.
+  static Future<List<MediaItem>> enrichAudioItems(List<MediaItem> items) async {
+    return _enrichAudioMetadataParallel(items);
+  }
+
   /// Number of audio items to process per isolate chunk.
   ///
   /// Larger chunks → fewer isolates spawned → less overhead.

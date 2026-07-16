@@ -4,11 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/media_item.dart';
 import '../models/media_type.dart';
-import '../services/cache_manager.dart';
+import '../services/database_service.dart';
+import '../services/media_repository.dart';
 import '../services/media_scanner_service.dart';
 import 'settings_provider.dart';
 
 /// Holds all scanned media items. Rescans when the folder list changes.
+///
+/// Persists items in SQLite ([DatabaseService]) instead of a JSON cache file.
 class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
   @override
   Future<List<MediaItem>> build() async {
@@ -23,13 +26,13 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
 
     if (target.isEmpty) return const [];
 
-    // Try loading from cache first.
-    final cached = await ScanCacheManager.load(target);
-    if (cached != null) return cached;
+    // Try loading from the database first.
+    final dbItems = await MediaRepository.query();
+    if (dbItems.isNotEmpty) return dbItems;
 
-    // Cache miss — perform a full scan and persist the result.
+    // Database empty — perform a full scan and persist.
     final items = await MediaScannerService.scan(target);
-    await ScanCacheManager.save(items, target);
+    await MediaRepository.replaceAll(items);
     return items;
   }
 
@@ -42,9 +45,8 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
           ? folders
           : await MediaScannerService.defaultFolders();
       if (target.isEmpty) return const <MediaItem>[];
-      await ScanCacheManager.clear();
       final items = await MediaScannerService.scan(target);
-      await ScanCacheManager.save(items, target);
+      await MediaRepository.replaceAll(items);
       return items;
     });
   }
@@ -53,11 +55,11 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
   Future<void> toggleFavorite(int index) async {
     final items = state.value?.toList() ?? <MediaItem>[];
     if (index < 0 || index >= items.length) return;
-    items[index] = items[index].copyWith(
-      isFavorite: !items[index].isFavorite,
-    );
+    final item = items[index];
+    final newValue = !item.isFavorite;
+    items[index] = item.copyWith(isFavorite: newValue);
     state = AsyncValue.data(items);
-    await _persist(items);
+    await DatabaseService.setFavorite(item.path, newValue);
   }
 
   /// Rename the item at [index] to [newName] (on disk and in the list).
@@ -70,7 +72,8 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
     final dot = item.name.lastIndexOf('.');
     final ext = dot >= 0 ? item.name.substring(dot) : '';
     final finalName = newName.endsWith(ext) ? newName : '$newName$ext';
-    final parent = item.path.substring(0, item.path.lastIndexOf(Platform.pathSeparator));
+    final parent = item.path
+        .substring(0, item.path.lastIndexOf(Platform.pathSeparator));
     final newPath = '$parent${Platform.pathSeparator}$finalName';
 
     // Rename on disk.
@@ -78,23 +81,17 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
 
     items[index] = item.copyWith(path: newPath, name: finalName);
     state = AsyncValue.data(items);
-    await _persist(items);
+    await DatabaseService.updatePath(item.path, newPath, finalName);
   }
 
-  /// Remove the item at [index] from the list (after it has been moved to
-  /// trash or permanently deleted).
+  /// Remove the item at [index] from the list.
   Future<void> removeItem(int index) async {
     final items = state.value?.toList() ?? <MediaItem>[];
     if (index < 0 || index >= items.length) return;
+    final path = items[index].path;
     items.removeAt(index);
     state = AsyncValue.data(items);
-    await _persist(items);
-  }
-
-  /// Persist the current item list to the cache file.
-  Future<void> _persist(List<MediaItem> items) async {
-    final folders = ref.read(settingsProvider).scanFolders;
-    await ScanCacheManager.save(items, folders);
+    await DatabaseService.removeMediaItems([path]);
   }
 }
 
