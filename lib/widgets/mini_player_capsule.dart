@@ -24,7 +24,6 @@ class _MiniPlayerCapsuleState extends ConsumerState<MiniPlayerCapsule>
   late final Animation<Offset> _slide;
   late final Animation<double> _fade;
   bool _visible = false;
-  double _volume = 1.0;
   bool _showVolume = false;
 
   @override
@@ -71,16 +70,12 @@ class _MiniPlayerCapsuleState extends ConsumerState<MiniPlayerCapsule>
       }
     }
 
-    // Listen for volume changes from the player.
-    ref.listen(playbackControllerProvider, (prev, next) {
-      // Volume is tracked locally since media_kit doesn't expose a volume stream easily.
-    });
-
     return SlideTransition(
       position: _slide,
       child: FadeTransition(
         opacity: _fade,
-        child: _visible ? _buildCapsule(state, context) : const SizedBox.shrink(),
+        child:
+            _visible ? _buildCapsule(state, context) : const SizedBox.shrink(),
       ),
     );
   }
@@ -89,9 +84,8 @@ class _MiniPlayerCapsuleState extends ConsumerState<MiniPlayerCapsule>
     final current = state.current!;
     final scheme = Theme.of(context).colorScheme;
     final title = current.title ?? current.name;
-    final subtitle = [current.artist, current.album]
-        .whereType<String>()
-        .join(' · ');
+    final subtitle =
+        [current.artist, current.album].whereType<String>().join(' · ');
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
@@ -130,7 +124,8 @@ class _MiniPlayerCapsuleState extends ConsumerState<MiniPlayerCapsule>
                               ? Image.file(
                                   File(current.artworkPath!),
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => _artPlaceholder(scheme),
+                                  errorBuilder: (_, __, ___) =>
+                                      _artPlaceholder(scheme),
                                 )
                               : _artPlaceholder(scheme),
                         ),
@@ -147,18 +142,24 @@ class _MiniPlayerCapsuleState extends ConsumerState<MiniPlayerCapsule>
                               title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                             ),
                             if (subtitle.isNotEmpty)
                               Text(
                                 subtitle,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: scheme.onSurfaceVariant,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: scheme.onSurfaceVariant,
+                                    ),
                               ),
                           ],
                         ),
@@ -166,14 +167,21 @@ class _MiniPlayerCapsuleState extends ConsumerState<MiniPlayerCapsule>
 
                       // Play / Pause
                       IconButton(
-                        icon: Icon(state.playing ? Icons.pause_rounded : Icons.play_arrow_rounded),
-                        onPressed: () => ref.read(playbackControllerProvider.notifier).playOrPause(),
+                        icon: Icon(state.playing
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded),
+                        onPressed: () => ref
+                            .read(playbackControllerProvider.notifier)
+                            .playOrPause(),
                       ),
 
                       // Volume toggle
                       IconButton(
-                        icon: Icon(_showVolume ? Icons.volume_up_rounded : Icons.volume_down_rounded),
-                        onPressed: () => setState(() => _showVolume = !_showVolume),
+                        icon: Icon(_showVolume
+                            ? Icons.volume_up_rounded
+                            : Icons.volume_down_rounded),
+                        onPressed: () =>
+                            setState(() => _showVolume = !_showVolume),
                       ),
 
                       // Playlist peek
@@ -182,7 +190,8 @@ class _MiniPlayerCapsuleState extends ConsumerState<MiniPlayerCapsule>
                         onSelected: (value) {
                           if (value == 'open_playlist') {
                             Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const MusicPlayerScreen()),
+                              MaterialPageRoute(
+                                  builder: (_) => const MusicPlayerScreen()),
                             );
                           }
                         },
@@ -203,7 +212,9 @@ class _MiniPlayerCapsuleState extends ConsumerState<MiniPlayerCapsule>
                               enabled: false,
                               child: ListTile(
                                 leading: Icon(
-                                  isCurrent ? Icons.play_arrow : Icons.music_note,
+                                  isCurrent
+                                      ? Icons.play_arrow
+                                      : Icons.music_note,
                                   color: isCurrent ? scheme.primary : null,
                                   size: 18,
                                 ),
@@ -213,7 +224,8 @@ class _MiniPlayerCapsuleState extends ConsumerState<MiniPlayerCapsule>
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 13,
-                                    fontWeight: isCurrent ? FontWeight.w600 : null,
+                                    fontWeight:
+                                        isCurrent ? FontWeight.w600 : null,
                                   ),
                                 ),
                                 dense: true,
@@ -231,23 +243,27 @@ class _MiniPlayerCapsuleState extends ConsumerState<MiniPlayerCapsule>
                 // Volume slider (expandable)
                 if (_showVolume)
                   Padding(
-                    padding: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
+                    padding:
+                        const EdgeInsets.only(left: 8, right: 8, bottom: 4),
                     child: Row(
                       children: [
-                        Icon(Icons.volume_down, size: 16, color: scheme.onSurfaceVariant),
+                        Icon(Icons.volume_down,
+                            size: 16, color: scheme.onSurfaceVariant),
                         Expanded(
                           child: Slider(
-                            value: _volume,
+                            value: state.volume.clamp(0, 100),
                             min: 0.0,
-                            max: 1.0,
+                            max: 100.0,
                             divisions: 100,
                             onChanged: (v) {
-                              setState(() => _volume = v);
-                              ref.read(playbackControllerProvider.notifier).player.setVolume(v);
+                              ref
+                                  .read(playbackControllerProvider.notifier)
+                                  .setVolume(v);
                             },
                           ),
                         ),
-                        Icon(Icons.volume_up, size: 16, color: scheme.onSurfaceVariant),
+                        Icon(Icons.volume_up,
+                            size: 16, color: scheme.onSurfaceVariant),
                       ],
                     ),
                   ),
@@ -261,6 +277,7 @@ class _MiniPlayerCapsuleState extends ConsumerState<MiniPlayerCapsule>
 
   Widget _artPlaceholder(ColorScheme scheme) => Container(
         color: scheme.primaryContainer.withValues(alpha: 0.5),
-        child: Icon(Icons.music_note, size: 22, color: scheme.onPrimaryContainer),
+        child:
+            Icon(Icons.music_note, size: 22, color: scheme.onPrimaryContainer),
       );
 }

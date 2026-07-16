@@ -14,6 +14,7 @@ class PlaybackState {
   final bool looping;
   final Duration position;
   final Duration duration;
+  final double volume;
 
   const PlaybackState({
     this.playlist = const [],
@@ -22,6 +23,7 @@ class PlaybackState {
     this.looping = false,
     this.position = Duration.zero,
     this.duration = Duration.zero,
+    this.volume = 100,
   });
 
   MediaItem? get current =>
@@ -37,6 +39,7 @@ class PlaybackState {
     bool? looping,
     Duration? position,
     Duration? duration,
+    double? volume,
   }) {
     return PlaybackState(
       playlist: playlist ?? this.playlist,
@@ -45,6 +48,7 @@ class PlaybackState {
       looping: looping ?? this.looping,
       position: position ?? this.position,
       duration: duration ?? this.duration,
+      volume: volume ?? this.volume,
     );
   }
 }
@@ -74,6 +78,9 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     _subs.add(player.stream.playlist.listen((pl) {
       if (mounted) state = state.copyWith(index: pl.index);
     }));
+    _subs.add(player.stream.volume.listen((v) {
+      if (mounted) state = state.copyWith(volume: v);
+    }));
   }
 
   /// Open a playlist starting at [startIndex] and begin playback.
@@ -101,6 +108,12 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   Future<void> previous() => player.previous();
   Future<void> jump(int index) => player.jump(index);
   Future<void> seek(Duration position) => player.seek(position);
+
+  Future<void> setVolume(double volume) async {
+    final next = volume.clamp(0, 100).toDouble();
+    state = state.copyWith(volume: next);
+    await player.setVolume(next);
+  }
 
   Future<void> toggleLoop() async {
     final looping = !state.looping;

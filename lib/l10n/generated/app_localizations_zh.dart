@@ -261,4 +261,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get favoritesEmptyHint => '右键点击任意文件，选择「收藏」即可将其添加到这里。';
+
+  @override
+  String get dropFilesHere => '松开鼠标即可导入媒体文件';
+
+  @override
+  String importedFiles(Object count) {
+    return '已导入 $count 个媒体文件';
+  }
+
+  @override
+  String importSkippedDuplicates(Object duplicates, Object imported) {
+    return '已导入 $imported 个文件，跳过 $duplicates 个重复文件';
+  }
 }

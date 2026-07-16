@@ -90,5 +90,8 @@
   "operationFailed": "Operation failed: {message}",
 
   "favoritesEmpty": "No favorites yet",
-  "favoritesEmptyHint": "Right-click any file and select \"Favorite\" to add it here."
+  "favoritesEmptyHint": "Right-click any file and select \"Favorite\" to add it here.",
+  "dropFilesHere": "Release to import media files",
+  "importedFiles": "Imported {count} media files",
+  "importSkippedDuplicates": "Imported {imported} files and skipped {duplicates} duplicates"
 }
