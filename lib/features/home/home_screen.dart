@@ -11,6 +11,7 @@ import '../../providers/tab_provider.dart';
 import '../folders/folders_screen.dart';
 import '../media/media_type_screen.dart';
 import '../settings/settings_screen.dart';
+import '../trash/trash_screen.dart';
 
 /// Root screen with a Material 3 navigation bar for switching media types,
 /// plus search, grid/list toggle, refresh and a settings entry.
@@ -62,7 +63,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 2:
         return MediaType.audio;
       default:
-        return MediaType.image; // folders tab: no video thumbnails
+        return MediaType.image; // folders / trash: placeholder
     }
   }
 
@@ -157,6 +158,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           RepaintBoundary(child: MediaTypeScreen(type: MediaType.video)),
           RepaintBoundary(child: MediaTypeScreen(type: MediaType.audio)),
           RepaintBoundary(child: FoldersScreen()),
+          RepaintBoundary(child: TrashScreen()),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -182,6 +184,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             icon: const Icon(Icons.folder_outlined),
             selectedIcon: const Icon(Icons.folder),
             label: groupModeName(context, GroupMode.folder),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.delete_outline),
+            selectedIcon: const Icon(Icons.delete),
+            label: l10n.trashTitle,
           ),
         ],
       ),

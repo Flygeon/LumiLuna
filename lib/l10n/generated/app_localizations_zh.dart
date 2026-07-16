@@ -179,4 +179,80 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get viewLicenses => '开源许可证';
+
+  @override
+  String get locateInExplorer => '定位到文件夹';
+
+  @override
+  String get favorite => '收藏';
+
+  @override
+  String get unfavorite => '取消收藏';
+
+  @override
+  String get rename => '重命名';
+
+  @override
+  String get renameTitle => '重命名文件';
+
+  @override
+  String get renameHint => '新文件名';
+
+  @override
+  String get delete => '移到回收站';
+
+  @override
+  String confirmDelete(Object name) {
+    return '将 $name 移到回收站？';
+  }
+
+  @override
+  String confirmDeleteMultiple(Object count) {
+    return '将 $count 个文件移到回收站？';
+  }
+
+  @override
+  String confirmPermanentDelete(Object name) {
+    return '永久删除 $name？此操作不可撤销。';
+  }
+
+  @override
+  String get confirmEmptyTrash => '永久删除回收站中所有文件？此操作不可撤销。';
+
+  @override
+  String get cancel => '取消';
+
+  @override
+  String get confirm => '移到回收站';
+
+  @override
+  String get restore => '还原';
+
+  @override
+  String get deleteForever => '永久删除';
+
+  @override
+  String get emptyTrash => '清空回收站';
+
+  @override
+  String get trashTitle => '回收站';
+
+  @override
+  String get trashEmpty => '回收站为空';
+
+  @override
+  String get permanentlyDeleted => '已永久删除';
+
+  @override
+  String get restored => '已还原';
+
+  @override
+  String movedToTrash(Object name) {
+    return '$name 已移到回收站';
+  }
+
+  @override
+  String operationFailed(Object message) {
+    return '操作失败：$message';
+  }
 }

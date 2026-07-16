@@ -52,4 +52,14 @@ class AppConstants {
   static const String prefScanFolders = 'pref_scan_folders';
   static const String prefGroupMode = 'pref_group_mode';
   static const String prefLocale = 'pref_locale';
+
+  // Scan cache file name (stored in application support directory).
+  static const String cacheFileName = 'lumiluna_cache.json';
+
+  // Max age of a valid cache before a full rescan is triggered (hours).
+  static const int cacheMaxAgeHours = 24;
+
+  // Trash / recycle bin.
+  static const String trashManifestName = 'lumiluna_trash.json';
+  static const String trashDirName = 'lumiluna_trash';
 }

@@ -421,6 +421,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open source licenses'**
   String get viewLicenses;
+
+  /// No description provided for @locateInExplorer.
+  ///
+  /// In en, this message translates to:
+  /// **'Locate in Explorer'**
+  String get locateInExplorer;
+
+  /// No description provided for @favorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite'**
+  String get favorite;
+
+  /// No description provided for @unfavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfavorite'**
+  String get unfavorite;
+
+  /// No description provided for @rename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get rename;
+
+  /// No description provided for @renameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename file'**
+  String get renameTitle;
+
+  /// No description provided for @renameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'New filename'**
+  String get renameHint;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to Trash'**
+  String get delete;
+
+  /// No description provided for @confirmDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Move {name} to trash?'**
+  String confirmDelete(Object name);
+
+  /// No description provided for @confirmDeleteMultiple.
+  ///
+  /// In en, this message translates to:
+  /// **'Move {count} items to trash?'**
+  String confirmDeleteMultiple(Object count);
+
+  /// No description provided for @confirmPermanentDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name} permanently? This action cannot be undone.'**
+  String confirmPermanentDelete(Object name);
+
+  /// No description provided for @confirmEmptyTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete all trashed files? This action cannot be undone.'**
+  String get confirmEmptyTrash;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to Trash'**
+  String get confirm;
+
+  /// No description provided for @restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get restore;
+
+  /// No description provided for @deleteForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently'**
+  String get deleteForever;
+
+  /// No description provided for @emptyTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty Trash'**
+  String get emptyTrash;
+
+  /// No description provided for @trashTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trash'**
+  String get trashTitle;
+
+  /// No description provided for @trashEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Trash is empty'**
+  String get trashEmpty;
+
+  /// No description provided for @permanentlyDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently deleted'**
+  String get permanentlyDeleted;
+
+  /// No description provided for @restored.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored'**
+  String get restored;
+
+  /// No description provided for @movedToTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved {name} to trash'**
+  String movedToTrash(Object name);
+
+  /// No description provided for @operationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Operation failed: {message}'**
+  String operationFailed(Object message);
 }
 
 class _AppLocalizationsDelegate

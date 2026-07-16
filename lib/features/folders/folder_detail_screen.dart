@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/l10n.dart';
 import '../../models/media_folder.dart';
 import '../../providers/settings_provider.dart';
+import '../../widgets/media_context_sheet.dart';
 import '../../widgets/media_grid_view.dart';
 import '../../widgets/media_list_view.dart';
 import '../media/media_type_screen.dart';
@@ -34,10 +35,20 @@ class FolderDetailScreen extends ConsumerWidget {
           ? MediaGridView(
               items: items,
               onTap: (i) => openMedia(context, ref, items, i),
+              onLongPress: (i) => MediaContextSheet.show(
+                context: context,
+                item: items[i],
+                ref: ref,
+              ),
             )
           : MediaListView(
               items: items,
               onTap: (i) => openMedia(context, ref, items, i),
+              onLongPress: (i) => MediaContextSheet.show(
+                context: context,
+                item: items[i],
+                ref: ref,
+              ),
             ),
     );
   }

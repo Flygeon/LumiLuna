@@ -10,11 +10,13 @@ import 'media_thumbnail.dart';
 class MediaGridView extends StatelessWidget {
   final List<MediaItem> items;
   final void Function(int index) onTap;
+  final void Function(int index)? onLongPress;
 
   const MediaGridView({
     super.key,
     required this.items,
     required this.onTap,
+    this.onLongPress,
   });
 
   @override
@@ -44,6 +46,7 @@ class MediaGridView extends StatelessWidget {
           itemBuilder: (context, index) => _GridTile(
             item: items[index],
             onTap: () => onTap(index),
+            onLongPress: onLongPress != null ? () => onLongPress!(index) : null,
           ),
         );
       },
@@ -54,8 +57,13 @@ class MediaGridView extends StatelessWidget {
 class _GridTile extends StatelessWidget {
   final MediaItem item;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
-  const _GridTile({required this.item, required this.onTap});
+  const _GridTile({
+    required this.item,
+    required this.onTap,
+    this.onLongPress,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +72,7 @@ class _GridTile extends StatelessWidget {
       margin: EdgeInsets.zero,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Stack(
           fit: StackFit.expand,
           children: [

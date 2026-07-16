@@ -8,11 +8,13 @@ import 'media_thumbnail.dart';
 class MediaListView extends StatelessWidget {
   final List<MediaItem> items;
   final void Function(int index) onTap;
+  final void Function(int index)? onLongPress;
 
   const MediaListView({
     super.key,
     required this.items,
     required this.onTap,
+    this.onLongPress,
   });
 
   @override
@@ -27,6 +29,7 @@ class MediaListView extends StatelessWidget {
         final item = items[index];
         return ListTile(
           onTap: () => onTap(index),
+          onLongPress: onLongPress != null ? () => onLongPress!(index) : null,
           leading: ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: SizedBox(
