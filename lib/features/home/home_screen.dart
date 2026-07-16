@@ -8,9 +8,11 @@ import '../../providers/filter_provider.dart';
 import '../../providers/media_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/tab_provider.dart';
+import '../collections/collection_list_screen.dart';
 import '../folders/folders_screen.dart';
 import '../favorites/favorites_screen.dart';
 import '../media/media_type_screen.dart';
+import '../playlists/playlist_list_screen.dart';
 import '../settings/settings_screen.dart';
 import '../trash/trash_screen.dart';
 
@@ -88,6 +90,51 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         });
   }
 
+  void _showMoreMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.collections_bookmark),
+              title: const Text('收藏集'),
+              subtitle: const Text('整理和浏览您的媒体收藏'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CollectionListScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.playlist_play),
+              title: const Text('播放列表'),
+              subtitle: const Text('管理音乐播放列表'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const PlaylistListScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings_outlined),
+              title: Text(context.l10n.settings),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -148,10 +195,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             IconButton(
               tooltip: l10n.settings,
-              icon: const Icon(Icons.settings_outlined),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              ),
+              icon: const Icon(Icons.more_vert),
+              onPressed: () => _showMoreMenu(context),
             ),
           ],
         ],

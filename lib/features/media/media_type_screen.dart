@@ -7,8 +7,10 @@ import '../../models/media_type.dart';
 import '../../providers/filter_provider.dart';
 import '../../providers/media_provider.dart';
 import '../../providers/player_provider.dart';
+import '../../providers/selection_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/async_view.dart';
+import '../../widgets/batch_action_bar.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/media_context_sheet.dart';
 import '../../widgets/media_grid_view.dart';
@@ -20,16 +22,28 @@ import '../player/video_player_screen.dart';
 /// Generic tab body listing all media of a single [MediaType], honouring the
 /// current search query and grid/list preference, and opening the appropriate
 /// player on tap.
-class MediaTypeScreen extends ConsumerWidget {
+///
+/// Supports batch selection via long-press. When in selection mode, tapping
+/// toggles selection instead of opening the player.
+class MediaTypeScreen extends ConsumerStatefulWidget {
   final MediaType type;
 
   const MediaTypeScreen({super.key, required this.type});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(mediaByTypeProvider(type));
+  ConsumerState<MediaTypeScreen> createState() => _MediaTypeScreenState();
+}
+
+class _MediaTypeScreenState extends ConsumerState<MediaTypeScreen> {
+  /// Unique selection scope for this media-type tab.
+  String get _selectionId => 'media_${widget.type.name}';
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(mediaByTypeProvider(widget.type));
     final query = ref.watch(searchQueryProvider).trim().toLowerCase();
     final isGrid = ref.watch(settingsProvider.select((s) => s.isGridView));
+    final sel = ref.watch(selectionProvider(_selectionId));
     final l10n = context.l10n;
 
     return AsyncView<List<MediaItem>>(
@@ -46,9 +60,9 @@ class MediaTypeScreen extends ConsumerWidget {
               }).toList();
 
         if (items.isEmpty) {
-          final typeLabel = mediaTypeName(context, type);
+          final typeLabel = mediaTypeName(context, widget.type);
           return EmptyState(
-            icon: type.icon,
+            icon: widget.type.icon,
             title: query.isEmpty
                 ? l10n.noItems(typeLabel)
                 : l10n.noMatch(typeLabel),
@@ -58,30 +72,68 @@ class MediaTypeScreen extends ConsumerWidget {
           );
         }
 
-        return RefreshIndicator(
-          onRefresh: () => ref.read(mediaProvider.notifier).rescan(),
-          child: isGrid
-              ? MediaGridView(
-                  items: items,
-                  onTap: (i) => openMedia(context, ref, items, i),
-                  onSecondaryTap: (i) => MediaContextSheet.show(
-                    context: context,
-                    item: items[i],
-                    ref: ref,
-                  ),
-                )
-              : MediaListView(
-                  items: items,
-                  onTap: (i) => openMedia(context, ref, items, i),
-                  onSecondaryTap: (i) => MediaContextSheet.show(
-                    context: context,
-                    item: items[i],
-                    ref: ref,
-                  ),
-                ),
+        return Column(
+          children: [
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () => ref.read(mediaProvider.notifier).rescan(),
+                child: isGrid
+                    ? MediaGridView(
+                        items: items,
+                        onTap: (i) => _onItemTap(items, i, sel),
+                        onLongPress: (i) => _onItemLongPress(items, i),
+                        onSecondaryTap: sel.isSelecting
+                            ? null
+                            : (i) => MediaContextSheet.show(
+                                  context: context,
+                                  item: items[i],
+                                  ref: ref,
+                                ),
+                        selectedPaths: sel.selected,
+                      )
+                    : MediaListView(
+                        items: items,
+                        onTap: (i) => _onItemTap(items, i, sel),
+                        onLongPress: (i) => _onItemLongPress(items, i),
+                        onSecondaryTap: sel.isSelecting
+                            ? null
+                            : (i) => MediaContextSheet.show(
+                                  context: context,
+                                  item: items[i],
+                                  ref: ref,
+                                ),
+                        selectedPaths: sel.selected,
+                      ),
+              ),
+            ),
+            // Batch action bar at the bottom when in selection mode.
+            if (sel.isSelecting)
+              BatchActionBar(selectionId: _selectionId),
+          ],
         );
       },
     );
+  }
+
+  void _onItemTap(List<MediaItem> items, int index, SelectionState sel) {
+    final item = items[index];
+    if (sel.isSelecting) {
+      // Toggle selection.
+      ref.read(selectionProvider(_selectionId).notifier).toggle(item.path);
+    } else {
+      openMedia(context, ref, items, index);
+    }
+  }
+
+  void _onItemLongPress(List<MediaItem> items, int index) {
+    final item = items[index];
+    final notifier = ref.read(selectionProvider(_selectionId).notifier);
+    if (!ref.read(selectionProvider(_selectionId)).isSelecting) {
+      // Enter selection mode and select this item.
+      notifier.startSelection({item.path});
+    } else {
+      notifier.toggle(item.path);
+    }
   }
 }
 
