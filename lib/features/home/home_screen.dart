@@ -8,6 +8,7 @@ import '../../providers/filter_provider.dart';
 import '../../providers/media_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/tab_provider.dart';
+import '../../widgets/mini_player_capsule.dart';
 import '../collections/collection_list_screen.dart';
 import '../folders/folders_screen.dart';
 import '../favorites/favorites_screen.dart';
@@ -201,17 +202,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ],
       ),
-      body: PageView(
-        controller: _pageController,
-        // Tap-driven animation only; the body is a vertical-scrolling media
-        // list, so we disable swipe to avoid accidental page changes.
-        physics: const NeverScrollableScrollPhysics(),
-        children: const [
-          RepaintBoundary(child: MediaTypeScreen(type: MediaType.image)),
-          RepaintBoundary(child: MediaTypeScreen(type: MediaType.video)),
-          RepaintBoundary(child: MediaTypeScreen(type: MediaType.audio)),
-          RepaintBoundary(child: FoldersScreen()),
-          RepaintBoundary(child: TrashScreen()),
+      body: Column(
+        children: [
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              children: const [
+                RepaintBoundary(child: MediaTypeScreen(type: MediaType.image)),
+                RepaintBoundary(child: MediaTypeScreen(type: MediaType.video)),
+                RepaintBoundary(child: MediaTypeScreen(type: MediaType.audio)),
+                RepaintBoundary(child: FoldersScreen()),
+                RepaintBoundary(child: TrashScreen()),
+              ],
+            ),
+          ),
+          // Mini player capsule (animated show/hide when music is playing).
+          const MiniPlayerCapsule(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
