@@ -37,16 +37,12 @@ jobs:
       - name: Build Windows (release)
         run: flutter build windows --release
 
-      - name: Package artifact
-        shell: pwsh
-        run: |
-          $src = "build/windows/x64/runner/Release"
-          if (-not (Test-Path $src)) { $src = "build/windows/runner/Release" }
-          Compress-Archive -Path "$src/*" -DestinationPath "lumiluna-windows.zip" -Force
-
       - name: Upload artifact
         uses: actions/upload-artifact@v5
         with:
           name: lumiluna-windows
-          path: lumiluna-windows.zip
+          # Upload the build output directory directly. GitHub's
+          # upload-artifact action wraps it in a ZIP automatically, so we
+          # should NOT pre-zip it — that would create a double-nested ZIP.
+          path: build/windows/x64/runner/Release/*
           retention-days: 30
