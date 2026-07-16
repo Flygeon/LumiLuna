@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/database_service.dart';
+import '../main.dart';
+
 
 /// Provider for the list of folders configured for scanning.
 final scanFoldersProvider = FutureProvider<List<String>>((ref) async {
-  return DatabaseService.getScanFolders();
+  final db = ref.read(appDatabaseProvider);
+  return db.getScanFolders();
 });
 
 /// Notifier to update scan folder configuration.
@@ -14,7 +16,7 @@ class ScanFoldersManager {
   ScanFoldersManager(this._ref);
 
   Future<void> setFolders(List<String> folders) async {
-    await DatabaseService.setScanFolders(folders);
+    await _ref.read(appDatabaseProvider).setScanFolders(folders);
     _ref.invalidate(scanFoldersProvider);
   }
 }

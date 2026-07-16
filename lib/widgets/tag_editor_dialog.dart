@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/tag.dart';
 import '../providers/tag_provider.dart';
-import '../services/database_service.dart';
+import '../main.dart';
+
 import 'tag_chip.dart';
 
 /// Dialog that lets the user manage tags for a set of media files.
@@ -146,7 +147,7 @@ class _TagEditorDialogState extends ConsumerState<TagEditorDialog> {
 
     // Auto-apply to all selected files.
     for (final path in widget.mediaPaths) {
-      await DatabaseService.addTagToMedia(path, tag.id!);
+      await ref.read(appDatabaseProvider).addTagToMedia(path, tag.id!);
     }
     _load();
   }

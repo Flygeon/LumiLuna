@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/media_item.dart';
 import '../models/media_type.dart';
-import '../services/database_service.dart';
-import '../services/media_repository.dart';
+import '../main.dart';
+
 import '../services/media_scanner_service.dart';
 import 'settings_provider.dart';
 
@@ -27,12 +27,13 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
     if (target.isEmpty) return const [];
 
     // Try loading from the database first.
-    final dbItems = await MediaRepository.query();
+    final db = ref.read(appDatabaseProvider);
+    final dbItems = await db.getAllMediaItems();
     if (dbItems.isNotEmpty) return dbItems;
 
     // Database empty — perform a full scan and persist.
     final items = await MediaScannerService.scan(target);
-    await MediaRepository.replaceAll(items);
+    await db.upsertMediaItems(items);
     return items;
   }
 
@@ -46,7 +47,8 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
           : await MediaScannerService.defaultFolders();
       if (target.isEmpty) return const <MediaItem>[];
       final items = await MediaScannerService.scan(target);
-      await MediaRepository.replaceAll(items);
+      final db = ref.read(appDatabaseProvider);
+      await db.upsertMediaItems(items);
       return items;
     });
   }
@@ -59,7 +61,8 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
     final newValue = !item.isFavorite;
     items[index] = item.copyWith(isFavorite: newValue);
     state = AsyncValue.data(items);
-    await DatabaseService.setFavorite(item.path, newValue);
+    final db = ref.read(appDatabaseProvider);
+    await db.setFavorite(item.path, newValue);
   }
 
   /// Rename the item at [index] to [newName] (on disk and in the list).
@@ -81,7 +84,8 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
 
     items[index] = item.copyWith(path: newPath, name: finalName);
     state = AsyncValue.data(items);
-    await DatabaseService.updatePath(item.path, newPath, finalName);
+    final db = ref.read(appDatabaseProvider);
+    await db.updateMediaItemPath(item.path, newPath, finalName);
   }
 
   /// Remove the item at [index] from the list.
@@ -91,7 +95,8 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
     final path = items[index].path;
     items.removeAt(index);
     state = AsyncValue.data(items);
-    await DatabaseService.removeMediaItems([path]);
+    final db = ref.read(appDatabaseProvider);
+    await db.removeMediaItems([path]);
   }
 }
 
