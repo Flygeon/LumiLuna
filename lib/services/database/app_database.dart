@@ -49,8 +49,7 @@ class Tags extends Table {
 
 class MediaTags extends Table {
   TextColumn get mediaPath => text().references(MediaItems, #path)();
-  IntColumn get tagId =>
-      integer().references(Tags, #id)();
+  IntColumn get tagId => integer().references(Tags, #id)();
 
   @override
   Set<Column> get primaryKey => {mediaPath, tagId};
@@ -175,14 +174,22 @@ class AppDatabase extends _$AppDatabase {
     int? limit,
     int? offset,
   }) async {
-    var query = select(mediaItems)..orderBy([(t) => OrderingTerm(expression: t.modified, mode: OrderingMode.desc)]);
+    var query = select(mediaItems)
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.modified, mode: OrderingMode.desc)
+      ]);
 
     if (type != null) {
       query = query..where((t) => t.type.equals(type.name));
     }
     if (searchQuery != null && searchQuery.isNotEmpty) {
       final q = '%$searchQuery%';
-      query = query..where((t) => t.name.like(q) | t.title.like(q) | t.artist.like(q) | t.album.like(q));
+      query = query
+        ..where((t) =>
+            t.name.like(q) |
+            t.title.like(q) |
+            t.artist.like(q) |
+            t.album.like(q));
     }
     if (favoritesOnly == true) {
       query = query..where((t) => t.isFavorite.equals(1));
@@ -199,60 +206,96 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<MediaItem?> getMediaItemByPath(String path) async {
-    final row = await (select(mediaItems)..where((t) => t.path.equals(path))).getSingleOrNull();
+    final row = await (select(mediaItems)..where((t) => t.path.equals(path)))
+        .getSingleOrNull();
     return row != null ? _mediaItemFromRow(row) : null;
   }
 
   Future<int> getMediaCount({MediaType? type}) async {
-    final query = select(mediaItems);
-    if (type != null) {
-      return (query..where((t) => t.type.equals(type.name))).get().then((r) => r.length);
-    }
-    return query.get().then((r) => r.length);
+    final count = mediaItems.path.count();
+    final query = selectOnly(mediaItems)..addColumns([count]);
+    if (type != null) query.where(mediaItems.type.equals(type.name));
+    final row = await query.getSingle();
+    return row.read(count) ?? 0;
   }
 
   Future<Map<MediaType, int>> getMediaCounts() async {
-    final rows = await select(mediaItems).get();
     final counts = {for (final t in MediaType.values) t: 0};
-    for (final row in rows) {
+    final query = selectOnly(mediaItems)
+      ..addColumns([mediaItems.type, mediaItems.path.count()])
+      ..groupBy([mediaItems.type]);
+    for (final row in await query.get()) {
+      final typeName = row.read(mediaItems.type);
       final type = MediaType.values.firstWhere(
-        (t) => t.name == row.type,
+        (t) => t.name == typeName,
         orElse: () => MediaType.image,
       );
-      counts[type] = (counts[type] ?? 0) + 1;
+      counts[type] = row.read(mediaItems.path.count()) ?? 0;
     }
     return counts;
   }
 
   Future<List<String>> getFolderPaths() async {
-    final rows = await select(mediaItems).get();
-    return rows.map((r) => r.folderPath).toSet().toList()..sort();
+    final query = selectOnly(mediaItems)
+      ..addColumns([mediaItems.folderPath])
+      ..groupBy([mediaItems.folderPath])
+      ..orderBy([OrderingTerm(expression: mediaItems.folderPath)]);
+    return (await query.get())
+        .map((row) => row.read(mediaItems.folderPath)!)
+        .toList();
   }
 
   Future<void> upsertMediaItems(List<MediaItem> items) async {
-    await batch((b) {
-      for (final item in items) {
-        b.insert(
-          mediaItems,
-          MediaItemsCompanion(
-            path: Value(item.path),
-            name: Value(item.name),
-            type: Value(item.type.name),
-            size: Value(item.size),
-            modified: Value(item.modified.toIso8601String()),
-            title: Value(item.title),
-            artist: Value(item.artist),
-            album: Value(item.album),
-            durationMs: Value(item.durationMs),
-            artworkPath: Value(item.artworkPath),
-            isFavorite: Value(item.isFavorite ? 1 : 0),
-            folderPath: Value(item.folderPath),
-          ),
-          mode: InsertMode.insertOrReplace,
-        );
-      }
+    for (final item in items) {
+      final existing = await (select(mediaItems)
+            ..where((table) => table.path.equals(item.path)))
+          .getSingleOrNull();
+      await into(mediaItems).insertOnConflictUpdate(
+        MediaItemsCompanion(
+          path: Value(item.path),
+          name: Value(item.name),
+          type: Value(item.type.name),
+          size: Value(item.size),
+          modified: Value(item.modified.toIso8601String()),
+          title: Value(item.title),
+          artist: Value(item.artist),
+          album: Value(item.album),
+          durationMs: Value(item.durationMs),
+          artworkPath: Value(item.artworkPath),
+          isFavorite: Value(existing?.isFavorite ?? (item.isFavorite ? 1 : 0)),
+          folderPath: Value(item.folderPath),
+          scannedAt: Value(DateTime.now().toIso8601String()),
+        ),
+      );
+    }
+  }
+
+  Future<void> syncMediaItems(
+    List<MediaItem> items,
+    List<String> folders,
+  ) async {
+    final normalizedFolders = folders
+        .map((folder) => _normalizePath(folder))
+        .where((folder) => folder.isNotEmpty)
+        .toList();
+    final currentPaths = items.map((item) => _normalizePath(item.path)).toSet();
+    final existing = await select(mediaItems).get();
+    final stale = existing
+        .where((row) => normalizedFolders.any((folder) {
+              final path = _normalizePath(row.path);
+              return path == folder || path.startsWith('$folder/');
+            }))
+        .where((row) => !currentPaths.contains(_normalizePath(row.path)))
+        .map((row) => row.path)
+        .toList();
+    await transaction(() async {
+      await upsertMediaItems(items);
+      if (stale.isNotEmpty) await removeMediaItems(stale);
     });
   }
+
+  static String _normalizePath(String value) =>
+      value.replaceAll('\\', '/').replaceAll(RegExp(r'/+'), '/').toLowerCase();
 
   Future<void> clearMediaItems() async {
     await delete(mediaItems).go();
@@ -270,7 +313,8 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  Future<void> updateMediaItemPath(String oldPath, String newPath, String newName) async {
+  Future<void> updateMediaItemPath(
+      String oldPath, String newPath, String newName) async {
     final folderPath = () {
       final normalized = newPath.replaceAll('\\', '/');
       final idx = normalized.lastIndexOf('/');
@@ -287,10 +331,12 @@ class AppDatabase extends _$AppDatabase {
     await (update(mediaTags)..where((t) => t.mediaPath.equals(oldPath))).write(
       MediaTagsCompanion(mediaPath: Value(newPath)),
     );
-    await (update(collectionItems)..where((t) => t.mediaPath.equals(oldPath))).write(
+    await (update(collectionItems)..where((t) => t.mediaPath.equals(oldPath)))
+        .write(
       CollectionItemsCompanion(mediaPath: Value(newPath)),
     );
-    await (update(playlistItems)..where((t) => t.mediaPath.equals(oldPath))).write(
+    await (update(playlistItems)..where((t) => t.mediaPath.equals(oldPath)))
+        .write(
       PlaylistItemsCompanion(mediaPath: Value(newPath)),
     );
   }
@@ -300,12 +346,17 @@ class AppDatabase extends _$AppDatabase {
   // ---------------------------------------------------------------------------
 
   Future<List<Tag>> getAllTags() async {
-    final rows = await (select(tags)..orderBy([(t) => OrderingTerm(expression: t.name)])).get();
-    return rows.map((r) => Tag(id: r.id, name: r.name, color: r.color)).toList();
+    final rows = await (select(tags)
+          ..orderBy([(t) => OrderingTerm(expression: t.name)]))
+        .get();
+    return rows
+        .map((r) => Tag(id: r.id, name: r.name, color: r.color))
+        .toList();
   }
 
   Future<Tag> createTag(String name, {int color = 0xFF5C5C5C}) async {
-    final id = await into(tags).insert(TagsCompanion(name: Value(name), color: Value(color)));
+    final id = await into(tags)
+        .insert(TagsCompanion(name: Value(name), color: Value(color)));
     return Tag(id: id, name: name, color: color);
   }
 
@@ -327,18 +378,22 @@ class AppDatabase extends _$AppDatabase {
         .go();
   }
 
-  Future<Map<String, List<Tag>>> getTagsForMediaPaths(List<String> paths) async {
+  Future<Map<String, List<Tag>>> getTagsForMediaPaths(
+      List<String> paths) async {
     if (paths.isEmpty) return {};
     final result = <String, List<Tag>>{};
     // Query media_tags for matching paths, then fetch tag details.
-    final relations = await (select(mediaTags)
-          ..where((t) => t.mediaPath.isIn(paths)))
-        .get();
+    final relations =
+        await (select(mediaTags)..where((t) => t.mediaPath.isIn(paths))).get();
     if (relations.isEmpty) return result;
 
     final tagIds = relations.map((r) => r.tagId).toSet().toList();
-    final tagsList = await (select(tags)..where((t) => t.id.isIn(tagIds))).get();
-    final tagMap = {for (final t in tagsList) t.id: Tag(id: t.id, name: t.name, color: t.color)};
+    final tagsList =
+        await (select(tags)..where((t) => t.id.isIn(tagIds))).get();
+    final tagMap = {
+      for (final t in tagsList)
+        t.id: Tag(id: t.id, name: t.name, color: t.color)
+    };
 
     for (final rel in relations) {
       final tag = tagMap[rel.tagId];
@@ -354,7 +409,12 @@ class AppDatabase extends _$AppDatabase {
   // ---------------------------------------------------------------------------
 
   Future<List<MediaCollection>> getAllCollections() async {
-    final rows = await (select(collections)..orderBy([(t) => OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc)])).get();
+    final rows = await (select(collections)
+          ..orderBy([
+            (t) =>
+                OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc)
+          ]))
+        .get();
     final result = <MediaCollection>[];
     for (final row in rows) {
       final items = await _getCollectionItems(row.id);
@@ -373,7 +433,8 @@ class AppDatabase extends _$AppDatabase {
 
   Future<List<MediaItem>> _getCollectionItems(int collectionId) async {
     final query = select(collectionItems).join([
-      innerJoin(mediaItems, mediaItems.path.equalsExp(collectionItems.mediaPath)),
+      innerJoin(
+          mediaItems, mediaItems.path.equalsExp(collectionItems.mediaPath)),
     ])
       ..where(collectionItems.collectionId.equals(collectionId))
       ..orderBy([OrderingTerm(expression: collectionItems.sortOrder)]);
@@ -381,7 +442,8 @@ class AppDatabase extends _$AppDatabase {
     return rows.map((r) => _mediaItemFromRow(r.readTable(mediaItems))).toList();
   }
 
-  Future<MediaCollection> createCollection(String name, {String? description}) async {
+  Future<MediaCollection> createCollection(String name,
+      {String? description}) async {
     final now = DateTime.now().toIso8601String();
     final id = await into(collections).insert(CollectionsCompanion(
       name: Value(name),
@@ -402,16 +464,20 @@ class AppDatabase extends _$AppDatabase {
     await (delete(collections)..where((t) => t.id.equals(id))).go();
   }
 
-  Future<void> addToCollection(int collectionId, List<String> mediaPaths) async {
+  Future<void> addToCollection(
+      int collectionId, List<String> mediaPaths) async {
     final now = DateTime.now().toIso8601String();
     await batch((b) {
       for (var i = 0; i < mediaPaths.length; i++) {
-        b.insert(collectionItems, CollectionItemsCompanion(
-          collectionId: Value(collectionId),
-          mediaPath: Value(mediaPaths[i]),
-          addedAt: Value(now),
-          sortOrder: Value(i),
-        ), mode: InsertMode.insertOrIgnore);
+        b.insert(
+            collectionItems,
+            CollectionItemsCompanion(
+              collectionId: Value(collectionId),
+              mediaPath: Value(mediaPaths[i]),
+              addedAt: Value(now),
+              sortOrder: Value(i),
+            ),
+            mode: InsertMode.insertOrIgnore);
       }
     });
     await (update(collections)..where((t) => t.id.equals(collectionId))).write(
@@ -431,7 +497,12 @@ class AppDatabase extends _$AppDatabase {
   // ---------------------------------------------------------------------------
 
   Future<List<Playlist>> getAllPlaylists() async {
-    final rows = await (select(playlists)..orderBy([(t) => OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc)])).get();
+    final rows = await (select(playlists)
+          ..orderBy([
+            (t) =>
+                OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc)
+          ]))
+        .get();
     final result = <Playlist>[];
     for (final row in rows) {
       final items = await _getPlaylistItems(row.id);
@@ -483,18 +554,24 @@ class AppDatabase extends _$AppDatabase {
     final now = DateTime.now().toIso8601String();
     final maxOrder = await (select(playlistItems)
           ..where((t) => t.playlistId.equals(playlistId))
-          ..orderBy([(t) => OrderingTerm(expression: t.sortOrder, mode: OrderingMode.desc)])
+          ..orderBy([
+            (t) =>
+                OrderingTerm(expression: t.sortOrder, mode: OrderingMode.desc)
+          ])
           ..limit(1))
         .get();
     final startOder = (maxOrder.isNotEmpty ? maxOrder.first.sortOrder : -1) + 1;
     await batch((b) {
       for (var i = 0; i < mediaPaths.length; i++) {
-        b.insert(playlistItems, PlaylistItemsCompanion(
-          playlistId: Value(playlistId),
-          mediaPath: Value(mediaPaths[i]),
-          addedAt: Value(now),
-          sortOrder: Value(startOder + i),
-        ), mode: InsertMode.insertOrIgnore);
+        b.insert(
+            playlistItems,
+            PlaylistItemsCompanion(
+              playlistId: Value(playlistId),
+              mediaPath: Value(mediaPaths[i]),
+              addedAt: Value(now),
+              sortOrder: Value(startOder + i),
+            ),
+            mode: InsertMode.insertOrIgnore);
       }
     });
     await (update(playlists)..where((t) => t.id.equals(playlistId))).write(
@@ -509,14 +586,16 @@ class AppDatabase extends _$AppDatabase {
         .go();
   }
 
-  Future<void> reorderPlaylist(int playlistId, List<String> orderedPaths) async {
+  Future<void> reorderPlaylist(
+      int playlistId, List<String> orderedPaths) async {
     await batch((b) {
       for (var i = 0; i < orderedPaths.length; i++) {
         b.update(
           playlistItems,
           PlaylistItemsCompanion(sortOrder: Value(i)),
           where: (t) =>
-              t.playlistId.equals(playlistId) & t.mediaPath.equals(orderedPaths[i]),
+              t.playlistId.equals(playlistId) &
+              t.mediaPath.equals(orderedPaths[i]),
         );
       }
     });
@@ -542,7 +621,8 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> updateLastScanned(String folderPath) async {
     await (update(scanFolders)..where((t) => t.path.equals(folderPath))).write(
-      ScanFoldersCompanion(lastScanned: Value(DateTime.now().toIso8601String())),
+      ScanFoldersCompanion(
+          lastScanned: Value(DateTime.now().toIso8601String())),
     );
   }
 
