@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -15,23 +14,19 @@ import '../models/tag.dart';
 /// file lives in the application support directory alongside the app.
 class DatabaseService {
   static Database? _db;
-  static bool _initFailed = false;
 
   /// Whether the database was successfully initialised.
   static bool get isAvailable => _db != null;
 
   /// Obtain (or create) the singleton database connection.
+  ///
+  /// Throws when the underlying SQLite library cannot be loaded (e.g. missing
+  /// `sqlite3.dll` on Windows). Callers — especially [main()] — should catch
+  /// and degrade gracefully.
   static Future<Database> get database async {
     if (_db != null) return _db!;
-    if (_initFailed) throw StateError('Database init previously failed');
-    try {
-      _db = await _initDatabase();
-      return _db!;
-    } catch (e) {
-      _initFailed = true;
-      debugPrint('[DatabaseService] init failed: $e');
-      rethrow;
-    }
+    _db = await _initDatabase();
+    return _db!;
   }
 
   static Future<Database> _initDatabase() async {

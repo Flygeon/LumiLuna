@@ -6,6 +6,7 @@ import 'package:lumiluna/l10n/generated/app_localizations.dart';
 import 'core/constants/app_constants.dart';
 import 'core/theme/app_theme.dart';
 import 'features/home/home_screen.dart';
+import 'main.dart';
 import 'providers/settings_provider.dart';
 
 class MediaLibraryApp extends ConsumerWidget {
@@ -16,6 +17,7 @@ class MediaLibraryApp extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     // Empty tag -> follow the system locale.
     final locale = settings.localeTag.isEmpty ? null : Locale(settings.localeTag);
+    final startupError = ref.watch(startupErrorProvider);
 
     return MaterialApp(
       title: AppConstants.appName,
@@ -31,7 +33,33 @@ class MediaLibraryApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const HomeScreen(),
+      home: Builder(
+        builder: (context) {
+          if (startupError != null) {
+            // Show a non-blocking banner on first frame.
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _showError(context, startupError);
+            });
+          }
+          return const HomeScreen();
+        },
+      ),
+    );
+  }
+
+  void _showError(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showMaterialBanner(
+      MaterialBanner(
+        backgroundColor: Theme.of(context).colorScheme.errorContainer,
+        content: Text(message),
+        leading: const Icon(Icons.error_outline),
+        actions: [
+          TextButton(
+            onPressed: () => ScaffoldMessenger.of(context).hideCurrentMaterialBanner(),
+            child: const Text('关闭'),
+          ),
+        ],
+      ),
     );
   }
 }
