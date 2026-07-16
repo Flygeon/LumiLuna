@@ -261,4 +261,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String operationFailed(Object message) {
     return 'Operation failed: $message';
   }
+
+  @override
+  String get favoritesEmpty => 'No favorites yet';
+
+  @override
+  String get favoritesEmptyHint =>
+      'Right-click any file and select \"Favorite\" to add it here.';
 }

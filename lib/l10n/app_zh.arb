@@ -87,5 +87,8 @@
   "permanentlyDeleted": "已永久删除",
   "restored": "已还原",
   "movedToTrash": "{name} 已移到回收站",
-  "operationFailed": "操作失败：{message}"
+  "operationFailed": "操作失败：{message}",
+
+  "favoritesEmpty": "还没有收藏",
+  "favoritesEmptyHint": "右键点击任意文件，选择「收藏」即可将其添加到这里。"
 }

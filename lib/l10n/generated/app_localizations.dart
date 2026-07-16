@@ -553,6 +553,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Operation failed: {message}'**
   String operationFailed(Object message);
+
+  /// No description provided for @favoritesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorites yet'**
+  String get favoritesEmpty;
+
+  /// No description provided for @favoritesEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Right-click any file and select \"Favorite\" to add it here.'**
+  String get favoritesEmptyHint;
 }
 
 class _AppLocalizationsDelegate

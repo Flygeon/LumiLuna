@@ -35,7 +35,7 @@ class FolderDetailScreen extends ConsumerWidget {
           ? MediaGridView(
               items: items,
               onTap: (i) => openMedia(context, ref, items, i),
-              onLongPress: (i) => MediaContextSheet.show(
+              onSecondaryTap: (i) => MediaContextSheet.show(
                 context: context,
                 item: items[i],
                 ref: ref,
@@ -44,7 +44,7 @@ class FolderDetailScreen extends ConsumerWidget {
           : MediaListView(
               items: items,
               onTap: (i) => openMedia(context, ref, items, i),
-              onLongPress: (i) => MediaContextSheet.show(
+              onSecondaryTap: (i) => MediaContextSheet.show(
                 context: context,
                 item: items[i],
                 ref: ref,

@@ -87,5 +87,8 @@
   "permanentlyDeleted": "Permanently deleted",
   "restored": "Restored",
   "movedToTrash": "Moved {name} to trash",
-  "operationFailed": "Operation failed: {message}"
+  "operationFailed": "Operation failed: {message}",
+
+  "favoritesEmpty": "No favorites yet",
+  "favoritesEmptyHint": "Right-click any file and select \"Favorite\" to add it here."
 }

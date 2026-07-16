@@ -255,4 +255,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String operationFailed(Object message) {
     return '操作失败：$message';
   }
+
+  @override
+  String get favoritesEmpty => '还没有收藏';
+
+  @override
+  String get favoritesEmptyHint => '右键点击任意文件，选择「收藏」即可将其添加到这里。';
 }

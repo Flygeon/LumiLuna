@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/l10n.dart';
 import '../../models/media_item.dart';
 import '../../models/media_type.dart';
-import '../../providers/filter_provider.dart';
 import '../../providers/media_provider.dart';
 import '../../providers/player_provider.dart';
 import '../../providers/settings_provider.dart';
@@ -17,50 +16,33 @@ import '../player/image_viewer_screen.dart';
 import '../player/music_player_screen.dart';
 import '../player/video_player_screen.dart';
 
-/// Generic tab body listing all media of a single [MediaType], honouring the
-/// current search query and grid/list preference, and opening the appropriate
-/// player on tap.
-class MediaTypeScreen extends ConsumerWidget {
-  final MediaType type;
-
-  const MediaTypeScreen({super.key, required this.type});
+/// Displays all media items the user has marked as favourites.
+class FavoritesScreen extends ConsumerWidget {
+  const FavoritesScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(mediaByTypeProvider(type));
-    final query = ref.watch(searchQueryProvider).trim().toLowerCase();
+    final async = ref.watch(mediaProvider);
     final isGrid = ref.watch(settingsProvider.select((s) => s.isGridView));
     final l10n = context.l10n;
 
-    return AsyncView<List<MediaItem>>(
-      value: async,
-      onRetry: () => ref.read(mediaProvider.notifier).rescan(),
-      builder: (all) {
-        final items = query.isEmpty
-            ? all
-            : all.where((i) {
-                final q = query;
-                return i.name.toLowerCase().contains(q) ||
-                    (i.title?.toLowerCase().contains(q) ?? false) ||
-                    (i.artist?.toLowerCase().contains(q) ?? false);
-              }).toList();
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.favorite)),
+      body: AsyncView<List<MediaItem>>(
+        value: async,
+        onRetry: () => ref.read(mediaProvider.notifier).rescan(),
+        builder: (all) {
+          final items = all.where((i) => i.isFavorite).toList();
 
-        if (items.isEmpty) {
-          final typeLabel = mediaTypeName(context, type);
-          return EmptyState(
-            icon: type.icon,
-            title: query.isEmpty
-                ? l10n.noItems(typeLabel)
-                : l10n.noMatch(typeLabel),
-            message: query.isEmpty
-                ? l10n.emptyAddFolderHint
-                : l10n.tryAnotherKeyword,
-          );
-        }
+          if (items.isEmpty) {
+            return EmptyState(
+              icon: Icons.star_border,
+              title: l10n.favoritesEmpty,
+              message: l10n.favoritesEmptyHint,
+            );
+          }
 
-        return RefreshIndicator(
-          onRefresh: () => ref.read(mediaProvider.notifier).rescan(),
-          child: isGrid
+          return isGrid
               ? MediaGridView(
                   items: items,
                   onTap: (i) => openMedia(context, ref, items, i),
@@ -78,19 +60,16 @@ class MediaTypeScreen extends ConsumerWidget {
                     item: items[i],
                     ref: ref,
                   ),
-                ),
-        );
-      },
+                );
+        },
+      ),
     );
   }
 }
 
-/// Opens the correct player for [items] at [index]:
-/// - images  -> swipeable viewer
-/// - videos  -> media_kit video screen (continuous playlist)
-/// - audio   -> music player with playlist
-///
-/// Shared so the folder detail view can reuse identical behaviour.
+/// Opens the correct player for [items] at [index].
+/// Duplicated from [media_type_screen] because [FavoritesScreen] mixes
+/// media types and the filtered playlists should respect the whole set.
 void openMedia(
   BuildContext context,
   WidgetRef ref,

@@ -9,6 +9,7 @@ import '../../providers/media_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/tab_provider.dart';
 import '../folders/folders_screen.dart';
+import '../favorites/favorites_screen.dart';
 import '../media/media_type_screen.dart';
 import '../settings/settings_screen.dart';
 import '../trash/trash_screen.dart';
@@ -137,6 +138,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               tooltip: l10n.refresh,
               icon: const Icon(Icons.refresh),
               onPressed: () => ref.read(mediaProvider.notifier).rescan(),
+            ),
+            IconButton(
+              tooltip: l10n.favorite,
+              icon: const Icon(Icons.star_border),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+              ),
             ),
             IconButton(
               tooltip: l10n.settings,
