@@ -200,9 +200,13 @@ class TrashManager {
   /// entries since we cannot query the real size from the system bin).
   static Future<int> getTrashSize() async {
     final entries = await _readManifest();
-    return entries
-        .where((e) => e.trashLocation != 'recycle_bin')
-        .fold(0, (sum, e) => sum + e.size);
+    var total = 0;
+    for (final e in entries) {
+      if (e.trashLocation != 'recycle_bin') {
+        total += e.size;
+      }
+    }
+    return total;
   }
 
   // ---------------------------------------------------------------------------

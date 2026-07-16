@@ -51,7 +51,7 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
 
   /// Toggle the [isFavorite] flag for the item at [index].
   Future<void> toggleFavorite(int index) async {
-    final items = [...state.value ?? []];
+    final items = state.value?.toList() ?? <MediaItem>[];
     if (index < 0 || index >= items.length) return;
     items[index] = items[index].copyWith(
       isFavorite: !items[index].isFavorite,
@@ -62,7 +62,7 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
 
   /// Rename the item at [index] to [newName] (on disk and in the list).
   Future<void> renameItem(int index, String newName) async {
-    final items = [...state.value ?? []];
+    final items = state.value?.toList() ?? <MediaItem>[];
     if (index < 0 || index >= items.length) return;
     final item = items[index];
 
@@ -84,7 +84,7 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
   /// Remove the item at [index] from the list (after it has been moved to
   /// trash or permanently deleted).
   Future<void> removeItem(int index) async {
-    final items = [...state.value ?? []];
+    final items = state.value?.toList() ?? <MediaItem>[];
     if (index < 0 || index >= items.length) return;
     items.removeAt(index);
     state = AsyncValue.data(items);
