@@ -1,7 +1,7 @@
 import 'dart:io';
 
+import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 import 'package:flutter/foundation.dart';
-import 'package:metadata_god/metadata_god.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../core/constants/app_constants.dart';
@@ -75,15 +75,17 @@ class MediaScannerService {
         continue;
       }
       try {
-        final meta = await MetadataGod.readMetadata(item.path);
+        // Pure-Dart parser — no native backend needed, so it builds cleanly
+        // on CI. getImage:true pulls the embedded cover art bytes.
+        final meta = readMetadata(File(item.path), getImage: true);
         String? artPath;
-        final pic = meta.picture;
-        if (pic?.data != null) {
+        if (meta.pictures.isNotEmpty) {
+          final pic = meta.pictures.first;
           final key = item.path.hashCode.abs().toString();
-          final dest = '${artDir.path}/$key${_extForMime(pic!.mimeType)}';
+          final dest = '${artDir.path}/$key${_extForMime(pic.mimetype)}';
           final file = File(dest);
           if (!await file.exists()) {
-            await file.writeAsBytes(pic.data!);
+            await file.writeAsBytes(pic.bytes);
           }
           artPath = dest;
         }
@@ -91,7 +93,7 @@ class MediaScannerService {
           title: meta.title,
           artist: meta.artist,
           album: meta.album,
-          durationMs: meta.durationMs,
+          durationMs: meta.duration?.inMilliseconds,
           artworkPath: artPath,
         ));
       } catch (_) {

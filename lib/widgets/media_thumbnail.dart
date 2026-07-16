@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import '../core/constants/app_constants.dart';
 import '../models/media_item.dart';
 import '../models/media_type.dart';
+import '../providers/tab_provider.dart';
 
 /// Displays a thumbnail for a [MediaItem].
 ///
