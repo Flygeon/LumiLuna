@@ -11,6 +11,8 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
+  flutter_localizations:
+    sdk: flutter
 
   # State management
   flutter_riverpod: ^2.5.1
@@ -28,13 +30,14 @@ dependencies:
   shared_preferences: ^2.3.2
 
   # Date / duration formatting
-  intl: ^0.19.0
+  intl: ^0.20.2
 
   # Video thumbnail extraction (native Windows support)
   fc_native_video_thumbnail: ^1.0.0
 
-  # Audio tag / metadata reading (Windows/Android/iOS/macOS/Linux)
-  metadata_god: ^1.1.0
+  # Audio tag / metadata reading — pure Dart, no native build step, so it
+  # compiles cleanly on CI (Windows/Linux/macOS) and stays cross-platform.
+  audio_metadata_reader: ^1.6.0
 
   # App version / build info for the About screen
   package_info_plus: ^8.0.0
