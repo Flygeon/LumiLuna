@@ -866,16 +866,16 @@ class $MediaTagsTable extends MediaTags
       'media_path', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES media_items (path) ON DELETE CASCADE'));
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES media_items (path)'));
   static const VerificationMeta _tagIdMeta = const VerificationMeta('tagId');
   @override
   late final GeneratedColumn<int> tagId = GeneratedColumn<int>(
       'tag_id', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES tags (id) ON DELETE CASCADE'));
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES tags (id)'));
   @override
   List<GeneratedColumn> get $columns => [mediaPath, tagId];
   @override
@@ -1404,8 +1404,8 @@ class $CollectionItemsTable extends CollectionItems
       'collection_id', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES collections (id) ON DELETE CASCADE'));
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES collections (id)'));
   static const VerificationMeta _mediaPathMeta =
       const VerificationMeta('mediaPath');
   @override
@@ -1413,8 +1413,8 @@ class $CollectionItemsTable extends CollectionItems
       'media_path', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES media_items (path) ON DELETE CASCADE'));
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES media_items (path)'));
   static const VerificationMeta _addedAtMeta =
       const VerificationMeta('addedAt');
   @override
@@ -2027,8 +2027,8 @@ class $PlaylistItemsTable extends PlaylistItems
       'playlist_id', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES playlists (id) ON DELETE CASCADE'));
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES playlists (id)'));
   static const VerificationMeta _mediaPathMeta =
       const VerificationMeta('mediaPath');
   @override
@@ -2036,8 +2036,8 @@ class $PlaylistItemsTable extends PlaylistItems
       'media_path', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES media_items (path) ON DELETE CASCADE'));
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES media_items (path)'));
   static const VerificationMeta _addedAtMeta =
       const VerificationMeta('addedAt');
   @override
@@ -2557,53 +2557,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         playlistItems,
         scanFolders
       ];
-  @override
-  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules(
-        [
-          WritePropagation(
-            on: TableUpdateQuery.onTableName('media_items',
-                limitUpdateKind: UpdateKind.delete),
-            result: [
-              TableUpdate('media_tags', kind: UpdateKind.delete),
-            ],
-          ),
-          WritePropagation(
-            on: TableUpdateQuery.onTableName('tags',
-                limitUpdateKind: UpdateKind.delete),
-            result: [
-              TableUpdate('media_tags', kind: UpdateKind.delete),
-            ],
-          ),
-          WritePropagation(
-            on: TableUpdateQuery.onTableName('collections',
-                limitUpdateKind: UpdateKind.delete),
-            result: [
-              TableUpdate('collection_items', kind: UpdateKind.delete),
-            ],
-          ),
-          WritePropagation(
-            on: TableUpdateQuery.onTableName('media_items',
-                limitUpdateKind: UpdateKind.delete),
-            result: [
-              TableUpdate('collection_items', kind: UpdateKind.delete),
-            ],
-          ),
-          WritePropagation(
-            on: TableUpdateQuery.onTableName('playlists',
-                limitUpdateKind: UpdateKind.delete),
-            result: [
-              TableUpdate('playlist_items', kind: UpdateKind.delete),
-            ],
-          ),
-          WritePropagation(
-            on: TableUpdateQuery.onTableName('media_items',
-                limitUpdateKind: UpdateKind.delete),
-            result: [
-              TableUpdate('playlist_items', kind: UpdateKind.delete),
-            ],
-          ),
-        ],
-      );
 }
 
 typedef $$MediaItemsTableCreateCompanionBuilder = MediaItemsCompanion Function({
