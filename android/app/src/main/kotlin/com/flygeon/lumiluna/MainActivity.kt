@@ -1,4 +1,4 @@
-package com.example.lumiluna
+package com.flygeon.lumiluna
 
 import io.flutter.embedding.android.FlutterActivity
 
