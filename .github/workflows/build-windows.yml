@@ -1,4 +1,4 @@
-name: Build Windows
+name: Build
 
 on:
   push:
@@ -8,7 +8,11 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # Windows (desktop)
+  # ---------------------------------------------------------------------------
   build-windows:
+    name: Windows
     runs-on: windows-latest
 
     steps:
@@ -41,8 +45,59 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: lumiluna-windows
-          # Upload the build output directory directly. GitHub's
-          # upload-artifact action wraps it in a ZIP automatically, so we
-          # should NOT pre-zip it — that would create a double-nested ZIP.
           path: build/windows/x64/runner/Release/*
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # Android (mobile)
+  # ---------------------------------------------------------------------------
+  build-android:
+    name: Android
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter version
+        run: flutter --version
+
+      # Android platform files were added via `flutter create --platforms=android`
+      # and are committed to the repository.
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        continue-on-error: true
+
+      - name: Build Android APK (release)
+        run: flutter build apk --release --split-per-abi
+
+      - name: Upload APK (arm64-v8a)
+        uses: actions/upload-artifact@v5
+        with:
+          name: lumiluna-android-arm64
+          path: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          retention-days: 30
+
+      - name: Upload APK (armeabi-v7a)
+        uses: actions/upload-artifact@v5
+        with:
+          name: lumiluna-android-arm32
+          path: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+          retention-days: 30
+
+      - name: Upload APK (x86_64)
+        uses: actions/upload-artifact@v5
+        with:
+          name: lumiluna-android-x86_64
+          path: build/app/outputs/flutter-apk/app-x86_64-release.apk
           retention-days: 30
