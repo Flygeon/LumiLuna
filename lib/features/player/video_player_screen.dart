@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import '../../l10n/l10n.dart';
 import '../../providers/player_provider.dart';
 
 /// Video playback screen backed by the shared media_kit player.
@@ -34,7 +35,7 @@ class VideoPlayerScreen extends ConsumerWidget {
           backgroundColor: Colors.black,
           foregroundColor: Colors.white,
           title: Text(
-            current?.name ?? '视频',
+            current?.name ?? context.l10n.videoTitle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 16),

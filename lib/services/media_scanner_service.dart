@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:metadata_god/metadata_god.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../core/constants/app_constants.dart';
 import '../models/media_item.dart';
+import '../models/media_type.dart';
 
 /// Scans local folders for media files on a background isolate.
 class MediaScannerService {
@@ -46,10 +48,66 @@ class MediaScannerService {
   }
 
   /// Scan the given [folders] recursively and return all media items.
-  /// Runs the heavy work on a background isolate via [compute].
+  /// The filesystem walk runs on a background isolate; audio metadata is
+  /// enriched afterwards on the caller isolate.
   static Future<List<MediaItem>> scan(List<String> folders) async {
     if (folders.isEmpty) return const [];
-    return compute(_scanIsolate, folders);
+    final items = await compute(_scanIsolate, folders);
+    return _enrichAudioMetadata(items);
+  }
+
+  /// Read audio tags (title / artist / album / duration / embedded artwork)
+  /// for every audio item and cache the cover art to disk. Non-audio items
+  /// pass through unchanged. Failures on a single file are swallowed so one
+  /// corrupt track never aborts the whole scan.
+  static Future<List<MediaItem>> _enrichAudioMetadata(List<MediaItem> items) async {
+    final hasAudio = items.any((i) => i.type == MediaType.audio);
+    if (!hasAudio) return items;
+
+    final cacheDir = await getTemporaryDirectory();
+    final artDir = Directory('${cacheDir.path}/lumiluna_artwork');
+    await artDir.create(recursive: true);
+
+    final out = <MediaItem>[];
+    for (final item in items) {
+      if (item.type != MediaType.audio) {
+        out.add(item);
+        continue;
+      }
+      try {
+        final meta = await MetadataGod.readMetadata(item.path);
+        String? artPath;
+        final pic = meta.picture;
+        if (pic?.data != null) {
+          final key = item.path.hashCode.abs().toString();
+          final dest = '${artDir.path}/$key${_extForMime(pic!.mimeType)}';
+          final file = File(dest);
+          if (!await file.exists()) {
+            await file.writeAsBytes(pic.data!);
+          }
+          artPath = dest;
+        }
+        out.add(item.copyWith(
+          title: meta.title,
+          artist: meta.artist,
+          album: meta.album,
+          durationMs: meta.durationMs,
+          artworkPath: artPath,
+        ));
+      } catch (_) {
+        out.add(item);
+      }
+    }
+    return out;
+  }
+
+  /// Map an artwork MIME type to a file extension for the cached cover image.
+  static String _extForMime(String? mime) {
+    if (mime == null) return '.jpg';
+    if (mime.contains('png')) return '.png';
+    if (mime.contains('webp')) return '.webp';
+    if (mime.contains('bmp')) return '.bmp';
+    return '.jpg';
   }
 
   /// Isolate entry point. Must be a top-level / static function.

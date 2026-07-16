@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/format_utils.dart';
+import '../../l10n/l10n.dart';
+import '../../models/media_item.dart';
 import '../../providers/player_provider.dart';
+import 'package:lumiluna/l10n/generated/app_localizations.dart';
 
 /// Music player with a now-playing header, transport controls, a seek bar and
 /// the full playlist. Backed by the shared media_kit player.
@@ -11,17 +14,21 @@ class MusicPlayerScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final state = ref.watch(playbackControllerProvider);
     final controller = ref.read(playbackControllerProvider.notifier);
     final scheme = Theme.of(context).colorScheme;
     final current = state.current;
 
+    final title = current?.title ?? current?.name ?? l10n.notPlaying;
+    final subtitle = _subtitle(current);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('正在播放')),
+      appBar: AppBar(title: Text(l10n.nowPlaying)),
       body: Column(
         children: [
           const SizedBox(height: 16),
-          // Album-art placeholder.
+          // Album-art: embedded cover when available, themed icon otherwise.
           Container(
             width: 200,
             height: 200,
@@ -29,17 +36,24 @@ class MusicPlayerScreen extends ConsumerWidget {
               color: scheme.secondaryContainer,
               borderRadius: BorderRadius.circular(24),
             ),
-            child: Icon(
-              Icons.music_note,
-              size: 96,
-              color: scheme.onSecondaryContainer,
-            ),
+            child: current?.artworkPath != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Image.file(
+                      File(current!.artworkPath!),
+                      fit: BoxFit.cover,
+                      gaplessPlayback: true,
+                      filterQuality: FilterQuality.low,
+                      errorBuilder: (_, __, ___) => _artPlaceholder(scheme),
+                    ),
+                  )
+                : _artPlaceholder(scheme),
           ),
           const SizedBox(height: 20),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
-              current?.name ?? '未在播放',
+              title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
@@ -48,14 +62,17 @@ class MusicPlayerScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            current?.folderName ?? '',
+            subtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
                 ?.copyWith(color: scheme.onSurfaceVariant),
           ),
           _SeekBar(state: state, onSeek: controller.seek),
-          _Controls(state: state, controller: controller),
+          _Controls(state: state, controller: controller, l10n: l10n),
           const Divider(height: 1),
           Expanded(
             child: _Playlist(state: state, controller: controller),
@@ -64,6 +81,21 @@ class MusicPlayerScreen extends ConsumerWidget {
       ),
     );
   }
+
+  /// Build the secondary line: "artist · album", falling back to the folder
+  /// name when no tags are present.
+  String _subtitle(MediaItem? item) {
+    if (item == null) return '';
+    final parts = [item.artist, item.album].whereType<String>().toList();
+    if (parts.isNotEmpty) return parts.join('  ·  ');
+    return item.folderName;
+  }
+
+  Widget _artPlaceholder(ColorScheme scheme) => Icon(
+        Icons.music_note,
+        size: 96,
+        color: scheme.onSecondaryContainer,
+      );
 }
 
 class _SeekBar extends StatelessWidget {
@@ -108,8 +140,13 @@ class _SeekBar extends StatelessWidget {
 class _Controls extends StatelessWidget {
   final PlaybackState state;
   final PlaybackController controller;
+  final AppLocalizations l10n;
 
-  const _Controls({required this.state, required this.controller});
+  const _Controls({
+    required this.state,
+    required this.controller,
+    required this.l10n,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +154,7 @@ class _Controls extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         IconButton(
-          tooltip: '循环播放',
+          tooltip: l10n.loopTooltip,
           isSelected: state.looping,
           icon: const Icon(Icons.repeat),
           selectedIcon: const Icon(Icons.repeat_on),
@@ -146,7 +183,7 @@ class _Controls extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         IconButton(
-          tooltip: '停止',
+          tooltip: l10n.stopTooltip,
           icon: const Icon(Icons.stop),
           onPressed: state.current == null ? null : controller.stop,
         ),
@@ -169,6 +206,8 @@ class _Playlist extends StatelessWidget {
       itemBuilder: (context, index) {
         final item = state.playlist[index];
         final isCurrent = index == state.index;
+        final title = item.title ?? item.name;
+        final subtitle = item.artist ?? FormatUtils.fileSize(item.size);
         return ListTile(
           dense: true,
           selected: isCurrent,
@@ -179,12 +218,14 @@ class _Playlist extends StatelessWidget {
                   style: TextStyle(color: scheme.onSurfaceVariant),
                 ),
           title: Text(
-            item.name,
+            title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: Text(
-            FormatUtils.fileSize(item.size),
+            subtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall,
           ),
           onTap: () => controller.jump(index),

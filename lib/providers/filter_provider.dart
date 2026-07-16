@@ -25,7 +25,10 @@ final searchedMediaProvider = Provider<AsyncValue<List<MediaItem>>>((ref) {
       result = result.where((i) => i.type == typeFilter);
     }
     if (query.isNotEmpty) {
-      result = result.where((i) => i.name.toLowerCase().contains(query));
+      result = result.where((i) =>
+        i.name.toLowerCase().contains(query) ||
+        (i.title?.toLowerCase().contains(query) ?? false) ||
+        (i.artist?.toLowerCase().contains(query) ?? false));
     }
     return result.toList();
   });
@@ -48,8 +51,11 @@ List<MediaFolder> _group(List<MediaItem> items, GroupMode mode) {
     late String label;
     switch (mode) {
       case GroupMode.album:
-        key = item.folderName;
-        label = item.folderName;
+        // Music groups by its album tag when present, everything else by folder.
+        key = (item.type == MediaType.audio && item.album != null)
+            ? item.album!
+            : item.folderName;
+        label = key;
         break;
       case GroupMode.folder:
         key = item.folderPath;

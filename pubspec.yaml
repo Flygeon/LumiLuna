@@ -33,6 +33,12 @@ dependencies:
   # Video thumbnail extraction (native Windows support)
   fc_native_video_thumbnail: ^1.0.0
 
+  # Audio tag / metadata reading (Windows/Android/iOS/macOS/Linux)
+  metadata_god: ^1.1.0
+
+  # App version / build info for the About screen
+  package_info_plus: ^8.0.0
+
 dev_dependencies:
   flutter_lints: ^4.0.0
   flutter_test:
@@ -40,6 +46,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # Enable flutter_gen (localization via gen-l10n + lib/l10n/*.arb).
+  generate: true
   assets:
     - assets/fonts/
   fonts:

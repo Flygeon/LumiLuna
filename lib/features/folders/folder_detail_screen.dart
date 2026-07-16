@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/l10n.dart';
 import '../../models/media_folder.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/media_grid_view.dart';
@@ -23,7 +24,7 @@ class FolderDetailScreen extends ConsumerWidget {
         title: Text(folder.label, maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: [
           IconButton(
-            tooltip: isGrid ? '列表视图' : '网格视图',
+            tooltip: isGrid ? context.l10n.listView : context.l10n.gridView,
             icon: Icon(isGrid ? Icons.view_list : Icons.grid_view),
             onPressed: () => ref.read(settingsProvider.notifier).toggleView(),
           ),

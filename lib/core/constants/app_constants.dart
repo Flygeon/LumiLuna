@@ -51,4 +51,5 @@ class AppConstants {
   static const String prefViewMode = 'pref_view_mode';
   static const String prefScanFolders = 'pref_scan_folders';
   static const String prefGroupMode = 'pref_group_mode';
+  static const String prefLocale = 'pref_locale';
 }

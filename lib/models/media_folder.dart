@@ -28,15 +28,4 @@ enum GroupMode {
   album,
   folder,
   date;
-
-  String get label {
-    switch (this) {
-      case GroupMode.album:
-        return '相册';
-      case GroupMode.folder:
-        return '文件夹';
-      case GroupMode.date:
-        return '日期';
-    }
-  }
 }

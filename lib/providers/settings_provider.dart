@@ -15,12 +15,14 @@ class AppSettings {
   final bool isGridView;
   final List<String> scanFolders;
   final GroupMode groupMode;
+  final String localeTag;
 
   const AppSettings({
     required this.themeMode,
     required this.isGridView,
     required this.scanFolders,
     required this.groupMode,
+    this.localeTag = '',
   });
 
   AppSettings copyWith({
@@ -28,12 +30,14 @@ class AppSettings {
     bool? isGridView,
     List<String>? scanFolders,
     GroupMode? groupMode,
+    String? localeTag,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
       isGridView: isGridView ?? this.isGridView,
       scanFolders: scanFolders ?? this.scanFolders,
       groupMode: groupMode ?? this.groupMode,
+      localeTag: localeTag ?? this.localeTag,
     );
   }
 }
@@ -45,6 +49,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
           isGridView: _service.getIsGridView(),
           scanFolders: _service.getScanFolders(),
           groupMode: _service.getGroupMode(),
+          localeTag: _service.getLocale(),
         ));
 
   final SettingsService _service;
@@ -52,6 +57,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> setThemeMode(ThemeMode mode) async {
     state = state.copyWith(themeMode: mode);
     await _service.setThemeMode(mode);
+  }
+
+  Future<void> setLocale(String tag) async {
+    state = state.copyWith(localeTag: tag);
+    await _service.setLocale(tag);
   }
 
   Future<void> toggleView() async {
