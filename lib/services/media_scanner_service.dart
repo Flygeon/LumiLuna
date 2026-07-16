@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../core/constants/app_constants.dart';
 import '../models/media_item.dart';
@@ -10,14 +11,50 @@ import '../models/media_type.dart';
 
 /// Scans local folders for media files on a background isolate.
 class MediaScannerService {
-  /// Resolve the default media directories to scan (Pictures / Videos / Music).
+  /// Request storage permissions on Android (no-op on other platforms).
   ///
-  /// [path_provider] does not expose these on Windows directly, so we derive
-  /// them from the user profile directory and fall back gracefully.
+  /// Returns `true` if the required permissions are granted.
+  static Future<bool> ensurePermissions() async {
+    if (!Platform.isAndroid) return true;
+
+    // Android 11+ (API 30+):  need MANAGE_EXTERNAL_STORAGE for full access,
+    // or scoped media permissions for reading specific media types.
+    // We try the scoped permissions first; if the OS rejects them we have
+    // MANAGE_EXTERNAL_STORAGE as a fallback.
+    final status = await Permission.manageExternalStorage.request();
+    if (status.isGranted) return true;
+
+    // Fallback: try individual media permissions (Android 13+).
+    final image = await Permission.photos.request();
+    final audio = await Permission.audio.request();
+    final video = await Permission.video.request();
+    return image.isGranted || audio.isGranted || video.isGranted;
+  }
+
+  /// Resolve the default media directories to scan.
+  ///
+  /// On Android we use the well-known public storage paths; on desktop we
+  /// derive them from the user profile directory.
   static Future<List<String>> defaultFolders() async {
     final result = <String>[];
 
-    // Try USERPROFILE / HOME based well-known folders (Windows/macOS/Linux).
+    if (Platform.isAndroid) {
+      // Android public storage directories.
+      const candidates = [
+        '/storage/emulated/0/DCIM',
+        '/storage/emulated/0/Pictures',
+        '/storage/emulated/0/Movies',
+        '/storage/emulated/0/Music',
+        '/storage/emulated/0/Download',
+      ];
+      for (final path in candidates) {
+        final dir = Directory(path);
+        if (await dir.exists()) result.add(path);
+      }
+      return result;
+    }
+
+    // Desktop: try USERPROFILE / HOME + well-known subdirectories.
     final home = _homeDir();
     if (home != null) {
       for (final sub in const ['Pictures', 'Videos', 'Music']) {
