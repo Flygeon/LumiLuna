@@ -1,19 +1,7 @@
-import com.android.build.gradle.BaseExtension
-
 allprojects {
     repositories {
         google()
         mavenCentral()
-    }
-}
-
-// Suppress AAR metadata checks in all subprojects (plugin modules like
-// file_picker may target an older compileSdk than the host app).
-subprojects {
-    afterEvaluate {
-        extensions.findByType<BaseExtension>()?.let {
-            it.checkReleaseAarMetadata = false
-        }
     }
 }
 
