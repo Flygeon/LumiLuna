@@ -11,8 +11,14 @@ import 'settings_provider.dart';
 
 /// Holds all scanned media items. Rescans when the folder list changes.
 ///
-/// Persists items in SQLite ([DatabaseService]) instead of a JSON cache file.
+/// Persists items in SQLite instead of a JSON cache file.
 class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
+  /// Resolve default scan folders, requesting storage permissions first on
+  /// Android where file-system access requires runtime consent.
+  Future<List<String>> _resolveDefaultFolders() async {
+    await MediaScannerService.ensurePermissions();
+    return MediaScannerService.defaultFolders();
+  }
   @override
   Future<List<MediaItem>> build() async {
     // Rebuild whenever the configured folders change.
@@ -22,7 +28,7 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
 
     final target = folders.isNotEmpty
         ? folders
-        : await MediaScannerService.defaultFolders();
+        : await _resolveDefaultFolders();
 
     if (target.isEmpty) return const [];
 
@@ -44,7 +50,7 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
       final folders = ref.read(settingsProvider).scanFolders;
       final target = folders.isNotEmpty
           ? folders
-          : await MediaScannerService.defaultFolders();
+          : await _resolveDefaultFolders();
       if (target.isEmpty) return const <MediaItem>[];
       final items = await MediaScannerService.scan(target);
       final db = ref.read(appDatabaseProvider);
