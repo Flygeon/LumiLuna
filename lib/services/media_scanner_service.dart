@@ -1,6 +1,4 @@
-import 'dart:async';
 import 'dart:io';
-import 'dart:convert';
 
 import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 import 'package:flutter/foundation.dart';
@@ -38,13 +36,6 @@ class MediaScannerService {
       }
     }
 
-    // #region debug-point H2:default-folders
-    unawaited(HttpClient().postUrl(Uri.parse('http://192.168.1.7:7777/event')).then((request) {
-      request.headers.contentType = ContentType.json;
-      request.write(jsonEncode({'sessionId': 'android-media-scan', 'runId': 'pre', 'hypothesisId': 'H2', 'location': 'media_scanner_service.dart:defaultFolders', 'msg': '[DEBUG] Default folders resolved', 'data': {'platform': Platform.operatingSystem, 'home': _homeDir(), 'folders': result}}));
-      return request.close();
-    }).catchError((_) {}));
-    // #endregion
     return result;
   }
 
@@ -61,21 +52,7 @@ class MediaScannerService {
   /// enriched in parallel on worker isolates.
   static Future<List<MediaItem>> scan(List<String> folders) async {
     if (folders.isEmpty) return const [];
-    // #region debug-point H1:H3:scan-entry
-    unawaited(HttpClient().postUrl(Uri.parse('http://192.168.1.7:7777/event')).then((request) {
-      request.headers.contentType = ContentType.json;
-      request.write(jsonEncode({'sessionId': 'android-media-scan', 'runId': 'pre', 'hypothesisId': 'H1', 'location': 'media_scanner_service.dart:scan', 'msg': '[DEBUG] Scan started', 'data': {'folders': folders}}));
-      return request.close();
-    }).catchError((_) {}));
-    // #endregion
     final items = await compute(_scanIsolate, folders);
-    // #region debug-point H4:H5:scan-result
-    unawaited(HttpClient().postUrl(Uri.parse('http://192.168.1.7:7777/event')).then((request) {
-      request.headers.contentType = ContentType.json;
-      request.write(jsonEncode({'sessionId': 'android-media-scan', 'runId': 'pre', 'hypothesisId': 'H4', 'location': 'media_scanner_service.dart:scan', 'msg': '[DEBUG] Scan completed', 'data': {'count': items.length, 'types': {for (final type in MediaType.values) type.name: items.where((item) => item.type == type).length}}}));
-      return request.close();
-    }).catchError((_) {}));
-    // #endregion
     return _enrichAudioMetadataParallel(items);
   }
 
