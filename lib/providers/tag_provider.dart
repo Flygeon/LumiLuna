@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/tag.dart';
-import '../services/database_service.dart';
+import '../main.dart';
+
 
 /// All tags.
 final tagsProvider = FutureProvider<List<Tag>>((ref) async {
-  return DatabaseService.getTags();
+  final db = ref.read(appDatabaseProvider);
+  return db.getAllTags();
 });
 
 /// Notifier to create / delete tags and manage media-tag associations.
@@ -15,26 +17,26 @@ class TagManager {
   TagManager(this._ref);
 
   Future<Tag> create(String name, {int color = 0xFF5C5C5C}) async {
-    final tag = await DatabaseService.createTag(name, color: color);
+    final tag = await _ref.read(appDatabaseProvider).createTag(name, color: color);
     _ref.invalidate(tagsProvider);
     return tag;
   }
 
   Future<void> delete(int id) async {
-    await DatabaseService.deleteTag(id);
+    await _ref.read(appDatabaseProvider).deleteTag(id);
     _ref.invalidate(tagsProvider);
   }
 
   Future<void> addToMedia(String mediaPath, int tagId) async {
-    await DatabaseService.addTagToMedia(mediaPath, tagId);
+    await _ref.read(appDatabaseProvider).addTagToMedia(mediaPath, tagId);
   }
 
   Future<void> removeFromMedia(String mediaPath, int tagId) async {
-    await DatabaseService.removeTagFromMedia(mediaPath, tagId);
+    await _ref.read(appDatabaseProvider).removeTagFromMedia(mediaPath, tagId);
   }
 
   /// Get tags for multiple items at once.
   Future<Map<String, List<Tag>>> tagsForPaths(List<String> paths) {
-    return DatabaseService.getTagsForMediaPaths(paths);
+    return _ref.read(appDatabaseProvider).getTagsForMediaPaths(paths);
   }
 }

@@ -4,8 +4,15 @@ import 'package:media_kit/media_kit.dart';
 
 import 'app.dart';
 import 'providers/settings_provider.dart';
-import 'services/database_service.dart';
+import 'services/database/app_database.dart';
 import 'services/settings_service.dart';
+
+/// Provider for the Drift-powered database singleton.
+final appDatabaseProvider = Provider<AppDatabase>((ref) {
+  final db = AppDatabase();
+  ref.onDispose(() => db.close());
+  return db;
+});
 
 /// Provider that exposes any startup error (e.g. DB init failure) to the UI.
 final startupErrorProvider = Provider<String?>((ref) => null);
@@ -21,11 +28,12 @@ Future<void> main() async {
 
   String? startupError;
 
-  // Initialise the SQLite database.  On Windows, sqflite_common_ffi needs
-  // sqlite3.dll which is bundled by sqlite3_flutter_libs.  If it ever
-  // fails we still start the app (just without persistence).
+  // Initialise the Drift database. On Windows it uses sqlite3 via dart:ffi.
+  // If it ever fails we still start the app (just without persistence).
   try {
-    await DatabaseService.database;
+    final db = AppDatabase();
+    await db.customStatement('SELECT 1');
+    db.close();
   } catch (e) {
     startupError = '数据库初始化失败: $e';
     // ignore: avoid_print

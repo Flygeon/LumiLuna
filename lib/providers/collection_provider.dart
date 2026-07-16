@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/collection.dart';
-import '../services/database_service.dart';
+import '../main.dart';
+
 
 /// All collections.
 final collectionsProvider = FutureProvider<List<MediaCollection>>((ref) async {
-  return DatabaseService.getCollections();
+  final db = ref.read(appDatabaseProvider);
+  return db.getAllCollections();
 });
 
 /// Notifier for collection CRUD operations.
@@ -15,22 +17,22 @@ class CollectionManager {
   CollectionManager(this._ref);
 
   Future<void> create(String name, {String? description}) async {
-    await DatabaseService.createCollection(name, description: description);
+    await _ref.read(appDatabaseProvider).createCollection(name, description: description);
     _ref.invalidate(collectionsProvider);
   }
 
   Future<void> delete(int id) async {
-    await DatabaseService.deleteCollection(id);
+    await _ref.read(appDatabaseProvider).deleteCollection(id);
     _ref.invalidate(collectionsProvider);
   }
 
   Future<void> addItems(int collectionId, List<String> mediaPaths) async {
-    await DatabaseService.addToCollection(collectionId, mediaPaths);
+    await _ref.read(appDatabaseProvider).addToCollection(collectionId, mediaPaths);
     _ref.invalidate(collectionsProvider);
   }
 
   Future<void> removeItem(int collectionId, String mediaPath) async {
-    await DatabaseService.removeFromCollection(collectionId, mediaPath);
+    await _ref.read(appDatabaseProvider).removeFromCollection(collectionId, mediaPath);
     _ref.invalidate(collectionsProvider);
   }
 }

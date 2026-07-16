@@ -3,7 +3,7 @@ import 'dart:io';
 
 import '../core/constants/app_constants.dart';
 import '../models/media_item.dart';
-import 'database_service.dart';
+import 'database/app_database.dart';
 import 'media_scanner_service.dart';
 
 /// Watches configured scan folders for file-system changes and performs
@@ -34,7 +34,9 @@ class FolderWatcherService {
   /// Start watching all folders currently configured in [DatabaseService].
   Future<void> start() async {
     if (_watching) await stop();
-    final folders = await DatabaseService.getScanFolders();
+    final db = AppDatabase();
+    final folders = await db.getScanFolders();
+    db.close();
     for (final folderPath in folders) {
       _watchFolder(folderPath);
     }
@@ -130,13 +132,17 @@ class FolderWatcherService {
       if (items.isNotEmpty) {
         // Enrich audio metadata for new audio files.
         final enriched = await MediaScannerService.enrichAudioItems(items);
-        await DatabaseService.upsertMediaItems(enriched);
+        final db = AppDatabase();
+        await db.upsertMediaItems(enriched);
+        db.close();
       }
     }
 
     // Remove deleted files.
     if (deletePaths.isNotEmpty) {
-      await DatabaseService.removeMediaItems(deletePaths);
+      final db = AppDatabase();
+      await db.removeMediaItems(deletePaths);
+      db.close();
     }
   }
 }

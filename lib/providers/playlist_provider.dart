@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/playlist.dart';
-import '../services/database_service.dart';
+import '../main.dart';
+
 
 /// All playlists.
 final playlistsProvider = FutureProvider<List<Playlist>>((ref) async {
-  return DatabaseService.getPlaylists();
+  final db = ref.read(appDatabaseProvider);
+  return db.getAllPlaylists();
 });
 
 /// Notifier for playlist CRUD operations.
@@ -15,27 +17,27 @@ class PlaylistManager {
   PlaylistManager(this._ref);
 
   Future<void> create(String name, {String? description}) async {
-    await DatabaseService.createPlaylist(name, description: description);
+    await _ref.read(appDatabaseProvider).createPlaylist(name, description: description);
     _ref.invalidate(playlistsProvider);
   }
 
   Future<void> delete(int id) async {
-    await DatabaseService.deletePlaylist(id);
+    await _ref.read(appDatabaseProvider).deletePlaylist(id);
     _ref.invalidate(playlistsProvider);
   }
 
   Future<void> addItems(int playlistId, List<String> mediaPaths) async {
-    await DatabaseService.addToPlaylist(playlistId, mediaPaths);
+    await _ref.read(appDatabaseProvider).addToPlaylist(playlistId, mediaPaths);
     _ref.invalidate(playlistsProvider);
   }
 
   Future<void> removeItem(int playlistId, String mediaPath) async {
-    await DatabaseService.removeFromPlaylist(playlistId, mediaPath);
+    await _ref.read(appDatabaseProvider).removeFromPlaylist(playlistId, mediaPath);
     _ref.invalidate(playlistsProvider);
   }
 
   Future<void> reorder(int playlistId, List<String> orderedPaths) async {
-    await DatabaseService.reorderPlaylist(playlistId, orderedPaths);
+    await _ref.read(appDatabaseProvider).reorderPlaylist(playlistId, orderedPaths);
     _ref.invalidate(playlistsProvider);
   }
 }

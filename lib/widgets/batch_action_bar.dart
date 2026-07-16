@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/collection_provider.dart';
 import '../providers/playlist_provider.dart';
 import '../providers/selection_provider.dart';
-import '../services/database_service.dart';
-import '../services/media_repository.dart';
+import '../main.dart';
+
 import 'tag_editor_dialog.dart';
 
 /// Bottom bar shown when in selection mode, with batch action buttons.
@@ -46,7 +46,7 @@ class BatchActionBar extends ConsumerWidget {
                 label: '收藏',
                 onTap: () {
                   for (final path in paths) {
-                    DatabaseService.setFavorite(path, true);
+                    ref.read(appDatabaseProvider).setFavorite(path, true);
                   }
                   ref.read(selectionProvider(selectionId).notifier).endSelection();
                 },
@@ -86,7 +86,7 @@ class BatchActionBar extends ConsumerWidget {
                     ),
                   );
                   if (ok == true) {
-                    await MediaRepository.batchDelete(paths);
+                    await ref.read(appDatabaseProvider).removeMediaItems(paths);
                     ref.read(selectionProvider(selectionId).notifier).endSelection();
                   }
                 },
