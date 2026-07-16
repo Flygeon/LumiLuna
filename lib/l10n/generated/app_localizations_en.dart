@@ -184,4 +184,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewLicenses => 'Open source licenses';
+
+  @override
+  String get locateInExplorer => 'Locate in Explorer';
+
+  @override
+  String get favorite => 'Favorite';
+
+  @override
+  String get unfavorite => 'Unfavorite';
+
+  @override
+  String get rename => 'Rename';
+
+  @override
+  String get renameTitle => 'Rename file';
+
+  @override
+  String get renameHint => 'New filename';
+
+  @override
+  String get delete => 'Move to Trash';
+
+  @override
+  String confirmDelete(Object name) {
+    return 'Move $name to trash?';
+  }
+
+  @override
+  String confirmDeleteMultiple(Object count) {
+    return 'Move $count items to trash?';
+  }
+
+  @override
+  String confirmPermanentDelete(Object name) {
+    return 'Delete $name permanently? This action cannot be undone.';
+  }
+
+  @override
+  String get confirmEmptyTrash =>
+      'Permanently delete all trashed files? This action cannot be undone.';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get confirm => 'Move to Trash';
+
+  @override
+  String get restore => 'Restore';
+
+  @override
+  String get deleteForever => 'Delete permanently';
+
+  @override
+  String get emptyTrash => 'Empty Trash';
+
+  @override
+  String get trashTitle => 'Trash';
+
+  @override
+  String get trashEmpty => 'Trash is empty';
+
+  @override
+  String get permanentlyDeleted => 'Permanently deleted';
+
+  @override
+  String get restored => 'Restored';
+
+  @override
+  String movedToTrash(Object name) {
+    return 'Moved $name to trash';
+  }
+
+  @override
+  String operationFailed(Object message) {
+    return 'Operation failed: $message';
+  }
 }

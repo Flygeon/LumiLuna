@@ -10,6 +10,7 @@ import '../../providers/player_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/async_view.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/media_context_sheet.dart';
 import '../../widgets/media_grid_view.dart';
 import '../../widgets/media_list_view.dart';
 import '../player/image_viewer_screen.dart';
@@ -63,10 +64,20 @@ class MediaTypeScreen extends ConsumerWidget {
               ? MediaGridView(
                   items: items,
                   onTap: (i) => openMedia(context, ref, items, i),
+                  onLongPress: (i) => MediaContextSheet.show(
+                    context: context,
+                    item: items[i],
+                    ref: ref,
+                  ),
                 )
               : MediaListView(
                   items: items,
                   onTap: (i) => openMedia(context, ref, items, i),
+                  onLongPress: (i) => MediaContextSheet.show(
+                    context: context,
+                    item: items[i],
+                    ref: ref,
+                  ),
                 ),
         );
       },

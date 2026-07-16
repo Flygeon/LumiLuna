@@ -19,6 +19,9 @@ class MediaItem {
   /// Cached embedded cover-art image path (audio only), if artwork exists.
   final String? artworkPath;
 
+  /// Whether the user has marked this item as a favourite.
+  final bool isFavorite;
+
   const MediaItem({
     required this.path,
     required this.name,
@@ -30,6 +33,7 @@ class MediaItem {
     this.album,
     this.durationMs,
     this.artworkPath,
+    this.isFavorite = false,
   });
 
   /// The immediate parent directory path.
@@ -84,10 +88,13 @@ class MediaItem {
     String? album,
     int? durationMs,
     String? artworkPath,
+    bool? isFavorite,
+    String? name,
+    String? path,
   }) {
     return MediaItem(
-      path: path,
-      name: name,
+      path: path ?? this.path,
+      name: name ?? this.name,
       type: type,
       size: size,
       modified: modified,
@@ -96,6 +103,7 @@ class MediaItem {
       album: album ?? this.album,
       durationMs: durationMs ?? this.durationMs,
       artworkPath: artworkPath ?? this.artworkPath,
+      isFavorite: isFavorite ?? this.isFavorite,
     );
   }
 
@@ -114,6 +122,36 @@ class MediaItem {
     if (audio.contains(ext)) return MediaType.audio;
     return null;
   }
+
+  /// Serialize this item to a JSON-compatible map.
+  Map<String, dynamic> toJson() => {
+        'path': path,
+        'name': name,
+        'type': type.name,
+        'size': size,
+        'modified': modified.toIso8601String(),
+        'title': title,
+        'artist': artist,
+        'album': album,
+        'durationMs': durationMs,
+        'artworkPath': artworkPath,
+        'isFavorite': isFavorite,
+      };
+
+  /// Deserialize from a JSON map produced by [toJson].
+  factory MediaItem.fromJson(Map<String, dynamic> json) => MediaItem(
+        path: json['path'] as String,
+        name: json['name'] as String,
+        type: MediaType.values.byName(json['type'] as String),
+        size: json['size'] as int,
+        modified: DateTime.parse(json['modified'] as String),
+        title: json['title'] as String?,
+        artist: json['artist'] as String?,
+        album: json['album'] as String?,
+        durationMs: json['durationMs'] as int?,
+        artworkPath: json['artworkPath'] as String?,
+        isFavorite: (json['isFavorite'] as bool?) ?? false,
+      );
 
   @override
   bool operator ==(Object other) =>
