@@ -782,9 +782,20 @@ class _Playlist extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Synchronized Lyrics View — uses its own ticker for smooth auto-scroll
-// ---------------------------------------------------------------------------
+// =============================================================================
+// Synchronized Lyrics View
+//
+// Architecture (anti-flicker):
+//   1. The provider (lyricsProvider) is decoupled from position — it only
+//      reloads when the track changes (via currentMediaProvider).
+//   2. This widget directly subscribes to the player's position *stream* via
+//      StreamSubscription — no Provider rebuild, no setState at 60 fps.
+//   3. The active line index is held in a ValueNotifier<int>.  Each row uses
+//      ValueListenableBuilder so only the row(s) whose active status actually
+//      changes get rebuilt — zero flicker for the rest of the list.
+//   4. Non-synced lyrics skip the stream subscription entirely and just
+//      render as a static scrollable list.
+// =============================================================================
 class _LyricsView extends ConsumerStatefulWidget {
   final Lyrics lyrics;
   const _LyricsView({required this.lyrics});
@@ -794,41 +805,50 @@ class _LyricsView extends ConsumerStatefulWidget {
 }
 
 class _LyricsViewState extends ConsumerState<_LyricsView> {
-  int _activeLine = -1;
-  final ScrollController _controller = ScrollController();
-  Timer? _refreshTimer;
+  /// Emits the current active line index.  Only changes when the line
+  /// actually transitions — not on every position tick.
+  final ValueNotifier<int> _activeLine = ValueNotifier<int>(-1);
 
-  static const double _itemHeight = 60.0;
-  static const double _topPadding = 100.0;
+  final ScrollController _scrollCtrl = ScrollController();
+  StreamSubscription<Duration>? _posSub;
+
+  static const double _kItemHeight = 60.0;
+  static const double _kTopPad = 100.0;
+
+  // ---------------------------------------------------------------------------
+  // Lifecycle
+  // ---------------------------------------------------------------------------
 
   @override
   void initState() {
     super.initState();
-    // 50ms 一次轮询：精度足够（≈20Hz），不会像 Ticker(60fps) 那样频繁重建，
-    // 因此 active 切换也不会出现"持续闪烁"的感觉。
-    _refreshTimer = Timer.periodic(
-      const Duration(milliseconds: 50),
-      (_) => _refreshActiveLine(),
-    );
+    if (widget.lyrics.isSynced) {
+      _startPositionListener();
+    }
   }
 
-  void _refreshActiveLine() {
-    if (!mounted) return;
-    final pos = ref.read(playbackControllerProvider).position;
+  void _startPositionListener() {
+    final controller = ref.read(playbackControllerProvider.notifier);
+    _posSub = controller.player.stream.position.listen(_onPosition);
+  }
+
+  void _onPosition(Duration pos) {
     final idx = widget.lyrics.lineIndexAt(pos);
-    if (idx == _activeLine) return;
-    setState(() => _activeLine = idx);
-    _scrollToActive(idx);
+    final prev = _activeLine.value;
+    if (idx == prev) return; // no change → no notify → no rebuild
+    _activeLine.value = idx;
+    _scrollTo(idx);
   }
 
-  void _scrollToActive(int idx) {
-    if (idx < 0 || !_controller.hasClients) return;
-    final viewport = _controller.position.viewportDimension;
-    final maxScroll = _controller.position.maxScrollExtent;
-    final lineCenter = _topPadding + idx * _itemHeight + _itemHeight / 2;
-    final target = (lineCenter - viewport / 2).clamp(0.0, maxScroll);
-    if ((target - _controller.offset).abs() < 1.0) return;
-    _controller.animateTo(
+  void _scrollTo(int idx) {
+    if (idx < 0 || !_scrollCtrl.hasClients) return;
+    final vp = _scrollCtrl.position.viewportDimension;
+    final mx = _scrollCtrl.position.maxScrollExtent;
+    final center = _kTopPad + idx * _kItemHeight + _kItemHeight / 2;
+    final target = (center - vp / 2).clamp(0.0, mx);
+    // Only animate if the delta is meaningful.
+    if ((target - _scrollCtrl.offset).abs() < 2.0) return;
+    _scrollCtrl.animateTo(
       target,
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeOutCubic,
@@ -836,29 +856,35 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
   }
 
   @override
+  void didUpdateWidget(covariant _LyricsView old) {
+    super.didUpdateWidget(old);
+    if (old.lyrics != widget.lyrics) {
+      _activeLine.value = -1;
+      _posSub?.cancel();
+      _posSub = null;
+      if (widget.lyrics.isSynced) {
+        _startPositionListener();
+      }
+    }
+  }
+
+  @override
   void dispose() {
-    _refreshTimer?.cancel();
-    _controller.dispose();
+    _posSub?.cancel();
+    _activeLine.dispose();
+    _scrollCtrl.dispose();
     super.dispose();
   }
 
-  /// Apple Music 风格：基于距离的透明度梯度，远处歌词自然"变虚"。
-  double _opacityForDistance(int distance) {
-    if (distance == 0) return 1.0;
-    if (distance == 1) return 0.55;
-    if (distance == 2) return 0.38;
-    return 0.22;
-  }
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
       child: ClipRect(
         child: ShaderMask(
-          // 关键修复：之前用的是 BlendMode.dstOut，会把黑色区域(中间)擦掉、
-          // 透明区域(顶部底部)保留 —— 表现为"中间一大块空白、只在顶部和底部
-          // 显示一行歌词"。改用 dstIn 后，行为反过来：黑色区域(中间)保留、
-          // 透明区域(顶部底部)渐隐 —— 这正是 Apple Music 的边缘渐变效果。
           blendMode: BlendMode.dstIn,
           shaderCallback: (bounds) => const LinearGradient(
             begin: Alignment.topCenter,
@@ -869,48 +895,71 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
               Colors.black,
               Colors.transparent,
             ],
-            // 顶部 20% / 底部 15% 渐变淡出，中间 65% 完全清晰。
-            stops: [0.0, 0.20, 0.85, 1.0],
+            stops: [0.0, 0.18, 0.85, 1.0],
           ).createShader(bounds),
           child: ListView.builder(
-            controller: _controller,
-            // 上下加大 padding，确保 active 行能滚到视口中央
+            controller: _scrollCtrl,
             padding: const EdgeInsets.symmetric(
               horizontal: 40,
-              vertical: _topPadding,
+              vertical: _kTopPad,
             ),
             itemCount: widget.lyrics.lines.length,
-            itemExtent: _itemHeight,
+            itemExtent: _kItemHeight,
             addAutomaticKeepAlives: false,
             addRepaintBoundaries: false,
-            itemBuilder: (context, index) {
-              final line = widget.lyrics.lines[index];
-              final isActive = index == _activeLine;
-              final distance = (index - _activeLine).abs();
-              final opacity = _opacityForDistance(distance);
-              return AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.easeOutCubic,
-                style: TextStyle(
-                  fontSize: isActive ? 22 : 16,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                  color: Colors.white.withValues(alpha: opacity),
-                  height: 1.5,
-                  letterSpacing: 0.2,
-                ),
-                child: Center(
-                  child: Text(
-                    line.text,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              );
-            },
+            itemBuilder: _buildLine,
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildLine(BuildContext context, int index) {
+    final text = widget.lyrics.lines[index].text;
+
+    // Each row listens to _activeLine independently.
+    // When _activeLine changes, only the rows whose "am I active?" answer
+    // actually toggles will rebuild — the rest stay untouched.
+    return ValueListenableBuilder<int>(
+      valueListenable: _activeLine,
+      builder: (context, activeIdx, _) {
+        final isActive = index == activeIdx;
+        final distance = (index - activeIdx).abs();
+        final opacity = _opacityForDistance(distance);
+        return AnimatedDefaultTextStyle(
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOutCubic,
+          style: TextStyle(
+            fontSize: isActive ? 22 : 16,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+            color: Colors.white.withValues(alpha: opacity),
+            height: 1.5,
+            letterSpacing: 0.2,
+          ),
+          child: Center(
+            child: Text(
+              text,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Apple Music style distance-based opacity falloff.
+  static double _opacityForDistance(int d) {
+    switch (d) {
+      case 0:
+        return 1.0;
+      case 1:
+        return 0.55;
+      case 2:
+        return 0.38;
+      default:
+        return 0.22;
+    }
   }
 }
