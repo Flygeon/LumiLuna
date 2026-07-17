@@ -6,17 +6,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/l10n.dart';
 import '../models/media_item.dart';
 import '../providers/media_provider.dart';
+import '../providers/selection_provider.dart';
 import '../services/trash_manager.dart';
 
 /// Modal bottom sheet shown when the user long-presses a media item.
+///
+/// On mobile this is also where the "multi-select" entry-point lives: tap the
+/// "多选" tile to enter selection mode with this item pre-selected, instead
+/// of jumping straight into it.
 class MediaContextSheet {
   MediaContextSheet._();
 
   /// Display the sheet for [item] with actions that operate through [ref].
+  ///
+  /// [selectionId] scopes the multi-select provider to the current screen, so
+  /// the same item can be selected from different tabs without colliding.
   static void show({
     required BuildContext context,
     required MediaItem item,
     required WidgetRef ref,
+    String? selectionId,
   }) {
     final l10n = context.l10n;
     showModalBottomSheet(
@@ -53,6 +62,20 @@ class MediaContextSheet {
                   onTap: () {
                     Navigator.pop(ctx);
                     _locateInExplorer(item);
+                  },
+                ),
+              // Multi-select entry point — same behaviour as long-pressing the
+              // item in the grid: enter selection mode with this item ticked.
+              if (selectionId != null)
+                ListTile(
+                  leading: const Icon(Icons.check_box_outlined),
+                  title: const Text('多选'),
+                  subtitle: const Text('进入多选模式，可批量操作'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    ref
+                        .read(selectionProvider(selectionId).notifier)
+                        .startSelection({item.path});
                   },
                 ),
               ListTile(

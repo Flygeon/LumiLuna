@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -83,6 +86,7 @@ class _MediaTypeScreenState extends ConsumerState<MediaTypeScreen> {
                                   context: context,
                                   item: items[i],
                                   ref: ref,
+                                  selectionId: _selectionId,
                                 ),
                         selectedPaths: sel.selected,
                       )
@@ -96,6 +100,7 @@ class _MediaTypeScreenState extends ConsumerState<MediaTypeScreen> {
                                   context: context,
                                   item: items[i],
                                   ref: ref,
+                                  selectionId: _selectionId,
                                 ),
                         selectedPaths: sel.selected,
                       ),
@@ -125,6 +130,19 @@ class _MediaTypeScreenState extends ConsumerState<MediaTypeScreen> {
 
   void _onItemLongPress(List<MediaItem> items, int index) {
     final item = items[index];
+    // On mobile (no mouse) the user expects a context menu, just like the
+    // right-click menu on Windows. The menu has a "多选" entry-point so the
+    // user can still get into batch-selection mode intentionally.
+    // On desktop, keep the previous behaviour: long-press == enter selection.
+    if (!kIsWeb && !Platform.isWindows) {
+      MediaContextSheet.show(
+        context: context,
+        item: item,
+        ref: ref,
+        selectionId: _selectionId,
+      );
+      return;
+    }
     final notifier = ref.read(selectionProvider(_selectionId).notifier);
     if (!ref.read(selectionProvider(_selectionId)).isSelecting) {
       // Enter selection mode and select this item.

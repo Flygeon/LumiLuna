@@ -39,13 +39,19 @@ class SelectionNotifier extends StateNotifier<SelectionState> {
     state = const SelectionState();
   }
 
-  /// Toggle one item.
+  /// Toggle one item. When the last item is unchecked, the selection mode
+  /// exits automatically so the UI returns to its normal tap-to-open flow.
   void toggle(String path) {
     final next = Set<String>.from(state.selected);
     if (next.contains(path)) {
       next.remove(path);
     } else {
       next.add(path);
+    }
+    if (next.isEmpty) {
+      // All selections cleared — drop selection mode entirely.
+      endSelection();
+      return;
     }
     state = state.copyWith(selected: next);
   }
@@ -55,9 +61,9 @@ class SelectionNotifier extends StateNotifier<SelectionState> {
     state = state.copyWith(selected: Set.from(paths));
   }
 
-  /// Clear selection (stay in selection mode).
+  /// Clear selection. Exits selection mode so the next tap opens the item.
   void clearSelection() {
-    state = state.copyWith(selected: {});
+    endSelection();
   }
 }
 

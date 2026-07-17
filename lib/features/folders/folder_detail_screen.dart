@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -60,6 +63,7 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
                               context: context,
                               item: items[i],
                               ref: ref,
+                              selectionId: _selectionId,
                             ),
                     selectedPaths: sel.selected,
                   )
@@ -73,6 +77,7 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
                               context: context,
                               item: items[i],
                               ref: ref,
+                              selectionId: _selectionId,
                             ),
                     selectedPaths: sel.selected,
                   ),
@@ -93,6 +98,17 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
 
   void _onItemLongPress(List<MediaItem> items, int index) {
     final item = items[index];
+    // On mobile, long-press opens the context menu (the menu has a "多选"
+    // tile that lets the user enter batch-selection mode).
+    if (!kIsWeb && !Platform.isWindows) {
+      MediaContextSheet.show(
+        context: context,
+        item: item,
+        ref: ref,
+        selectionId: _selectionId,
+      );
+      return;
+    }
     final notifier = ref.read(selectionProvider(_selectionId).notifier);
     if (!ref.read(selectionProvider(_selectionId)).isSelecting) {
       notifier.startSelection({item.path});
