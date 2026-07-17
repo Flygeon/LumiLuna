@@ -10,13 +10,36 @@ import '../models/media_type.dart';
 import '../main.dart';
 import 'play_history_provider.dart';
 
+/// How the playlist advances when a track finishes.
+///
+/// [sequential] — stop at end of playlist (or wrap if media_kit's own mode is
+///                `loop`, but we do not enable that here).
+/// [loop]       — replay the current track forever.
+/// [shuffle]    — jump to a random track on completion.
+enum PlaybackMode {
+  sequential,
+  loop,
+  shuffle;
+
+  /// Advance to the next mode in the cycle.
+  PlaybackMode get next {
+    switch (this) {
+      case PlaybackMode.sequential:
+        return PlaybackMode.loop;
+      case PlaybackMode.loop:
+        return PlaybackMode.shuffle;
+      case PlaybackMode.shuffle:
+        return PlaybackMode.sequential;
+    }
+  }
+}
+
 /// Immutable snapshot of the current playback session.
 class PlaybackState {
   final List<MediaItem> playlist;
   final int index;
   final bool playing;
-  final bool looping;
-  final bool shuffling;
+  final PlaybackMode mode;
   final Duration position;
   final Duration duration;
   final double volume;
@@ -26,8 +49,7 @@ class PlaybackState {
     this.playlist = const [],
     this.index = -1,
     this.playing = false,
-    this.looping = false,
-    this.shuffling = false,
+    this.mode = PlaybackMode.sequential,
     this.position = Duration.zero,
     this.duration = Duration.zero,
     this.volume = 100,
@@ -43,12 +65,17 @@ class PlaybackState {
   bool get hasNext => index >= 0 && index < playlist.length - 1;
   bool get hasPrevious => index > 0;
 
+  /// True when the playlist is set to repeat the current track forever.
+  bool get looping => mode == PlaybackMode.loop;
+
+  /// True when the next track is picked at random.
+  bool get shuffling => mode == PlaybackMode.shuffle;
+
   PlaybackState copyWith({
     List<MediaItem>? playlist,
     int? index,
     bool? playing,
-    bool? looping,
-    bool? shuffling,
+    PlaybackMode? mode,
     Duration? position,
     Duration? duration,
     double? volume,
@@ -58,8 +85,7 @@ class PlaybackState {
       playlist: playlist ?? this.playlist,
       index: index ?? this.index,
       playing: playing ?? this.playing,
-      looping: looping ?? this.looping,
-      shuffling: shuffling ?? this.shuffling,
+      mode: mode ?? this.mode,
       position: position ?? this.position,
       duration: duration ?? this.duration,
       volume: volume ?? this.volume,
@@ -199,29 +225,46 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   }
 
   Future<void> toggleLoop() async {
-    final looping = !state.looping;
-    state = state.copyWith(looping: looping);
-    // When shuffling, PlaylistMode stays `none` so that `completed` fires and
-    // our shuffle logic handles auto-advance.  Only apply the user's loop
-    // preference when shuffle is off.
-    final mode = state.shuffling
-        ? PlaylistMode.none
-        : (looping ? PlaylistMode.loop : PlaylistMode.none);
-    await player.setPlaylistMode(mode);
+    final next = state.mode == PlaybackMode.loop
+        ? PlaybackMode.sequential
+        : PlaybackMode.loop;
+    await setMode(next);
   }
 
   /// Toggle shuffle on/off.  When on, PlaylistMode is forced to `none` so
   /// that track completion triggers our random-advance logic (loop mode would
   /// auto-advance sequentially and bypass shuffle).  The user's loop
-  /// preference is preserved in [PlaybackState.looping] and restored when
+  /// preference is preserved in [PlaybackState.mode] and restored when
   /// shuffle is turned off.
   Future<void> toggleShuffle() async {
-    final shuffling = !state.shuffling;
-    state = state.copyWith(shuffling: shuffling);
-    final mode = shuffling
-        ? PlaylistMode.none
-        : (state.looping ? PlaylistMode.loop : PlaylistMode.none);
-    await player.setPlaylistMode(mode);
+    final next = state.mode == PlaybackMode.shuffle
+        ? PlaybackMode.sequential
+        : PlaybackMode.shuffle;
+    await setMode(next);
+  }
+
+  /// Cycle to the next playback mode: sequential → loop → shuffle → …
+  Future<void> cyclePlayMode() => setMode(state.mode.next);
+
+  /// Set the playback mode and sync media_kit's playlist mode accordingly.
+  ///
+  /// Shuffle requires `PlaylistMode.none` so the `completed` event fires and
+  /// our random-advance logic runs.  Loop sets `PlaylistMode.loop` so
+  /// media_kit auto-restarts the current track.  Sequential uses `none` so
+  /// the playlist simply stops at the end (no auto-advance).
+  Future<void> setMode(PlaybackMode mode) async {
+    state = state.copyWith(mode: mode);
+    final PlaylistMode playlistMode;
+    switch (mode) {
+      case PlaybackMode.loop:
+        playlistMode = PlaylistMode.loop;
+        break;
+      case PlaybackMode.shuffle:
+      case PlaybackMode.sequential:
+        playlistMode = PlaylistMode.none;
+        break;
+    }
+    await player.setPlaylistMode(playlistMode);
   }
 
   Future<void> stop() async {

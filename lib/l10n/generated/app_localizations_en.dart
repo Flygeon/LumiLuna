@@ -92,13 +92,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notPlaying => 'Nothing playing';
 
   @override
-  String get loopTooltip => 'Loop';
+  String playModeTooltip(String mode) {
+    return 'Play mode: $mode';
+  }
 
   @override
-  String get shuffleTooltip => 'Shuffle';
+  String get playModeSequential => 'Sequential';
 
   @override
-  String get stopTooltip => 'Stop';
+  String get playModeLoop => 'Loop';
+
+  @override
+  String get playModeShuffle => 'Shuffle';
 
   @override
   String get playlist => 'Playlist';

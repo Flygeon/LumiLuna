@@ -29,9 +29,13 @@
 
   "nowPlaying": "正在播放",
   "notPlaying": "未在播放",
-  "loopTooltip": "循环播放",
-  "shuffleTooltip": "随机播放",
-  "stopTooltip": "停止",
+  "playModeTooltip": "播放模式：{mode}",
+  "@playModeTooltip": {
+    "placeholders": { "mode": { "type": "String" } }
+  },
+  "playModeSequential": "顺序播放",
+  "playModeLoop": "循环播放",
+  "playModeShuffle": "随机播放",
   "playlist": "播放列表",
 
   "videoTitle": "视频",
