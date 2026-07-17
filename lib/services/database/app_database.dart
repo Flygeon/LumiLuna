@@ -110,6 +110,16 @@ class ScanFolders extends Table {
   Set<Column> get primaryKey => {path};
 }
 
+@DataClassName('PlayHistoryRow')
+class PlayHistory extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get mediaPath => text().references(MediaItems, #path)();
+  TextColumn get playedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 // ---------------------------------------------------------------------------
 // Database class
 // ---------------------------------------------------------------------------
@@ -129,24 +139,26 @@ class ScanFolders extends Table {
     Playlists,
     PlaylistItems,
     ScanFolders,
+    PlayHistory,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
       onCreate: (m) async {
         await m.createAll();
-        // Enable foreign keys after creating all tables.
         await customStatement('PRAGMA foreign_keys = ON');
       },
       onUpgrade: (m, from, to) async {
-        // Future migrations go here.
+        if (from < 2) {
+          await m.createTable(playHistory);
+        }
       },
       beforeOpen: (details) async {
         await customStatement('PRAGMA foreign_keys = ON');
@@ -636,6 +648,32 @@ class AppDatabase extends _$AppDatabase {
       ScanFoldersCompanion(
           lastScanned: Value(DateTime.now().toIso8601String())),
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Play history DAO
+  // ---------------------------------------------------------------------------
+
+  Future<void> recordPlay(String mediaPath) async {
+    await into(playHistory).insert(PlayHistoryRow(
+      id: 0,
+      mediaPath: mediaPath,
+      playedAt: DateTime.now().toIso8601String(),
+    ));
+  }
+
+  Future<List<MediaItem>> getPlayHistory({int limit = 100, int offset = 0}) async {
+    final query = select(playHistory).join([
+      innerJoin(mediaItems, mediaItems.path.equalsExp(playHistory.mediaPath)),
+    ])
+      ..orderBy([OrderingTerm(expression: playHistory.playedAt, mode: OrderingMode.desc)])
+      ..limit(limit, offset: offset);
+    final rows = await query.get();
+    return rows.map((r) => _mediaItemFromRow(r.readTable(mediaItems))).toList();
+  }
+
+  Future<void> clearPlayHistory() async {
+    await delete(playHistory).go();
   }
 
   // ---------------------------------------------------------------------------

@@ -14,6 +14,7 @@ import '../../widgets/mini_player_capsule.dart';
 import '../collections/collection_list_screen.dart';
 import '../folders/folders_screen.dart';
 import '../favorites/favorites_screen.dart';
+import '../history/play_history_screen.dart';
 import '../media/media_type_screen.dart';
 import '../playlists/playlist_list_screen.dart';
 import '../settings/settings_screen.dart';
@@ -124,6 +125,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Navigator.of(ctx).pop();
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const PlaylistListScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.history),
+              title: Text(context.l10n.playHistory),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (_) => const PlayHistoryScreen()),
                 );
               },
             ),
@@ -267,13 +279,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             if (_dragging)
               Positioned.fill(
                 child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withValues(alpha: 0.12)),
-                    child: Center(child: Text(context.l10n.dropFilesHere)),
+                  child: ColoredBox(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.85),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.cloud_upload_outlined,
+                              size: 64,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimary),
+                          const SizedBox(height: 16),
+                          Text(
+                            context.l10n.dropFilesHere,
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimary),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),

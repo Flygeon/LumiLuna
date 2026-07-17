@@ -93,5 +93,10 @@
   "favoritesEmptyHint": "Right-click any file and select \"Favorite\" to add it here.",
   "dropFilesHere": "Release to import media files",
   "importedFiles": "Imported {count} media files",
-  "importSkippedDuplicates": "Imported {imported} files and skipped {duplicates} duplicates"
+  "importSkippedDuplicates": "Imported {imported} files and skipped {duplicates} duplicates",
+  "playHistory": "Play History",
+  "playHistoryEmpty": "No play history yet",
+  "playHistoryEmptyHint": "Media files you play will appear here.",
+  "clearHistoryConfirmTitle": "Clear Play History",
+  "clearHistoryConfirmBody": "Are you sure you want to clear all play records? This action cannot be undone."
 }

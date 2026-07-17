@@ -274,4 +274,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String importSkippedDuplicates(Object duplicates, Object imported) {
     return '已导入 $imported 个文件，跳过 $duplicates 个重复文件';
   }
+
+  @override
+  String get playHistory => '播放历史';
+
+  @override
+  String get playHistoryEmpty => '暂无播放记录';
+
+  @override
+  String get playHistoryEmptyHint => '播放过的媒体文件会显示在这里。';
+
+  @override
+  String get clearHistoryConfirmTitle => '清空播放历史';
+
+  @override
+  String get clearHistoryConfirmBody => '确定清空所有播放记录？此操作不可撤销。';
 }

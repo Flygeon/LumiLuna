@@ -583,6 +583,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Imported {imported} files and skipped {duplicates} duplicates'**
   String importSkippedDuplicates(Object duplicates, Object imported);
+
+  /// No description provided for @playHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Play History'**
+  String get playHistory;
+
+  /// No description provided for @playHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No play history yet'**
+  String get playHistoryEmpty;
+
+  /// No description provided for @playHistoryEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Media files you play will appear here.'**
+  String get playHistoryEmptyHint;
+
+  /// No description provided for @clearHistoryConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Play History'**
+  String get clearHistoryConfirmTitle;
+
+  /// No description provided for @clearHistoryConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to clear all play records? This action cannot be undone.'**
+  String get clearHistoryConfirmBody;
 }
 
 class _AppLocalizationsDelegate

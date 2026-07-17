@@ -93,5 +93,10 @@
   "favoritesEmptyHint": "右键点击任意文件，选择「收藏」即可将其添加到这里。",
   "dropFilesHere": "松开鼠标即可导入媒体文件",
   "importedFiles": "已导入 {count} 个媒体文件",
-  "importSkippedDuplicates": "已导入 {imported} 个文件，跳过 {duplicates} 个重复文件"
+  "importSkippedDuplicates": "已导入 {imported} 个文件，跳过 {duplicates} 个重复文件",
+  "playHistory": "播放历史",
+  "playHistoryEmpty": "暂无播放记录",
+  "playHistoryEmptyHint": "播放过的媒体文件会显示在这里。",
+  "clearHistoryConfirmTitle": "清空播放历史",
+  "clearHistoryConfirmBody": "确定清空所有播放记录？此操作不可撤销。"
 }
