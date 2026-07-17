@@ -5,11 +5,14 @@ import '../services/lyrics_service.dart';
 import 'player_provider.dart';
 
 /// Lyrics for the currently playing audio track.
+///
+/// IMPORTANT: This provider depends on [currentMediaProvider] (a lightweight
+/// selector that ONLY changes when the current track changes), NOT on the
+/// full [playbackControllerProvider] which fires on every position tick.
+/// This prevents lyrics from being reloaded/rebuild every frame.
 final lyricsProvider = FutureProvider<Lyrics?>((ref) async {
-  final state = ref.watch(playbackControllerProvider);
-  final current = state.current;
+  final current = ref.watch(currentMediaProvider);
   if (current == null) return null;
-  // Only audio tracks can have lyrics.
   if (current.type.name != 'audio') return null;
   return LyricsService.load(current.path);
 });

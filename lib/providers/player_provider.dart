@@ -186,3 +186,13 @@ final playbackControllerProvider =
     );
   },
 );
+
+/// Lightweight provider that only changes when the *current track identity*
+/// changes (track path).  It does NOT fire on position ticks, volume changes,
+/// or play/pause toggles — making it safe for lyrics / artwork / metadata
+/// providers that should not rebuild 60 times per second.
+final currentMediaProvider = Provider<MediaItem?>((ref) {
+  return ref.watch(
+    playbackControllerProvider.select((s) => s.current),
+  );
+});
