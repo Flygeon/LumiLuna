@@ -113,7 +113,15 @@ class TrashManager {
       final unique = '${DateTime.now().millisecondsSinceEpoch}_${_randomString(6)}';
       final ext = item.extension.isNotEmpty ? '.${item.extension}' : '';
       final dest = '${trash.path}${Platform.pathSeparator}$unique$ext';
-      await file.rename(dest);
+      // On Android (scoped storage) and some Windows edge cases, File.rename
+      // fails across storage volumes / restricted directories.  Fall back to
+      // copy + delete so the operation still succeeds.
+      try {
+        await file.rename(dest);
+      } catch (_) {
+        await file.copy(dest);
+        await file.delete();
+      }
 
       final entry = TrashEntry(
         originalPath: item.path,

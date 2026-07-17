@@ -29,9 +29,13 @@
 
   "nowPlaying": "Now Playing",
   "notPlaying": "Nothing playing",
-  "loopTooltip": "Loop",
-  "shuffleTooltip": "Shuffle",
-  "stopTooltip": "Stop",
+  "playModeTooltip": "Play mode: {mode}",
+  "@playModeTooltip": {
+    "placeholders": { "mode": { "type": "String" } }
+  },
+  "playModeSequential": "Sequential",
+  "playModeLoop": "Loop",
+  "playModeShuffle": "Shuffle",
   "playlist": "Playlist",
 
   "videoTitle": "Video",

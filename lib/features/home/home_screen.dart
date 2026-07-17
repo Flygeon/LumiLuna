@@ -192,6 +192,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final isGrid = ref.watch(settingsProvider.select((s) => s.isGridView));
+    // Read sort state via select so that HomeScreen only rebuilds when the
+    // sort fields actually change — not on every settings mutation
+    // (e.g. favourite toggles, view-mode switches).
+    final sortMode =
+        ref.watch(settingsProvider.select((s) => s.mediaSortMode));
+    final sortAscending =
+        ref.watch(settingsProvider.select((s) => s.mediaSortAscending));
 
     return Scaffold(
       appBar: AppBar(
@@ -242,7 +249,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             PopupMenuButton<MediaSortMode>(
               tooltip: l10n.sort,
               icon: const Icon(Icons.sort),
-              initialValue: ref.watch(settingsProvider).mediaSortMode,
+              initialValue: sortMode,
               onSelected: ref.read(settingsProvider.notifier).setMediaSortMode,
               itemBuilder: (_) => [
                 PopupMenuItem(
@@ -264,10 +271,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ],
             ),
             IconButton(
-              tooltip: ref.watch(settingsProvider).mediaSortAscending
-                  ? l10n.sortAscending
-                  : l10n.sortDescending,
-              icon: Icon(ref.watch(settingsProvider).mediaSortAscending
+              tooltip: sortAscending ? l10n.sortAscending : l10n.sortDescending,
+              icon: Icon(sortAscending
                   ? Icons.arrow_upward
                   : Icons.arrow_downward),
               onPressed:

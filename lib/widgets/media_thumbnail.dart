@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fc_native_video_thumbnail/fc_native_video_thumbnail.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../core/constants/app_constants.dart';
@@ -114,15 +115,23 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
   Future<void> _loadFromDiskCache() async {
     try {
       final base = await getTemporaryDirectory();
-      final dir = Directory('${base.path}/lumiluna_thumbs');
+      // Use package:path join so the path separator is correct on every
+      // platform (Windows uses '\', POSIX uses '/').  Mixing them — as the
+      // previous string interpolation did — produced paths that *usually*
+      // worked on Windows but could confuse File.exists() in some edge
+      // cases, contributing to thumbnail-state flicker on sort.
+      final dir = Directory(p.join(base.path, 'lumiluna_thumbs'));
       if (!await dir.exists()) return;
       final key = _cacheKey(widget.item);
-      final dest = '${dir.path}${Platform.pathSeparator}$key.jpg';
+      final dest = p.join(dir.path, '$key.jpg');
       if (await File(dest).exists() && mounted) {
         setState(() => _thumbPath = dest);
       }
-    } catch (_) {
-      // ignore
+    } catch (e, st) {
+      // Surface cache-load errors instead of swallowing them silently — a
+      // silent failure here is exactly what made the grey-screen bug on
+      // Windows impossible to diagnose.
+      debugPrint('_loadFromDiskCache failed: $e\n$st');
     }
   }
 
@@ -157,16 +166,18 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
       final path = await (_pending[key] ??= _generateThumbnail(widget.item)
           .whenComplete(() => _pending.remove(key)));
       if (mounted && path != null) setState(() => _thumbPath = path);
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('_VideoThumbnail._generate failed for ${widget.item.path}: $e\n$st');
+    }
   }
 
   static Future<String?> _generateThumbnail(MediaItem item) async {
     try {
       final cacheDir = await getTemporaryDirectory();
-      final thumbDir = Directory('${cacheDir.path}/lumiluna_thumbs');
+      final thumbDir = Directory(p.join(cacheDir.path, 'lumiluna_thumbs'));
       await thumbDir.create(recursive: true);
       final key = _cacheKey(item);
-      final dest = '${thumbDir.path}${Platform.pathSeparator}$key.jpg';
+      final dest = p.join(thumbDir.path, '$key.jpg');
 
       if (await File(dest).exists()) return dest;
 
@@ -179,7 +190,8 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
         quality: 80,
       );
       return ok ? dest : null;
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('_generateThumbnail failed for ${item.path}: $e\n$st');
       return null;
     }
   }

@@ -7,6 +7,12 @@ import 'media_thumbnail.dart';
 
 /// Responsive grid of media items. Column count adapts to available width so
 /// the layout works from phones to wide desktop windows.
+///
+/// Each tile is wrapped in a [RepaintBoundary] so that re-sorting the list
+/// (which causes every tile's index to change) only repaints the tiles that
+/// actually need to repaint — not the entire grid.  This also prevents any
+/// paint-phase exception in one tile from cascading into a grey-screen for
+/// the whole grid.
 class MediaGridView extends StatelessWidget {
   final List<MediaItem> items;
   final void Function(int index) onTap;
@@ -43,18 +49,23 @@ class MediaGridView extends StatelessWidget {
             childAspectRatio: 1,
           ),
           itemCount: items.length,
-          // Stable key preserves widget state across rebuilds.
-          itemBuilder: (context, index) => _GridTile(
+          // Each tile gets its own RepaintBoundary so that paint work is
+          // isolated per-tile.  Combined with the stable ValueKey, this means
+          // re-sorting the list never repaints tiles whose content hasn't
+          // changed — eliminating the visual flicker / grey-screen after sort.
+          itemBuilder: (context, index) => RepaintBoundary(
             key: ValueKey(items[index].path),
-            item: items[index],
-            selected: selectedPaths.contains(items[index].path),
-            onTap: () => onTap(index),
-            onSecondaryTap: onSecondaryTap != null
-                ? () => onSecondaryTap!(index)
-                : null,
-            onLongPress: onLongPress != null
-                ? () => onLongPress!(index)
-                : null,
+            child: _GridTile(
+              item: items[index],
+              selected: selectedPaths.contains(items[index].path),
+              onTap: () => onTap(index),
+              onSecondaryTap: onSecondaryTap != null
+                  ? () => onSecondaryTap!(index)
+                  : null,
+              onLongPress: onLongPress != null
+                  ? () => onLongPress!(index)
+                  : null,
+            ),
           ),
         );
       },
@@ -70,7 +81,6 @@ class _GridTile extends StatelessWidget {
   final VoidCallback? onLongPress;
 
   const _GridTile({
-    super.key,
     required this.item,
     this.selected = false,
     required this.onTap,

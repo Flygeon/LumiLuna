@@ -90,13 +90,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notPlaying => '未在播放';
 
   @override
-  String get loopTooltip => '循环播放';
+  String playModeTooltip(String mode) {
+    return '播放模式：$mode';
+  }
 
   @override
-  String get shuffleTooltip => '随机播放';
+  String get playModeSequential => '顺序播放';
 
   @override
-  String get stopTooltip => '停止';
+  String get playModeLoop => '循环播放';
+
+  @override
+  String get playModeShuffle => '随机播放';
 
   @override
   String get playlist => '播放列表';

@@ -248,23 +248,29 @@ abstract class AppLocalizations {
   /// **'Nothing playing'**
   String get notPlaying;
 
-  /// No description provided for @loopTooltip.
+  /// No description provided for @playModeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Play mode: {mode}'**
+  String playModeTooltip(String mode);
+
+  /// No description provided for @playModeSequential.
+  ///
+  /// In en, this message translates to:
+  /// **'Sequential'**
+  String get playModeSequential;
+
+  /// No description provided for @playModeLoop.
   ///
   /// In en, this message translates to:
   /// **'Loop'**
-  String get loopTooltip;
+  String get playModeLoop;
 
-  /// No description provided for @shuffleTooltip.
+  /// No description provided for @playModeShuffle.
   ///
   /// In en, this message translates to:
   /// **'Shuffle'**
-  String get shuffleTooltip;
-
-  /// No description provided for @stopTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Stop'**
-  String get stopTooltip;
+  String get playModeShuffle;
 
   /// No description provided for @playlist.
   ///

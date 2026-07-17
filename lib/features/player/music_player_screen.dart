@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/format_utils.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../l10n/l10n.dart';
 import '../../models/media_item.dart';
 import '../../providers/lyrics_provider.dart';
@@ -30,7 +33,15 @@ class MusicPlayerScreen extends ConsumerWidget {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
+    final player = _PlayerKeyboardShortcuts(
+      enabled: _isDesktop,
+      onTogglePlay: controller.playOrPause,
+      onPrevious: controller.previous,
+      onNext: controller.next,
+      hasCurrent: state.current != null,
+      hasPrev: state.index > 0,
+      hasNext: state.current != null && state.index < state.playlist.length - 1,
+      child: Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -86,7 +97,21 @@ class MusicPlayerScreen extends ConsumerWidget {
                 ),
               ],
             ),
+    ),
     );
+
+    return player;
+  }
+
+  /// True when shortcuts should be active.  Only the Windows / macOS / Linux
+  /// desktop builds enable keyboard control — phones and tablets have no
+  /// physical keyboard and we want the Space key to keep its default
+  /// behaviour in the seek slider / playlist etc.
+  static bool get _isDesktop {
+    if (kIsWeb) return false;
+    return defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.linux;
   }
 
   Widget _buildBackground(MediaItem item, ColorScheme scheme) {
@@ -117,16 +142,14 @@ class MusicPlayerScreen extends ConsumerWidget {
 class _PlaybackSummary {
   final MediaItem? current;
   final double rate;
-  final bool looping;
-  final bool shuffling;
+  final PlaybackMode mode;
   final int index;
   final List<MediaItem> playlist;
 
   const _PlaybackSummary({
     this.current,
     required this.rate,
-    required this.looping,
-    required this.shuffling,
+    required this.mode,
     required this.index,
     required this.playlist,
   });
@@ -134,8 +157,7 @@ class _PlaybackSummary {
   static _PlaybackSummary fromState(PlaybackState s) => _PlaybackSummary(
         current: s.current,
         rate: s.rate,
-        looping: s.looping,
-        shuffling: s.shuffling,
+        mode: s.mode,
         index: s.index,
         playlist: s.playlist,
       );
@@ -145,8 +167,7 @@ class _PlaybackSummary {
       o is _PlaybackSummary &&
       o.current?.path == current?.path &&
       o.rate == rate &&
-      o.looping == looping &&
-      o.shuffling == shuffling &&
+      o.mode == mode &&
       o.index == index &&
       o.playlist.length == playlist.length &&
       (o.playlist.isEmpty ||
@@ -154,8 +175,7 @@ class _PlaybackSummary {
           o.playlist.first.path == playlist.first.path);
 
   @override
-  int get hashCode =>
-      Object.hash(current?.path, rate, looping, shuffling, index);
+  int get hashCode => Object.hash(current?.path, rate, mode, index);
 }
 
 // ---------------------------------------------------------------------------
@@ -185,6 +205,11 @@ class _NarrowLayout extends ConsumerStatefulWidget {
 class _NarrowLayoutState extends ConsumerState<_NarrowLayout> {
   bool _showLyricsOverlay = false;
   final PageController _pageController = PageController();
+
+  void _closeLyricsOverlay() {
+    if (!_showLyricsOverlay) return;
+    setState(() => _showLyricsOverlay = false);
+  }
 
   @override
   void dispose() {
@@ -218,9 +243,19 @@ class _NarrowLayoutState extends ConsumerState<_NarrowLayout> {
                         () => _showLyricsOverlay = !_showLyricsOverlay)
                     : null,
                 child: _showLyricsOverlay && hasLyrics
-                    ? _LyricsPanel(
-                        lyricsAsync: lyricsAsync,
-                        translationAsync: translationAsync,
+                    ? _LyricsOverlay(
+                        // Wrap LyricView in a Listener that closes the
+                        // overlay on a *quick tap*.  A `Listener` sees raw
+                        // pointer events without participating in the
+                        // gesture arena, so it does NOT consume the events
+                        // — the LyricView's own GestureDetector still wins
+                        // and handles taps-to-seek, vertical-drag scroll,
+                        // and the long-press selection.
+                        onTapUp: _closeLyricsOverlay,
+                        child: _LyricsPanel(
+                          lyricsAsync: lyricsAsync,
+                          translationAsync: translationAsync,
+                        ),
                       )
                     : Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -687,7 +722,9 @@ class _SeekState {
 }
 
 // ---------------------------------------------------------------------------
-// Playback Controls — Material Design style with ripple, includes shuffle
+// Playback Controls — Material Design style with ripple.  A single button
+// cycles through sequential → loop → shuffle modes; the stop button has
+// been removed.
 // ---------------------------------------------------------------------------
 class _Controls extends ConsumerWidget {
   const _Controls();
@@ -698,8 +735,7 @@ class _Controls extends ConsumerWidget {
       playbackControllerProvider.select(
         (s) => _ControlState(
           playing: s.playing,
-          looping: s.looping,
-          shuffling: s.shuffling,
+          mode: s.mode,
           rate: s.rate,
           hasPrev: s.hasPrevious,
           hasNext: s.hasNext,
@@ -713,24 +749,11 @@ class _Controls extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Shuffle
-        IconButton(
-          tooltip: l10n.shuffleTooltip,
-          isSelected: state.shuffling,
-          icon: Icon(Icons.shuffle,
-              color: Colors.white.withValues(alpha: 0.5)),
-          selectedIcon: const Icon(Icons.shuffle, color: Colors.white),
-          onPressed: controller.toggleShuffle,
-        ),
-        const SizedBox(width: 4),
-        // Loop
-        IconButton(
-          tooltip: l10n.loopTooltip,
-          isSelected: state.looping,
-          icon: Icon(Icons.repeat,
-              color: Colors.white.withValues(alpha: 0.5)),
-          selectedIcon: const Icon(Icons.repeat, color: Colors.white),
-          onPressed: controller.toggleLoop,
+        // Combined play-mode button (sequential / loop / shuffle)
+        _PlayModeButton(
+          mode: state.mode,
+          onCycle: controller.cyclePlayMode,
+          l10n: l10n,
         ),
         const SizedBox(width: 8),
         // Previous
@@ -769,14 +792,50 @@ class _Controls extends ConsumerWidget {
         const SizedBox(width: 4),
         // Speed selector
         _SpeedButton(rate: state.rate, onSelected: controller.setRate),
-        const SizedBox(width: 4),
-        // Stop
-        IconButton(
-          tooltip: l10n.stopTooltip,
-          icon: Icon(Icons.stop, color: Colors.white.withValues(alpha: 0.5)),
-          onPressed: state.hasCurrent ? controller.stop : null,
-        ),
       ],
+    );
+  }
+}
+
+/// Single button that cycles through sequential → loop → shuffle.  Visual
+/// state is encoded both by the icon and by its opacity (sequential is the
+/// dim "off" state, the other two are highlighted).
+class _PlayModeButton extends StatelessWidget {
+  final PlaybackMode mode;
+  final Future<void> Function() onCycle;
+  final AppLocalizations l10n;
+
+  const _PlayModeButton({
+    required this.mode,
+    required this.onCycle,
+    required this.l10n,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, label, active) = switch (mode) {
+      PlaybackMode.sequential => (
+        Icons.repeat,
+        l10n.playModeSequential,
+        false,
+      ),
+      PlaybackMode.loop => (
+        Icons.repeat_one,
+        l10n.playModeLoop,
+        true,
+      ),
+      PlaybackMode.shuffle => (
+        Icons.shuffle,
+        l10n.playModeShuffle,
+        true,
+      ),
+    };
+    return IconButton(
+      tooltip: l10n.playModeTooltip(label),
+      isSelected: active,
+      icon: Icon(icon, color: Colors.white.withValues(alpha: 0.5)),
+      selectedIcon: Icon(icon, color: Colors.white),
+      onPressed: onCycle,
     );
   }
 }
@@ -810,8 +869,7 @@ class _SpeedButton extends StatelessWidget {
 
 class _ControlState {
   final bool playing;
-  final bool looping;
-  final bool shuffling;
+  final PlaybackMode mode;
   final double rate;
   final bool hasPrev;
   final bool hasNext;
@@ -819,8 +877,7 @@ class _ControlState {
 
   const _ControlState({
     required this.playing,
-    required this.looping,
-    required this.shuffling,
+    required this.mode,
     required this.rate,
     required this.hasPrev,
     required this.hasNext,
@@ -831,8 +888,7 @@ class _ControlState {
   bool operator ==(Object o) =>
       o is _ControlState &&
       o.playing == playing &&
-      o.looping == looping &&
-      o.shuffling == shuffling &&
+      o.mode == mode &&
       o.rate == rate &&
       o.hasPrev == hasPrev &&
       o.hasNext == hasNext &&
@@ -840,7 +896,7 @@ class _ControlState {
 
   @override
   int get hashCode =>
-      Object.hash(playing, looping, shuffling, rate, hasPrev, hasNext, hasCurrent);
+      Object.hash(playing, mode, rate, hasPrev, hasNext, hasCurrent);
 }
 
 // ---------------------------------------------------------------------------
@@ -1079,6 +1135,112 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
         style: _style,
         width: double.infinity,
         height: double.infinity,
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Lyrics Overlay wrapper — captures raw pointer events to distinguish a quick
+// tap (close the overlay) from a swipe (let the LyricView handle scrolling).
+//
+// `Listener` does NOT participate in the gesture arena, so it does not steal
+// taps from the LyricView's internal GestureDetector — taps-to-seek and the
+// vertical-drag scroll continue to work exactly as before.
+// =============================================================================
+class _LyricsOverlay extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTapUp;
+
+  const _LyricsOverlay({
+    required this.child,
+    required this.onTapUp,
+  });
+
+  @override
+  State<_LyricsOverlay> createState() => _LyricsOverlayState();
+}
+
+class _LyricsOverlayState extends State<_LyricsOverlay> {
+  Offset? _downPos;
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: (event) {
+        _downPos = event.localPosition;
+      },
+      onPointerUp: (event) {
+        final start = _downPos;
+        _downPos = null;
+        if (start == null) return;
+        // If the pointer barely moved between down and up, treat it as a
+        // tap and close the overlay.  Otherwise the user was swiping the
+        // lyrics and we leave the overlay open.
+        final moved = (event.localPosition - start).distance;
+        if (moved < 10) {
+          widget.onTapUp();
+        }
+      },
+      onPointerCancel: (_) => _downPos = null,
+      child: widget.child,
+    );
+  }
+}
+
+// =============================================================================
+// Windows keyboard shortcuts: Space = play/pause, ←/→ = previous/next.
+//
+// Wraps the screen in a `Focus` + `CallbackShortcuts` pair.  `autofocus: true`
+// so the player claims focus as soon as the screen opens and the shortcuts
+// work without an extra click.  `CallbackShortcuts` consumes the bound key
+// events before they propagate to descendants, which is exactly what we want
+// here — the player screen has no other widgets that need Space / ← / →.
+// =============================================================================
+class _PlayerKeyboardShortcuts extends StatelessWidget {
+  final Widget child;
+  final bool enabled;
+  final Future<void> Function() onTogglePlay;
+  final Future<void> Function() onPrevious;
+  final Future<void> Function() onNext;
+  final bool hasCurrent;
+  final bool hasPrev;
+  final bool hasNext;
+
+  const _PlayerKeyboardShortcuts({
+    required this.child,
+    required this.enabled,
+    required this.onTogglePlay,
+    required this.onPrevious,
+    required this.onNext,
+    required this.hasCurrent,
+    required this.hasPrev,
+    required this.hasNext,
+  });
+
+  static final _playPause = SingleActivator(LogicalKeyboardKey.space);
+  static final _previous = SingleActivator(LogicalKeyboardKey.arrowLeft);
+  static final _next = SingleActivator(LogicalKeyboardKey.arrowRight);
+
+  @override
+  Widget build(BuildContext context) {
+    if (!enabled) return child;
+    return Focus(
+      autofocus: true,
+      child: CallbackShortcuts(
+        bindings: {
+          _playPause: () {
+            if (hasCurrent) onTogglePlay();
+          },
+          _previous: () {
+            if (hasPrev) onPrevious();
+          },
+          _next: () {
+            if (hasNext) onNext();
+          },
+        },
+        child: child,
       ),
     );
   }
