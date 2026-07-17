@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -792,80 +793,122 @@ class _LyricsView extends ConsumerStatefulWidget {
   ConsumerState<_LyricsView> createState() => _LyricsViewState();
 }
 
-class _LyricsViewState extends ConsumerState<_LyricsView>
-    with SingleTickerProviderStateMixin {
+class _LyricsViewState extends ConsumerState<_LyricsView> {
   int _activeLine = -1;
   final ScrollController _controller = ScrollController();
-  // ignore: prefer_typing_uninitialized_variables
-  late final _ticker;
+  Timer? _refreshTimer;
+
+  static const double _itemHeight = 60.0;
+  static const double _topPadding = 100.0;
 
   @override
   void initState() {
     super.initState();
-    _ticker = createTicker(_onTick)..start();
+    // 50ms 一次轮询：精度足够（≈20Hz），不会像 Ticker(60fps) 那样频繁重建，
+    // 因此 active 切换也不会出现"持续闪烁"的感觉。
+    _refreshTimer = Timer.periodic(
+      const Duration(milliseconds: 50),
+      (_) => _refreshActiveLine(),
+    );
   }
 
-  void _onTick(Duration elapsed) {
+  void _refreshActiveLine() {
+    if (!mounted) return;
     final pos = ref.read(playbackControllerProvider).position;
     final idx = widget.lyrics.lineIndexAt(pos);
     if (idx == _activeLine) return;
     setState(() => _activeLine = idx);
-    if (idx >= 0 && _controller.hasClients) {
-      final target =
-          (idx * 60.0) - (_controller.position.viewportDimension / 2) + 30;
-      _controller.animateTo(
-        target.clamp(0.0, _controller.position.maxScrollExtent),
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeOutCubic,
-      );
-    }
+    _scrollToActive(idx);
+  }
+
+  void _scrollToActive(int idx) {
+    if (idx < 0 || !_controller.hasClients) return;
+    final viewport = _controller.position.viewportDimension;
+    final maxScroll = _controller.position.maxScrollExtent;
+    final lineCenter = _topPadding + idx * _itemHeight + _itemHeight / 2;
+    final target = (lineCenter - viewport / 2).clamp(0.0, maxScroll);
+    if ((target - _controller.offset).abs() < 1.0) return;
+    _controller.animateTo(
+      target,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   @override
   void dispose() {
-    _ticker.dispose();
+    _refreshTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
+  /// Apple Music 风格：基于距离的透明度梯度，远处歌词自然"变虚"。
+  double _opacityForDistance(int distance) {
+    if (distance == 0) return 1.0;
+    if (distance == 1) return 0.55;
+    if (distance == 2) return 0.38;
+    return 0.22;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ClipRect(
-      child: ShaderMask(
-        shaderCallback: (bounds) => LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.transparent, Colors.black, Colors.black, Colors.transparent],
-          stops: const [0.0, 0.08, 0.92, 1.0],
-        ).createShader(bounds),
-        blendMode: BlendMode.dstOut,
-        child: ListView.builder(
-          controller: _controller,
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-          itemCount: widget.lyrics.lines.length,
-          itemExtent: 60,
-          addAutomaticKeepAlives: false,
-          addRepaintBoundaries: false,
-          itemBuilder: (context, index) {
-            final line = widget.lyrics.lines[index];
-            final isActive = index == _activeLine;
-            return AnimatedOpacity(
-              duration: const Duration(milliseconds: 200),
-              opacity: isActive ? 1.0 : 0.45,
-              child: Text(
-                line.text,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+    return RepaintBoundary(
+      child: ClipRect(
+        child: ShaderMask(
+          // 关键修复：之前用的是 BlendMode.dstOut，会把黑色区域(中间)擦掉、
+          // 透明区域(顶部底部)保留 —— 表现为"中间一大块空白、只在顶部和底部
+          // 显示一行歌词"。改用 dstIn 后，行为反过来：黑色区域(中间)保留、
+          // 透明区域(顶部底部)渐隐 —— 这正是 Apple Music 的边缘渐变效果。
+          blendMode: BlendMode.dstIn,
+          shaderCallback: (bounds) => const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              Colors.black,
+              Colors.black,
+              Colors.transparent,
+            ],
+            // 顶部 20% / 底部 15% 渐变淡出，中间 65% 完全清晰。
+            stops: [0.0, 0.20, 0.85, 1.0],
+          ).createShader(bounds),
+          child: ListView.builder(
+            controller: _controller,
+            // 上下加大 padding，确保 active 行能滚到视口中央
+            padding: const EdgeInsets.symmetric(
+              horizontal: 40,
+              vertical: _topPadding,
+            ),
+            itemCount: widget.lyrics.lines.length,
+            itemExtent: _itemHeight,
+            addAutomaticKeepAlives: false,
+            addRepaintBoundaries: false,
+            itemBuilder: (context, index) {
+              final line = widget.lyrics.lines[index];
+              final isActive = index == _activeLine;
+              final distance = (index - _activeLine).abs();
+              final opacity = _opacityForDistance(distance);
+              return AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOutCubic,
                 style: TextStyle(
-                  fontSize: isActive ? 20 : 15,
+                  fontSize: isActive ? 22 : 16,
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                  color: Colors.white,
+                  color: Colors.white.withValues(alpha: opacity),
                   height: 1.5,
+                  letterSpacing: 0.2,
                 ),
-              ),
-            );
-          },
+                child: Center(
+                  child: Text(
+                    line.text,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
