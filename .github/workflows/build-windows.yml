@@ -101,3 +101,68 @@ jobs:
           name: lumiluna-android-x86_64
           path: build/app/outputs/flutter-apk/app-x86_64-release.apk
           retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # Release (only on push to master/main or manual dispatch)
+  # ---------------------------------------------------------------------------
+  release:
+    name: Create Release
+    needs: [build-windows, build-android]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Read app version
+        id: version
+        run: |
+          echo "version=$(grep '^version: ' pubspec.yaml | sed 's/version: //')" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Download Windows build
+        uses: actions/download-artifact@v4
+        with:
+          name: lumiluna-windows
+          path: release/windows
+
+      - name: Download Android APK (arm64-v8a)
+        uses: actions/download-artifact@v4
+        with:
+          name: lumiluna-android-arm64
+          path: release/android
+
+      - name: Download Android APK (armeabi-v7a)
+        uses: actions/download-artifact@v4
+        with:
+          name: lumiluna-android-arm32
+          path: release/android
+
+      - name: Download Android APK (x86_64)
+        uses: actions/download-artifact@v4
+        with:
+          name: lumiluna-android-x86_64
+          path: release/android
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}+${{ github.run_id }}
+          name: "LumiLuna v${{ steps.version.outputs.version }}"
+          body: |
+            ## LumiLuna v${{ steps.version.outputs.version }}
+
+            Automated release from commit `${{ github.sha }}`.
+
+            ### Downloads
+
+            - **Windows**: `release/windows/` — x64 installer / portable bundle
+            - **Android**: `release/android/` — arm64-v8a / armeabi-v7a / x86_64 APKs
+          files: |
+            release/**
+          generate_release_notes: true
+          make_latest: true
+          token: ${{ secrets.GITHUB_TOKEN }}
