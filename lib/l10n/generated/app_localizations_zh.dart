@@ -93,6 +93,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get loopTooltip => '循环播放';
 
   @override
+  String get shuffleTooltip => '随机播放';
+
+  @override
   String get stopTooltip => '停止';
 
   @override

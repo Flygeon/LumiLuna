@@ -95,6 +95,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loopTooltip => 'Loop';
 
   @override
+  String get shuffleTooltip => 'Shuffle';
+
+  @override
   String get stopTooltip => 'Stop';
 
   @override
