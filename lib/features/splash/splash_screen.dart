@@ -70,13 +70,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     if (!mounted) return;
 
+    // Read settings BEFORE navigating. The pageBuilder closure must NOT
+    // capture `ref`: pushReplacement disposes this Splash element, but
+    // Flutter invokes pageBuilder on a later frame — calling ref.read on
+    // the disposed element throws _assertNotDisposed and crashes the frame
+    // (root cause of the intermittent gray screen on both platforms).
+    final onboardingCompleted = ref.read(settingsProvider).onboardingCompleted;
+
     // Navigate to home with a fade transition.
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) =>
-            ref.read(settingsProvider).onboardingCompleted
-                ? const HomeScreen()
-                : const OnboardingScreen(),
+        pageBuilder: (_, __, ___) => onboardingCompleted
+            ? const HomeScreen()
+            : const OnboardingScreen(),
         transitionsBuilder: (_, anim, __, child) => FadeTransition(
           opacity: anim,
           child: child,
