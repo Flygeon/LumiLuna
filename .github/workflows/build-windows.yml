@@ -41,11 +41,16 @@ jobs:
       - name: Build Windows (release)
         run: flutter build windows --release
 
+      - name: Package Windows release (zip)
+        shell: pwsh
+        run: |
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath lumiluna-windows-x64.zip
+
       - name: Upload artifact
         uses: actions/upload-artifact@v5
         with:
           name: lumiluna-windows
-          path: build/windows/x64/runner/Release/*
+          path: lumiluna-windows-x64.zip
           retention-days: 30
 
   # ---------------------------------------------------------------------------
@@ -120,7 +125,11 @@ jobs:
       - name: Read app version
         id: version
         run: |
-          echo "version=$(grep '^version: ' pubspec.yaml | sed 's/version: //')" >> "$GITHUB_OUTPUT"
+          RAW=$(grep '^version: ' pubspec.yaml | sed 's/version: //')
+          # Flutter pubspec version is "X.Y.Z+buildNumber"; strip the build number
+          # so the release shows "v1.0.0" instead of "v1.0.0+1".
+          VERSION=${RAW%%+*}
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
         shell: bash
 
       - name: Download Windows build
@@ -159,8 +168,8 @@ jobs:
 
             ### Downloads
 
-            - **Windows**: `release/windows/` — x64 installer / portable bundle
-            - **Android**: `release/android/` — arm64-v8a / armeabi-v7a / x86_64 APKs
+            - **Windows**: `lumiluna-windows-x64.zip` — x64 portable bundle (unzip and run `lumiluna.exe`)
+            - **Android**: `app-arm64-v8a-release.apk` / `app-armeabi-v7a-release.apk` / `app-x86_64-release.apk`
           files: |
             release/**
           generate_release_notes: true
