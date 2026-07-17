@@ -30,6 +30,7 @@
   "nowPlaying": "正在播放",
   "notPlaying": "未在播放",
   "loopTooltip": "循环播放",
+  "shuffleTooltip": "随机播放",
   "stopTooltip": "停止",
   "playlist": "播放列表",
 

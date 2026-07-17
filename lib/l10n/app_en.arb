@@ -30,6 +30,7 @@
   "nowPlaying": "Now Playing",
   "notPlaying": "Nothing playing",
   "loopTooltip": "Loop",
+  "shuffleTooltip": "Shuffle",
   "stopTooltip": "Stop",
   "playlist": "Playlist",
 

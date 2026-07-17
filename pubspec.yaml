@@ -39,6 +39,12 @@ dependencies:
   # compiles cleanly on CI (Windows/Linux/macOS) and stays cross-platform.
   audio_metadata_reader: ^1.6.0
 
+  # Apple Music-style lyrics viewer with built-in translation support,
+  # word-by-word highlight, and external position-driven scrolling (push-based
+  # via LyricController.setProgress).  No audio player dependency — works
+  # alongside media_kit without native conflicts.
+  flutter_lyric: ^3.0.7
+
   # App version / build info for the About screen
   package_info_plus: ^8.0.0
   path: ^1.9.1

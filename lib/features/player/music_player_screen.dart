@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/format_utils.dart';
 import '../../l10n/l10n.dart';
-import '../../models/lyrics.dart';
 import '../../models/media_item.dart';
 import '../../providers/lyrics_provider.dart';
 import '../../providers/player_provider.dart';
@@ -24,11 +24,11 @@ class MusicPlayerScreen extends ConsumerWidget {
     // Only rebuild when the track or playback mode changes — NOT on every
     // position tick.  Position-sensitive children (seek bar, lyrics) use their
     // own fine-grained subscriptions.
-    final state = ref.watch(playbackControllerProvider.select((s) => _PlaybackSummary.fromState(s)));
+    final state = ref.watch(playbackControllerProvider
+        .select((s) => _PlaybackSummary.fromState(s)));
     final controller = ref.read(playbackControllerProvider.notifier);
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
-    final lyricsAsync = ref.watch(lyricsProvider);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -44,24 +44,6 @@ class MusicPlayerScreen extends ConsumerWidget {
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
         centerTitle: true,
-        actions: [
-          PopupMenuButton<double>(
-            tooltip: l10n.playbackSpeed,
-            initialValue: state.rate,
-            onSelected: controller.setRate,
-            itemBuilder: (_) => const [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
-                .map((rate) => PopupMenuItem(
-                      value: rate,
-                      child: Text('${rate}x'),
-                    ))
-                .toList(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text('${state.rate}x',
-                  style: const TextStyle(fontSize: 13)),
-            ),
-          ),
-        ],
       ),
       body: state.current == null
           ? Center(
@@ -78,7 +60,8 @@ class MusicPlayerScreen extends ConsumerWidget {
             )
           : Stack(
               children: [
-                Positioned.fill(child: _buildBackground(state.current!, scheme)),
+                Positioned.fill(
+                    child: _buildBackground(state.current!, scheme)),
                 SafeArea(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
@@ -88,7 +71,6 @@ class MusicPlayerScreen extends ConsumerWidget {
                               current: state.current!,
                               scheme: scheme,
                               controller: controller,
-                              lyricsAsync: lyricsAsync,
                               playlist: state.playlist,
                               playlistIndex: state.index,
                             )
@@ -96,7 +78,6 @@ class MusicPlayerScreen extends ConsumerWidget {
                               current: state.current!,
                               scheme: scheme,
                               controller: controller,
-                              lyricsAsync: lyricsAsync,
                               playlist: state.playlist,
                               playlistIndex: state.index,
                             );
@@ -137,6 +118,7 @@ class _PlaybackSummary {
   final MediaItem? current;
   final double rate;
   final bool looping;
+  final bool shuffling;
   final int index;
   final List<MediaItem> playlist;
 
@@ -144,6 +126,7 @@ class _PlaybackSummary {
     this.current,
     required this.rate,
     required this.looping,
+    required this.shuffling,
     required this.index,
     required this.playlist,
   });
@@ -152,6 +135,7 @@ class _PlaybackSummary {
         current: s.current,
         rate: s.rate,
         looping: s.looping,
+        shuffling: s.shuffling,
         index: s.index,
         playlist: s.playlist,
       );
@@ -162,6 +146,7 @@ class _PlaybackSummary {
       o.current?.path == current?.path &&
       o.rate == rate &&
       o.looping == looping &&
+      o.shuffling == shuffling &&
       o.index == index &&
       o.playlist.length == playlist.length &&
       (o.playlist.isEmpty ||
@@ -169,17 +154,18 @@ class _PlaybackSummary {
           o.playlist.first.path == playlist.first.path);
 
   @override
-  int get hashCode => Object.hash(current?.path, rate, looping, index);
+  int get hashCode =>
+      Object.hash(current?.path, rate, looping, shuffling, index);
 }
 
 // ---------------------------------------------------------------------------
 // Narrow layout (phones / narrow windows — stacked)
+// Tap the album cover to toggle a full lyrics overlay.
 // ---------------------------------------------------------------------------
-class _NarrowLayout extends StatelessWidget {
+class _NarrowLayout extends ConsumerStatefulWidget {
   final MediaItem current;
   final ColorScheme scheme;
   final PlaybackController controller;
-  final AsyncValue<Lyrics?> lyricsAsync;
   final List<MediaItem> playlist;
   final int playlistIndex;
 
@@ -187,20 +173,63 @@ class _NarrowLayout extends StatelessWidget {
     required this.current,
     required this.scheme,
     required this.controller,
-    required this.lyricsAsync,
     required this.playlist,
     required this.playlistIndex,
   });
 
   @override
+  ConsumerState<_NarrowLayout> createState() => _NarrowLayoutState();
+}
+
+class _NarrowLayoutState extends ConsumerState<_NarrowLayout> {
+  bool _showLyricsOverlay = false;
+
+  @override
   Widget build(BuildContext context) {
+    final lyricsAsync = ref.watch(lyricsProvider);
+    final translationAsync = ref.watch(lyricsTranslationProvider);
+
+    final hasLyrics = lyricsAsync.maybeWhen(
+      data: (lyrics) => lyrics != null && lyrics.trim().isNotEmpty,
+      orElse: () => false,
+    );
+
     return Column(
       children: [
-        const Spacer(flex: 1),
-        _AlbumArt(item: current, maxWidth: 400),
-        const SizedBox(height: 24),
-        _SongInfo(item: current),
-        const SizedBox(height: 20),
+        // Album art / lyrics overlay — tap to toggle.
+        Expanded(
+          flex: _showLyricsOverlay ? 5 : 3,
+          child: GestureDetector(
+            onTap: hasLyrics
+                ? () =>
+                    setState(() => _showLyricsOverlay = !_showLyricsOverlay)
+                : null,
+            child: _showLyricsOverlay && hasLyrics
+                ? _LyricsPanel(
+                    lyricsAsync: lyricsAsync,
+                    translationAsync: translationAsync,
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _AlbumArt(item: widget.current, maxWidth: 400),
+                      const SizedBox(height: 24),
+                      _SongInfo(item: widget.current),
+                      if (hasLyrics)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            '点击封面查看歌词',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withValues(alpha: 0.4),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+          ),
+        ),
         const _PlaybackRegion(),
         const SizedBox(height: 8),
       ],
@@ -215,7 +244,6 @@ class _WideLayout extends StatelessWidget {
   final MediaItem current;
   final ColorScheme scheme;
   final PlaybackController controller;
-  final AsyncValue<Lyrics?> lyricsAsync;
   final List<MediaItem> playlist;
   final int playlistIndex;
 
@@ -223,7 +251,6 @@ class _WideLayout extends StatelessWidget {
     required this.current,
     required this.scheme,
     required this.controller,
-    required this.lyricsAsync,
     required this.playlist,
     required this.playlistIndex,
   });
@@ -243,10 +270,7 @@ class _WideLayout extends StatelessWidget {
               const SizedBox(height: 24),
               _SongInfo(item: current),
               const Spacer(flex: 1),
-              const SizedBox(
-                width: 360,
-                child: _SeekBar(),
-              ),
+              const SizedBox(width: 360, child: _SeekBar()),
               const SizedBox(height: 8),
               const _Controls(),
               const SizedBox(height: 24),
@@ -257,7 +281,6 @@ class _WideLayout extends StatelessWidget {
         Expanded(
           flex: 3,
           child: _LyricsOrQueue(
-            lyricsAsync: lyricsAsync,
             playlist: playlist,
             playlistIndex: playlistIndex,
           ),
@@ -268,7 +291,7 @@ class _WideLayout extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Playback region — subscribes to position independently
+// Playback region (narrow layout) — seek bar + controls + lyrics/queue toggle
 // ---------------------------------------------------------------------------
 class _PlaybackRegion extends ConsumerStatefulWidget {
   const _PlaybackRegion();
@@ -282,10 +305,10 @@ class _PlaybackRegionState extends ConsumerState<_PlaybackRegion> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(playbackControllerProvider);
+    final state = ref.watch(playbackControllerProvider
+        .select((s) => _RegionState(playlist: s.playlist, index: s.index)));
     final lyricsAsync = ref.watch(lyricsProvider);
-    final playlist = state.playlist;
-    final index = state.index;
+    final translationAsync = ref.watch(lyricsTranslationProvider);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -298,51 +321,48 @@ class _PlaybackRegionState extends ConsumerState<_PlaybackRegion> {
           showLyrics: _showLyrics,
           onToggle: () => setState(() => _showLyrics = !_showLyrics),
         ),
-        Flexible(
-          flex: 3,
+        SizedBox(
+          height: 180,
           child: _showLyrics
-              ? _buildLyricsPanel(lyricsAsync)
-              : _Playlist(playlist: playlist, currentIndex: index),
+              ? _LyricsPanel(
+                  lyricsAsync: lyricsAsync,
+                  translationAsync: translationAsync,
+                )
+              : _Playlist(
+                  playlist: state.playlist,
+                  currentIndex: state.index,
+                  onTap: (i) => ref
+                      .read(playbackControllerProvider.notifier)
+                      .jump(i),
+                ),
         ),
       ],
     );
   }
+}
 
-  Widget _buildLyricsPanel(AsyncValue<Lyrics?> async) {
-    return async.when(
-      data: (lyrics) {
-        if (lyrics == null || lyrics.lines.isEmpty) {
-          return const Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.lyrics_outlined, size: 40, color: Colors.white38),
-                SizedBox(height: 8),
-                Text('暂无歌词',
-                    style: TextStyle(color: Colors.white60, fontSize: 13)),
-              ],
-            ),
-          );
-        }
-        return _LyricsView(lyrics: lyrics);
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) =>
-          const Center(child: Text('无法加载歌词', style: TextStyle(color: Colors.white60))),
-    );
-  }
+/// Lightweight snapshot for _PlaybackRegion.
+class _RegionState {
+  final List<MediaItem> playlist;
+  final int index;
+  const _RegionState({required this.playlist, required this.index});
+
+  @override
+  bool operator ==(Object o) =>
+      o is _RegionState && o.index == index && o.playlist == playlist;
+
+  @override
+  int get hashCode => Object.hash(index, playlist);
 }
 
 // ---------------------------------------------------------------------------
 // Lyrics or Queue panel (used in _WideLayout)
 // ---------------------------------------------------------------------------
 class _LyricsOrQueue extends ConsumerStatefulWidget {
-  final AsyncValue<Lyrics?> lyricsAsync;
   final List<MediaItem> playlist;
   final int playlistIndex;
 
   const _LyricsOrQueue({
-    required this.lyricsAsync,
     required this.playlist,
     required this.playlistIndex,
   });
@@ -356,6 +376,9 @@ class _LyricsOrQueueState extends ConsumerState<_LyricsOrQueue> {
 
   @override
   Widget build(BuildContext context) {
+    final lyricsAsync = ref.watch(lyricsProvider);
+    final translationAsync = ref.watch(lyricsTranslationProvider);
+
     return Column(
       children: [
         _PanelToggle(
@@ -364,21 +387,47 @@ class _LyricsOrQueueState extends ConsumerState<_LyricsOrQueue> {
         ),
         Expanded(
           child: _showLyrics
-              ? _buildLyricsPanel()
+              ? _LyricsPanel(
+                  lyricsAsync: lyricsAsync,
+                  translationAsync: translationAsync,
+                )
               : _Playlist(
                   playlist: widget.playlist,
                   currentIndex: widget.playlistIndex,
-                  onTap: (i) => ref.read(playbackControllerProvider.notifier).jump(i),
+                  onTap: (i) => ref
+                      .read(playbackControllerProvider.notifier)
+                      .jump(i),
                 ),
         ),
       ],
     );
   }
+}
 
-  Widget _buildLyricsPanel() {
+// ---------------------------------------------------------------------------
+// Lyrics panel — wraps lyrics loading + translation toggle + LyricView
+// ---------------------------------------------------------------------------
+class _LyricsPanel extends ConsumerStatefulWidget {
+  final AsyncValue<String?> lyricsAsync;
+  final AsyncValue<String?> translationAsync;
+
+  const _LyricsPanel({
+    required this.lyricsAsync,
+    required this.translationAsync,
+  });
+
+  @override
+  ConsumerState<_LyricsPanel> createState() => _LyricsPanelState();
+}
+
+class _LyricsPanelState extends ConsumerState<_LyricsPanel> {
+  bool _showTranslation = false;
+
+  @override
+  Widget build(BuildContext context) {
     return widget.lyricsAsync.when(
-      data: (lyrics) {
-        if (lyrics == null || lyrics.lines.isEmpty) {
+      data: (rawLyrics) {
+        if (rawLyrics == null || rawLyrics.trim().isEmpty) {
           return const Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -391,11 +440,92 @@ class _LyricsOrQueueState extends ConsumerState<_LyricsOrQueue> {
             ),
           );
         }
-        return _LyricsView(lyrics: lyrics);
+        final translation = widget.translationAsync.maybeWhen(
+          data: (t) => t,
+          orElse: () => null,
+        );
+        final hasTranslation =
+            translation != null && translation.trim().isNotEmpty;
+
+        return Column(
+          children: [
+            if (hasTranslation)
+              _TranslationToggle(
+                showTranslation: _showTranslation,
+                onToggle: () =>
+                    setState(() => _showTranslation = !_showTranslation),
+              ),
+            Expanded(
+              child: _LyricsView(
+                rawLyrics: rawLyrics,
+                translation: hasTranslation ? translation : null,
+                showTranslation: _showTranslation && hasTranslation,
+              ),
+            ),
+          ],
+        );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) =>
-          const Center(child: Text('无法加载歌词', style: TextStyle(color: Colors.white60))),
+      error: (_, __) => const Center(
+          child: Text('无法加载歌词',
+              style: TextStyle(color: Colors.white60))),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Translation toggle — "仅原文" / "原文+翻译"
+// ---------------------------------------------------------------------------
+class _TranslationToggle extends StatelessWidget {
+  final bool showTranslation;
+  final VoidCallback onToggle;
+
+  const _TranslationToggle({
+    required this.showTranslation,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _chip('仅原文', !showTranslation, onToggle),
+          const SizedBox(width: 8),
+          _chip('原文+翻译', showTranslation, onToggle),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(String label, bool active, VoidCallback onTap) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: active
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color:
+                  active ? Colors.white : Colors.white.withValues(alpha: 0.5),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -583,7 +713,7 @@ class _SeekState {
 }
 
 // ---------------------------------------------------------------------------
-// Playback Controls
+// Playback Controls — Material Design style with ripple, includes shuffle
 // ---------------------------------------------------------------------------
 class _Controls extends ConsumerWidget {
   const _Controls();
@@ -595,6 +725,8 @@ class _Controls extends ConsumerWidget {
         (s) => _ControlState(
           playing: s.playing,
           looping: s.looping,
+          shuffling: s.shuffling,
+          rate: s.rate,
           hasPrev: s.hasPrevious,
           hasNext: s.hasNext,
           hasCurrent: s.current != null,
@@ -607,43 +739,67 @@ class _Controls extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        // Shuffle
+        IconButton(
+          tooltip: l10n.shuffleTooltip,
+          isSelected: state.shuffling,
+          icon: Icon(Icons.shuffle,
+              color: Colors.white.withValues(alpha: 0.5)),
+          selectedIcon: const Icon(Icons.shuffle, color: Colors.white),
+          onPressed: controller.toggleShuffle,
+        ),
+        const SizedBox(width: 4),
+        // Loop
         IconButton(
           tooltip: l10n.loopTooltip,
           isSelected: state.looping,
-          icon: const Icon(Icons.repeat, color: Colors.white70),
-          selectedIcon: const Icon(Icons.repeat_on, color: Colors.white),
+          icon: Icon(Icons.repeat,
+              color: Colors.white.withValues(alpha: 0.5)),
+          selectedIcon: const Icon(Icons.repeat, color: Colors.white),
           onPressed: controller.toggleLoop,
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 8),
+        // Previous
         IconButton(
           iconSize: 36,
-          icon: Icon(Icons.skip_previous, color: Colors.white.withValues(alpha: 0.85)),
+          icon: Icon(Icons.skip_previous,
+              color: Colors.white.withValues(alpha: 0.85)),
           onPressed: state.hasPrev ? controller.previous : null,
         ),
-        const SizedBox(width: 4),
-        Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-          child: IconButton(
-            iconSize: 32,
-            padding: const EdgeInsets.all(14),
-            color: Colors.black,
-            icon: Icon(state.playing ? Icons.pause : Icons.play_arrow),
-            onPressed: state.hasCurrent ? controller.playOrPause : null,
+        const SizedBox(width: 8),
+        // Play / Pause — Material filled button with ripple
+        Material(
+          color: Colors.white,
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: state.hasCurrent ? controller.playOrPause : null,
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              child: Icon(
+                state.playing ? Icons.pause : Icons.play_arrow,
+                size: 32,
+                color: Colors.black,
+              ),
+            ),
           ),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 8),
+        // Next
         IconButton(
           iconSize: 36,
-          icon: Icon(Icons.skip_next, color: Colors.white.withValues(alpha: 0.85)),
+          icon: Icon(Icons.skip_next,
+              color: Colors.white.withValues(alpha: 0.85)),
           onPressed: state.hasNext ? controller.next : null,
         ),
         const SizedBox(width: 4),
+        // Speed selector
+        _SpeedButton(rate: state.rate, onSelected: controller.setRate),
+        const SizedBox(width: 4),
+        // Stop
         IconButton(
           tooltip: l10n.stopTooltip,
-          icon: const Icon(Icons.stop, color: Colors.white70),
+          icon: Icon(Icons.stop, color: Colors.white.withValues(alpha: 0.5)),
           onPressed: state.hasCurrent ? controller.stop : null,
         ),
       ],
@@ -651,9 +807,38 @@ class _Controls extends ConsumerWidget {
   }
 }
 
+/// Compact speed selector — relocated from AppBar into the controls row.
+class _SpeedButton extends StatelessWidget {
+  final double rate;
+  final void Function(double) onSelected;
+  const _SpeedButton({required this.rate, required this.onSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<double>(
+      tooltip: 'Playback speed',
+      initialValue: rate,
+      onSelected: onSelected,
+      itemBuilder: (_) => const [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
+          .map((r) => PopupMenuItem(value: r, child: Text('${r}x')))
+          .toList(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Text('${rate}x',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.white.withValues(alpha: 0.7),
+            )),
+      ),
+    );
+  }
+}
+
 class _ControlState {
   final bool playing;
   final bool looping;
+  final bool shuffling;
+  final double rate;
   final bool hasPrev;
   final bool hasNext;
   final bool hasCurrent;
@@ -661,6 +846,8 @@ class _ControlState {
   const _ControlState({
     required this.playing,
     required this.looping,
+    required this.shuffling,
+    required this.rate,
     required this.hasPrev,
     required this.hasNext,
     required this.hasCurrent,
@@ -671,12 +858,15 @@ class _ControlState {
       o is _ControlState &&
       o.playing == playing &&
       o.looping == looping &&
+      o.shuffling == shuffling &&
+      o.rate == rate &&
       o.hasPrev == hasPrev &&
       o.hasNext == hasNext &&
       o.hasCurrent == hasCurrent;
 
   @override
-  int get hashCode => Object.hash(playing, looping, hasPrev, hasNext, hasCurrent);
+  int get hashCode =>
+      Object.hash(playing, looping, shuffling, rate, hasPrev, hasNext, hasCurrent);
 }
 
 // ---------------------------------------------------------------------------
@@ -772,10 +962,7 @@ class _Playlist extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(color: Colors.white54, fontSize: 12),
           ),
-          onTap: () {
-            // Jump handled via controller - need ref access.
-            // This is now handled by the parent PlaybackControllerProvider.
-          },
+          onTap: onTap != null ? () => onTap!(index) : null,
         );
       },
     );
@@ -783,183 +970,106 @@ class _Playlist extends StatelessWidget {
 }
 
 // =============================================================================
-// Synchronized Lyrics View
+// Synchronized Lyrics View — powered by flutter_lyric
 //
-// Architecture (anti-flicker):
-//   1. The provider (lyricsProvider) is decoupled from position — it only
-//      reloads when the track changes (via currentMediaProvider).
-//   2. This widget directly subscribes to the player's position *stream* via
-//      StreamSubscription — no Provider rebuild, no setState at 60 fps.
-//   3. The active line index is held in a ValueNotifier<int>.  Each row uses
-//      ValueListenableBuilder so only the row(s) whose active status actually
-//      changes get rebuilt — zero flicker for the rest of the list.
-//   4. Non-synced lyrics skip the stream subscription entirely and just
-//      render as a static scrollable list.
+// flutter_lyric provides smooth scrolling, highlight animation, translation
+// support, and touch interaction out of the box.  We feed it the raw LRC text
+// and drive it with media_kit's position stream via controller.setProgress().
 // =============================================================================
 class _LyricsView extends ConsumerStatefulWidget {
-  final Lyrics lyrics;
-  const _LyricsView({required this.lyrics});
+  final String rawLyrics;
+  final String? translation;
+  final bool showTranslation;
+
+  const _LyricsView({
+    required this.rawLyrics,
+    this.translation,
+    this.showTranslation = false,
+  });
 
   @override
   ConsumerState<_LyricsView> createState() => _LyricsViewState();
 }
 
 class _LyricsViewState extends ConsumerState<_LyricsView> {
-  /// Emits the current active line index.  Only changes when the line
-  /// actually transitions — not on every position tick.
-  final ValueNotifier<int> _activeLine = ValueNotifier<int>(-1);
-
-  final ScrollController _scrollCtrl = ScrollController();
+  late final LyricController _controller;
   StreamSubscription<Duration>? _posSub;
 
-  static const double _kItemHeight = 60.0;
-  static const double _kTopPad = 100.0;
-
-  // ---------------------------------------------------------------------------
-  // Lifecycle
-  // ---------------------------------------------------------------------------
+  /// Apple Music-inspired style: centered text, white highlight, smooth
+  /// fade at top/bottom, generous spacing, translation support.
+  static final _style = LyricStyles.default1.copyWith(
+    textStyle: const TextStyle(fontSize: 16, color: Colors.white54),
+    activeStyle: const TextStyle(
+      fontSize: 22,
+      fontWeight: FontWeight.w600,
+      color: Colors.white,
+    ),
+    translationStyle: TextStyle(
+      fontSize: 14,
+      color: Colors.white.withValues(alpha: 0.5),
+    ),
+    translationActiveColor: Colors.white.withValues(alpha: 0.85),
+    lineGap: 30,
+    translationLineGap: 8,
+    contentPadding: const EdgeInsets.only(
+        top: 200, left: 30, right: 30, bottom: 200),
+    fadeRange: FadeRange(top: 100, bottom: 100),
+    activeHighlightColor: Colors.white,
+    activeHighlightGradient: null,
+    enableSwitchAnimation: true,
+  );
 
   @override
   void initState() {
     super.initState();
-    if (widget.lyrics.isSynced) {
-      _startPositionListener();
-    }
+    _controller = LyricController();
+    _loadLyrics();
+    _startPositionListener();
+  }
+
+  void _loadLyrics() {
+    _controller.loadLyric(
+      widget.rawLyrics,
+      translationLyric: widget.showTranslation ? widget.translation : null,
+    );
   }
 
   void _startPositionListener() {
-    final controller = ref.read(playbackControllerProvider.notifier);
-    _posSub = controller.player.stream.position.listen(_onPosition);
-  }
-
-  void _onPosition(Duration pos) {
-    final idx = widget.lyrics.lineIndexAt(pos);
-    final prev = _activeLine.value;
-    if (idx == prev) return; // no change → no notify → no rebuild
-    _activeLine.value = idx;
-    _scrollTo(idx);
-  }
-
-  void _scrollTo(int idx) {
-    if (idx < 0 || !_scrollCtrl.hasClients) return;
-    final vp = _scrollCtrl.position.viewportDimension;
-    final mx = _scrollCtrl.position.maxScrollExtent;
-    final center = _kTopPad + idx * _kItemHeight + _kItemHeight / 2;
-    final target = (center - vp / 2).clamp(0.0, mx);
-    // Only animate if the delta is meaningful.
-    if ((target - _scrollCtrl.offset).abs() < 2.0) return;
-    _scrollCtrl.animateTo(
-      target,
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutCubic,
-    );
+    final pc = ref.read(playbackControllerProvider.notifier);
+    // Push media_kit's position stream directly into flutter_lyric.
+    _posSub = pc.player.stream.position.listen(_controller.setProgress);
+    // Tap a lyric line → seek the player.
+    _controller.setOnTapLineCallback((position) {
+      pc.seek(position);
+    });
   }
 
   @override
   void didUpdateWidget(covariant _LyricsView old) {
     super.didUpdateWidget(old);
-    if (old.lyrics != widget.lyrics) {
-      _activeLine.value = -1;
-      _posSub?.cancel();
-      _posSub = null;
-      if (widget.lyrics.isSynced) {
-        _startPositionListener();
-      }
+    if (old.rawLyrics != widget.rawLyrics ||
+        old.showTranslation != widget.showTranslation ||
+        old.translation != widget.translation) {
+      _loadLyrics();
     }
   }
 
   @override
   void dispose() {
     _posSub?.cancel();
-    _activeLine.dispose();
-    _scrollCtrl.dispose();
+    _controller.dispose();
     super.dispose();
   }
-
-  // ---------------------------------------------------------------------------
-  // Build
-  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
-      child: ClipRect(
-        child: ShaderMask(
-          blendMode: BlendMode.dstIn,
-          shaderCallback: (bounds) => const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.transparent,
-              Colors.black,
-              Colors.black,
-              Colors.transparent,
-            ],
-            stops: [0.0, 0.18, 0.85, 1.0],
-          ).createShader(bounds),
-          child: ListView.builder(
-            controller: _scrollCtrl,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 40,
-              vertical: _kTopPad,
-            ),
-            itemCount: widget.lyrics.lines.length,
-            itemExtent: _kItemHeight,
-            addAutomaticKeepAlives: false,
-            addRepaintBoundaries: false,
-            itemBuilder: _buildLine,
-          ),
-        ),
+      child: LyricView(
+        controller: _controller,
+        style: _style,
+        width: double.infinity,
+        height: double.infinity,
       ),
     );
-  }
-
-  Widget _buildLine(BuildContext context, int index) {
-    final text = widget.lyrics.lines[index].text;
-
-    // Each row listens to _activeLine independently.
-    // When _activeLine changes, only the rows whose "am I active?" answer
-    // actually toggles will rebuild — the rest stay untouched.
-    return ValueListenableBuilder<int>(
-      valueListenable: _activeLine,
-      builder: (context, activeIdx, _) {
-        final isActive = index == activeIdx;
-        final distance = (index - activeIdx).abs();
-        final opacity = _opacityForDistance(distance);
-        return AnimatedDefaultTextStyle(
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-          style: TextStyle(
-            fontSize: isActive ? 22 : 16,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-            color: Colors.white.withValues(alpha: opacity),
-            height: 1.5,
-            letterSpacing: 0.2,
-          ),
-          child: Center(
-            child: Text(
-              text,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  /// Apple Music style distance-based opacity falloff.
-  static double _opacityForDistance(int d) {
-    switch (d) {
-      case 0:
-        return 1.0;
-      case 1:
-        return 0.55;
-      case 2:
-        return 0.38;
-      default:
-        return 0.22;
-    }
   }
 }

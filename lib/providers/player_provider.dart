@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
@@ -15,6 +16,7 @@ class PlaybackState {
   final int index;
   final bool playing;
   final bool looping;
+  final bool shuffling;
   final Duration position;
   final Duration duration;
   final double volume;
@@ -25,6 +27,7 @@ class PlaybackState {
     this.index = -1,
     this.playing = false,
     this.looping = false,
+    this.shuffling = false,
     this.position = Duration.zero,
     this.duration = Duration.zero,
     this.volume = 100,
@@ -45,6 +48,7 @@ class PlaybackState {
     int? index,
     bool? playing,
     bool? looping,
+    bool? shuffling,
     Duration? position,
     Duration? duration,
     double? volume,
@@ -55,6 +59,7 @@ class PlaybackState {
       index: index ?? this.index,
       playing: playing ?? this.playing,
       looping: looping ?? this.looping,
+      shuffling: shuffling ?? this.shuffling,
       position: position ?? this.position,
       duration: duration ?? this.duration,
       volume: volume ?? this.volume,
@@ -75,6 +80,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   final Future<void> Function(String path)? onPlay;
 
   final List<StreamSubscription> _subs = [];
+  final Random _random = Random();
 
   void _bind() {
     _subs.add(player.stream.playing.listen((v) {
@@ -99,6 +105,27 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     _subs.add(player.stream.volume.listen((v) {
       if (mounted) state = state.copyWith(volume: v);
     }));
+    // When a track completes naturally and shuffle is on, jump to a random
+    // track instead of letting media_kit proceed sequentially.  We force
+    // PlaylistMode.none while shuffling so that `completed` fires (loop mode
+    // would auto-advance and skip our shuffle logic).
+    _subs.add(player.stream.completed.listen((completed) async {
+      if (!completed || !mounted) return;
+      if (state.shuffling && state.playlist.length > 1) {
+        await player.jump(_randomIndexExcluding(state.index));
+        await player.play();
+      }
+    }));
+  }
+
+  /// Picks a random playlist index different from [exclude].
+  int _randomIndexExcluding(int exclude) {
+    if (state.playlist.length <= 1) return exclude;
+    int idx;
+    do {
+      idx = _random.nextInt(state.playlist.length);
+    } while (idx == exclude);
+    return idx;
   }
 
   /// Open a playlist starting at [startIndex] and begin playback.
@@ -134,8 +161,28 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   Future<void> playOrPause() => player.playOrPause();
   Future<void> play() => player.play();
   Future<void> pause() => player.pause();
-  Future<void> next() => player.next();
-  Future<void> previous() => player.previous();
+
+  /// Skip to the next track.  When shuffle is on, jumps to a random index
+  /// instead of the sequential next.
+  Future<void> next() async {
+    if (state.shuffling && state.playlist.length > 1) {
+      await player.jump(_randomIndexExcluding(state.index));
+      return;
+    }
+    await player.next();
+  }
+
+  /// Skip to the previous track.  When shuffle is on, jumps to a random
+  /// index (same as next) since "previous" has no meaningful order in
+  /// shuffle mode.
+  Future<void> previous() async {
+    if (state.shuffling && state.playlist.length > 1) {
+      await player.jump(_randomIndexExcluding(state.index));
+      return;
+    }
+    await player.previous();
+  }
+
   Future<void> jump(int index) => player.jump(index);
   Future<void> seek(Duration position) => player.seek(position);
 
@@ -154,9 +201,27 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   Future<void> toggleLoop() async {
     final looping = !state.looping;
     state = state.copyWith(looping: looping);
-    await player.setPlaylistMode(
-      looping ? PlaylistMode.loop : PlaylistMode.none,
-    );
+    // When shuffling, PlaylistMode stays `none` so that `completed` fires and
+    // our shuffle logic handles auto-advance.  Only apply the user's loop
+    // preference when shuffle is off.
+    final mode = state.shuffling
+        ? PlaylistMode.none
+        : (looping ? PlaylistMode.loop : PlaylistMode.none);
+    await player.setPlaylistMode(mode);
+  }
+
+  /// Toggle shuffle on/off.  When on, PlaylistMode is forced to `none` so
+  /// that track completion triggers our random-advance logic (loop mode would
+  /// auto-advance sequentially and bypass shuffle).  The user's loop
+  /// preference is preserved in [PlaybackState.looping] and restored when
+  /// shuffle is turned off.
+  Future<void> toggleShuffle() async {
+    final shuffling = !state.shuffling;
+    state = state.copyWith(shuffling: shuffling);
+    final mode = shuffling
+        ? PlaylistMode.none
+        : (state.looping ? PlaylistMode.loop : PlaylistMode.none);
+    await player.setPlaylistMode(mode);
   }
 
   Future<void> stop() async {

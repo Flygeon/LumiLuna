@@ -254,6 +254,12 @@ abstract class AppLocalizations {
   /// **'Loop'**
   String get loopTooltip;
 
+  /// No description provided for @shuffleTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Shuffle'**
+  String get shuffleTooltip;
+
   /// No description provided for @stopTooltip.
   ///
   /// In en, this message translates to:
