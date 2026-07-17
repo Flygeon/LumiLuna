@@ -26,7 +26,28 @@ class MusicPlayerScreen extends ConsumerWidget {
     final subtitle = _subtitle(current);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.nowPlaying)),
+      appBar: AppBar(
+        title: Text(l10n.nowPlaying),
+        actions: [
+          PopupMenuButton<double>(
+            tooltip: l10n.playbackSpeed,
+            initialValue: state.rate,
+            onSelected: controller.setRate,
+            itemBuilder: (_) => const [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
+                .map((rate) => PopupMenuItem(
+                      value: rate,
+                      child: Text('${rate}x'),
+                    ))
+                .toList(),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text('${state.rate}x'),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           const SizedBox(height: 16),

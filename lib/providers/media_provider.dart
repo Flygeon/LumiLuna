@@ -17,6 +17,7 @@ import 'folder_watcher_provider.dart';
 ///
 /// Persists items in SQLite ([DatabaseService]) instead of a JSON cache file.
 class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
+  Future<void>? _refreshTask;
   @override
   Future<List<MediaItem>> build() async {
     // Rebuild whenever the configured folders change.
@@ -50,11 +51,27 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
   }
 
   Future<void> _refreshIndex(AppDatabase db, List<String> folders) async {
+    if (_refreshTask != null) return _refreshTask;
+    final task = _performRefresh(db, folders);
+    _refreshTask = task;
+    try {
+      await task;
+    } finally {
+      _refreshTask = null;
+    }
+  }
+
+  Future<void> _performRefresh(AppDatabase db, List<String> folders) async {
     try {
       final items = await MediaScannerService.scan(folders);
       await db.syncMediaItems(items, folders);
       state = AsyncValue.data(await db.getAllMediaItems());
     } catch (_) {}
+  }
+
+  Future<void> reloadFromDatabase() async {
+    final items = await ref.read(appDatabaseProvider).getAllMediaItems();
+    state = AsyncValue.data(items);
   }
 
   /// Force a rescan of the current folders.

@@ -7,7 +7,7 @@ import '../services/folder_watcher_service.dart';
 final folderWatcherProvider = Provider<FolderWatcherService>((ref) {
   final service = FolderWatcherService(
     database: ref.watch(appDatabaseProvider),
-    onChanged: () async => ref.invalidate(mediaProvider),
+    onChanged: () => ref.read(mediaProvider.notifier).reloadFromDatabase(),
   );
   ref.onDispose(() => service.stop());
   return service;

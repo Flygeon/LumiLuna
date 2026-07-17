@@ -9,6 +9,8 @@ final settingsServiceProvider = Provider<SettingsService>((ref) {
   throw UnimplementedError('settingsServiceProvider must be overridden');
 });
 
+enum MediaSortMode { modified, name, size, duration }
+
 /// App-wide user settings (theme, view mode, scan folders, grouping).
 class AppSettings {
   final ThemeMode themeMode;
@@ -16,6 +18,9 @@ class AppSettings {
   final List<String> scanFolders;
   final GroupMode groupMode;
   final String localeTag;
+  final bool onboardingCompleted;
+  final MediaSortMode mediaSortMode;
+  final bool mediaSortAscending;
 
   const AppSettings({
     required this.themeMode,
@@ -23,6 +28,9 @@ class AppSettings {
     required this.scanFolders,
     required this.groupMode,
     this.localeTag = '',
+    this.onboardingCompleted = false,
+    this.mediaSortMode = MediaSortMode.modified,
+    this.mediaSortAscending = false,
   });
 
   AppSettings copyWith({
@@ -31,6 +39,9 @@ class AppSettings {
     List<String>? scanFolders,
     GroupMode? groupMode,
     String? localeTag,
+    bool? onboardingCompleted,
+    MediaSortMode? mediaSortMode,
+    bool? mediaSortAscending,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -38,6 +49,9 @@ class AppSettings {
       scanFolders: scanFolders ?? this.scanFolders,
       groupMode: groupMode ?? this.groupMode,
       localeTag: localeTag ?? this.localeTag,
+      onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+      mediaSortMode: mediaSortMode ?? this.mediaSortMode,
+      mediaSortAscending: mediaSortAscending ?? this.mediaSortAscending,
     );
   }
 }
@@ -50,6 +64,12 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
           scanFolders: _service.getScanFolders(),
           groupMode: _service.getGroupMode(),
           localeTag: _service.getLocale(),
+          onboardingCompleted: _service.getOnboardingCompleted(),
+          mediaSortMode: MediaSortMode.values.firstWhere(
+            (mode) => mode.name == _service.getMediaSort(),
+            orElse: () => MediaSortMode.modified,
+          ),
+          mediaSortAscending: _service.getMediaSortAscending(),
         ));
 
   final SettingsService _service;
@@ -96,6 +116,22 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> setFolders(List<String> folders) async {
     state = state.copyWith(scanFolders: folders);
     await _service.setScanFolders(folders);
+  }
+
+  Future<void> completeOnboarding() async {
+    await _service.setOnboardingCompleted(true);
+    state = state.copyWith(onboardingCompleted: true);
+  }
+
+  Future<void> setMediaSortMode(MediaSortMode mode) async {
+    state = state.copyWith(mediaSortMode: mode);
+    await _service.setMediaSort(mode.name);
+  }
+
+  Future<void> toggleMediaSortDirection() async {
+    final ascending = !state.mediaSortAscending;
+    state = state.copyWith(mediaSortAscending: ascending);
+    await _service.setMediaSortAscending(ascending);
   }
 }
 

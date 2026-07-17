@@ -668,8 +668,27 @@ class $TagsTable extends Tags with TableInfo<$TagsTable, TagRow> {
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(0xFF5C5C5C));
+  static const VerificationMeta _parentIdMeta =
+      const VerificationMeta('parentId');
   @override
-  List<GeneratedColumn> get $columns => [id, name, color];
+  late final GeneratedColumn<int> parentId = GeneratedColumn<int>(
+      'parent_id', aliasedName, true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES tags (id)'));
+  static const VerificationMeta _isGroupMeta =
+      const VerificationMeta('isGroup');
+  @override
+  late final GeneratedColumn<bool> isGroup = GeneratedColumn<bool>(
+      'is_group', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_group" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns => [id, name, color, parentId, isGroup];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -693,6 +712,14 @@ class $TagsTable extends Tags with TableInfo<$TagsTable, TagRow> {
       context.handle(
           _colorMeta, color.isAcceptableOrUnknown(data['color']!, _colorMeta));
     }
+    if (data.containsKey('parent_id')) {
+      context.handle(_parentIdMeta,
+          parentId.isAcceptableOrUnknown(data['parent_id']!, _parentIdMeta));
+    }
+    if (data.containsKey('is_group')) {
+      context.handle(_isGroupMeta,
+          isGroup.isAcceptableOrUnknown(data['is_group']!, _isGroupMeta));
+    }
     return context;
   }
 
@@ -708,6 +735,10 @@ class $TagsTable extends Tags with TableInfo<$TagsTable, TagRow> {
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       color: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}color'])!,
+      parentId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}parent_id']),
+      isGroup: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_group'])!,
     );
   }
 
@@ -721,13 +752,24 @@ class TagRow extends DataClass implements Insertable<TagRow> {
   final int id;
   final String name;
   final int color;
-  const TagRow({required this.id, required this.name, required this.color});
+  final int? parentId;
+  final bool isGroup;
+  const TagRow(
+      {required this.id,
+      required this.name,
+      required this.color,
+      this.parentId,
+      required this.isGroup});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
     map['color'] = Variable<int>(color);
+    if (!nullToAbsent || parentId != null) {
+      map['parent_id'] = Variable<int>(parentId);
+    }
+    map['is_group'] = Variable<bool>(isGroup);
     return map;
   }
 
@@ -736,6 +778,10 @@ class TagRow extends DataClass implements Insertable<TagRow> {
       id: Value(id),
       name: Value(name),
       color: Value(color),
+      parentId: parentId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(parentId),
+      isGroup: Value(isGroup),
     );
   }
 
@@ -746,6 +792,8 @@ class TagRow extends DataClass implements Insertable<TagRow> {
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       color: serializer.fromJson<int>(json['color']),
+      parentId: serializer.fromJson<int?>(json['parentId']),
+      isGroup: serializer.fromJson<bool>(json['isGroup']),
     );
   }
   @override
@@ -755,19 +803,31 @@ class TagRow extends DataClass implements Insertable<TagRow> {
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
       'color': serializer.toJson<int>(color),
+      'parentId': serializer.toJson<int?>(parentId),
+      'isGroup': serializer.toJson<bool>(isGroup),
     };
   }
 
-  TagRow copyWith({int? id, String? name, int? color}) => TagRow(
+  TagRow copyWith(
+          {int? id,
+          String? name,
+          int? color,
+          Value<int?> parentId = const Value.absent(),
+          bool? isGroup}) =>
+      TagRow(
         id: id ?? this.id,
         name: name ?? this.name,
         color: color ?? this.color,
+        parentId: parentId.present ? parentId.value : this.parentId,
+        isGroup: isGroup ?? this.isGroup,
       );
   TagRow copyWithCompanion(TagsCompanion data) {
     return TagRow(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       color: data.color.present ? data.color.value : this.color,
+      parentId: data.parentId.present ? data.parentId.value : this.parentId,
+      isGroup: data.isGroup.present ? data.isGroup.value : this.isGroup,
     );
   }
 
@@ -776,54 +836,74 @@ class TagRow extends DataClass implements Insertable<TagRow> {
     return (StringBuffer('TagRow(')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('color: $color')
+          ..write('color: $color, ')
+          ..write('parentId: $parentId, ')
+          ..write('isGroup: $isGroup')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, color);
+  int get hashCode => Object.hash(id, name, color, parentId, isGroup);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is TagRow &&
           other.id == this.id &&
           other.name == this.name &&
-          other.color == this.color);
+          other.color == this.color &&
+          other.parentId == this.parentId &&
+          other.isGroup == this.isGroup);
 }
 
 class TagsCompanion extends UpdateCompanion<TagRow> {
   final Value<int> id;
   final Value<String> name;
   final Value<int> color;
+  final Value<int?> parentId;
+  final Value<bool> isGroup;
   const TagsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.color = const Value.absent(),
+    this.parentId = const Value.absent(),
+    this.isGroup = const Value.absent(),
   });
   TagsCompanion.insert({
     this.id = const Value.absent(),
     required String name,
     this.color = const Value.absent(),
+    this.parentId = const Value.absent(),
+    this.isGroup = const Value.absent(),
   }) : name = Value(name);
   static Insertable<TagRow> custom({
     Expression<int>? id,
     Expression<String>? name,
     Expression<int>? color,
+    Expression<int>? parentId,
+    Expression<bool>? isGroup,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (color != null) 'color': color,
+      if (parentId != null) 'parent_id': parentId,
+      if (isGroup != null) 'is_group': isGroup,
     });
   }
 
   TagsCompanion copyWith(
-      {Value<int>? id, Value<String>? name, Value<int>? color}) {
+      {Value<int>? id,
+      Value<String>? name,
+      Value<int>? color,
+      Value<int?>? parentId,
+      Value<bool>? isGroup}) {
     return TagsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       color: color ?? this.color,
+      parentId: parentId ?? this.parentId,
+      isGroup: isGroup ?? this.isGroup,
     );
   }
 
@@ -839,6 +919,12 @@ class TagsCompanion extends UpdateCompanion<TagRow> {
     if (color.present) {
       map['color'] = Variable<int>(color.value);
     }
+    if (parentId.present) {
+      map['parent_id'] = Variable<int>(parentId.value);
+    }
+    if (isGroup.present) {
+      map['is_group'] = Variable<bool>(isGroup.value);
+    }
     return map;
   }
 
@@ -847,7 +933,9 @@ class TagsCompanion extends UpdateCompanion<TagRow> {
     return (StringBuffer('TagsCompanion(')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('color: $color')
+          ..write('color: $color, ')
+          ..write('parentId: $parentId, ')
+          ..write('isGroup: $isGroup')
           ..write(')'))
         .toString();
   }
@@ -866,16 +954,16 @@ class $MediaTagsTable extends MediaTags
       'media_path', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: true,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('REFERENCES media_items (path)'));
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES media_items (path) ON UPDATE CASCADE ON DELETE CASCADE'));
   static const VerificationMeta _tagIdMeta = const VerificationMeta('tagId');
   @override
   late final GeneratedColumn<int> tagId = GeneratedColumn<int>(
       'tag_id', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: true,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('REFERENCES tags (id)'));
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES tags (id) ON DELETE CASCADE'));
   @override
   List<GeneratedColumn> get $columns => [mediaPath, tagId];
   @override
@@ -2779,6 +2867,32 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         scanFolders,
         playHistory
       ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules(
+        [
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('media_items',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('media_tags', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('media_items',
+                limitUpdateKind: UpdateKind.update),
+            result: [
+              TableUpdate('media_tags', kind: UpdateKind.update),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('tags',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('media_tags', kind: UpdateKind.delete),
+            ],
+          ),
+        ],
+      );
 }
 
 typedef $$MediaItemsTableCreateCompanionBuilder = MediaItemsCompanion Function({
@@ -3385,16 +3499,34 @@ typedef $$TagsTableCreateCompanionBuilder = TagsCompanion Function({
   Value<int> id,
   required String name,
   Value<int> color,
+  Value<int?> parentId,
+  Value<bool> isGroup,
 });
 typedef $$TagsTableUpdateCompanionBuilder = TagsCompanion Function({
   Value<int> id,
   Value<String> name,
   Value<int> color,
+  Value<int?> parentId,
+  Value<bool> isGroup,
 });
 
 final class $$TagsTableReferences
     extends BaseReferences<_$AppDatabase, $TagsTable, TagRow> {
   $$TagsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $TagsTable _parentIdTable(_$AppDatabase db) =>
+      db.tags.createAlias('tags__parent_id__tags__id');
+
+  $$TagsTableProcessedTableManager? get parentId {
+    final $_column = $_itemColumn<int>('parent_id');
+    if ($_column == null) return null;
+    final manager = $$TagsTableTableManager($_db, $_db.tags)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_parentIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
 
   static MultiTypedResultKey<$MediaTagsTable, List<MediaTag>>
       _mediaTagsRefsTable(_$AppDatabase db) =>
@@ -3427,6 +3559,29 @@ class $$TagsTableFilterComposer extends Composer<_$AppDatabase, $TagsTable> {
 
   ColumnFilters<int> get color => $composableBuilder(
       column: $table.color, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isGroup => $composableBuilder(
+      column: $table.isGroup, builder: (column) => ColumnFilters(column));
+
+  $$TagsTableFilterComposer get parentId {
+    final $$TagsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.parentId,
+        referencedTable: $db.tags,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TagsTableFilterComposer(
+              $db: $db,
+              $table: $db.tags,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 
   Expression<bool> mediaTagsRefs(
       Expression<bool> Function($$MediaTagsTableFilterComposer f) f) {
@@ -3466,6 +3621,29 @@ class $$TagsTableOrderingComposer extends Composer<_$AppDatabase, $TagsTable> {
 
   ColumnOrderings<int> get color => $composableBuilder(
       column: $table.color, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isGroup => $composableBuilder(
+      column: $table.isGroup, builder: (column) => ColumnOrderings(column));
+
+  $$TagsTableOrderingComposer get parentId {
+    final $$TagsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.parentId,
+        referencedTable: $db.tags,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TagsTableOrderingComposer(
+              $db: $db,
+              $table: $db.tags,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 }
 
 class $$TagsTableAnnotationComposer
@@ -3485,6 +3663,29 @@ class $$TagsTableAnnotationComposer
 
   GeneratedColumn<int> get color =>
       $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<bool> get isGroup =>
+      $composableBuilder(column: $table.isGroup, builder: (column) => column);
+
+  $$TagsTableAnnotationComposer get parentId {
+    final $$TagsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.parentId,
+        referencedTable: $db.tags,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TagsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.tags,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 
   Expression<T> mediaTagsRefs<T extends Object>(
       Expression<T> Function($$MediaTagsTableAnnotationComposer a) f) {
@@ -3519,7 +3720,7 @@ class $$TagsTableTableManager extends RootTableManager<
     $$TagsTableUpdateCompanionBuilder,
     (TagRow, $$TagsTableReferences),
     TagRow,
-    PrefetchHooks Function({bool mediaTagsRefs})> {
+    PrefetchHooks Function({bool parentId, bool mediaTagsRefs})> {
   $$TagsTableTableManager(_$AppDatabase db, $TagsTable table)
       : super(TableManagerState(
           db: db,
@@ -3534,31 +3735,63 @@ class $$TagsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<int> color = const Value.absent(),
+            Value<int?> parentId = const Value.absent(),
+            Value<bool> isGroup = const Value.absent(),
           }) =>
               TagsCompanion(
             id: id,
             name: name,
             color: color,
+            parentId: parentId,
+            isGroup: isGroup,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String name,
             Value<int> color = const Value.absent(),
+            Value<int?> parentId = const Value.absent(),
+            Value<bool> isGroup = const Value.absent(),
           }) =>
               TagsCompanion.insert(
             id: id,
             name: name,
             color: color,
+            parentId: parentId,
+            isGroup: isGroup,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) =>
                   (e.readTable(table), $$TagsTableReferences(db, table, e)))
               .toList(),
-          prefetchHooksCallback: ({mediaTagsRefs = false}) {
+          prefetchHooksCallback: ({parentId = false, mediaTagsRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [if (mediaTagsRefs) db.mediaTags],
-              addJoins: null,
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (parentId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.parentId,
+                    referencedTable: $$TagsTableReferences._parentIdTable(db),
+                    referencedColumn:
+                        $$TagsTableReferences._parentIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (mediaTagsRefs)
@@ -3590,7 +3823,7 @@ typedef $$TagsTableProcessedTableManager = ProcessedTableManager<
     $$TagsTableUpdateCompanionBuilder,
     (TagRow, $$TagsTableReferences),
     TagRow,
-    PrefetchHooks Function({bool mediaTagsRefs})>;
+    PrefetchHooks Function({bool parentId, bool mediaTagsRefs})>;
 typedef $$MediaTagsTableCreateCompanionBuilder = MediaTagsCompanion Function({
   required String mediaPath,
   required int tagId,

@@ -289,4 +289,66 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clearHistoryConfirmBody => '确定清空所有播放记录？此操作不可撤销。';
+
+  @override
+  String get onboardingSkip => '跳过引导';
+
+  @override
+  String get onboardingPrevious => '上一步';
+
+  @override
+  String get onboardingNext => '下一步';
+
+  @override
+  String get onboardingStart => '开始使用';
+
+  @override
+  String get onboardingWelcomeTitle => '欢迎使用 LumiLuna';
+
+  @override
+  String get onboardingWelcomeBody => '在一个简洁的媒体库中浏览、整理和欣赏你的图片、视频与音乐。';
+
+  @override
+  String get onboardingLibraryTitle => '自动整理媒体';
+
+  @override
+  String get onboardingLibraryBody =>
+      '应用会扫描系统默认媒体目录，也可以在设置中添加自己的文件夹。媒体会自动归入图片、视频和音乐标签页。';
+
+  @override
+  String get onboardingPlaybackTitle => '沉浸式播放体验';
+
+  @override
+  String get onboardingPlaybackBody =>
+      '直接打开图片、连续播放视频或管理音乐队列。播放历史会帮你快速找到最近欣赏的内容。';
+
+  @override
+  String get onboardingOrganizeTitle => '轻松管理收藏';
+
+  @override
+  String get onboardingOrganizeBody => '长按媒体即可批量选择，并进行收藏、删除、添加标签或加入播放列表等操作。';
+
+  @override
+  String get sort => '排序';
+
+  @override
+  String get sortModified => '按修改时间';
+
+  @override
+  String get sortName => '按名称';
+
+  @override
+  String get sortSize => '按文件大小';
+
+  @override
+  String get sortDuration => '按播放时长';
+
+  @override
+  String get sortAscending => '升序';
+
+  @override
+  String get sortDescending => '降序';
+
+  @override
+  String get playbackSpeed => '播放速度';
 }

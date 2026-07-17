@@ -613,6 +613,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to clear all play records? This action cannot be undone.'**
   String get clearHistoryConfirmBody;
+
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onboardingSkip;
+
+  /// No description provided for @onboardingPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get onboardingPrevious;
+
+  /// No description provided for @onboardingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onboardingNext;
+
+  /// No description provided for @onboardingStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get onboardingStart;
+
+  /// No description provided for @onboardingWelcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to LumiLuna'**
+  String get onboardingWelcomeTitle;
+
+  /// No description provided for @onboardingWelcomeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse, organize, and enjoy your photos, videos, and music in one elegant media library.'**
+  String get onboardingWelcomeBody;
+
+  /// No description provided for @onboardingLibraryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic Media Organization'**
+  String get onboardingLibraryTitle;
+
+  /// No description provided for @onboardingLibraryBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The app scans your default media folders, and you can add more folders in Settings. Media is automatically sorted into photo, video, and music tabs.'**
+  String get onboardingLibraryBody;
+
+  /// No description provided for @onboardingPlaybackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Immersive Playback'**
+  String get onboardingPlaybackTitle;
+
+  /// No description provided for @onboardingPlaybackBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Open photos, play videos continuously, or manage your music queue. Play history helps you quickly find recent content.'**
+  String get onboardingPlaybackBody;
+
+  /// No description provided for @onboardingOrganizeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Your Collection'**
+  String get onboardingOrganizeTitle;
+
+  /// No description provided for @onboardingOrganizeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press media to select multiple items, then favorite, delete, tag, or add them to playlists.'**
+  String get onboardingOrganizeBody;
+
+  /// No description provided for @sort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get sort;
+
+  /// No description provided for @sortModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified date'**
+  String get sortModified;
+
+  /// No description provided for @sortName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get sortName;
+
+  /// No description provided for @sortSize.
+  ///
+  /// In en, this message translates to:
+  /// **'File size'**
+  String get sortSize;
+
+  /// No description provided for @sortDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get sortDuration;
+
+  /// No description provided for @sortAscending.
+  ///
+  /// In en, this message translates to:
+  /// **'Ascending'**
+  String get sortAscending;
+
+  /// No description provided for @sortDescending.
+  ///
+  /// In en, this message translates to:
+  /// **'Descending'**
+  String get sortDescending;
+
+  /// No description provided for @playbackSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Playback speed'**
+  String get playbackSpeed;
 }
 
 class _AppLocalizationsDelegate

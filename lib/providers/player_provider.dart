@@ -5,7 +5,9 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../models/media_item.dart';
+import '../models/media_type.dart';
 import '../main.dart';
+import 'play_history_provider.dart';
 
 /// Immutable snapshot of the current playback session.
 class PlaybackState {
@@ -16,6 +18,7 @@ class PlaybackState {
   final Duration position;
   final Duration duration;
   final double volume;
+  final double rate;
 
   const PlaybackState({
     this.playlist = const [],
@@ -25,10 +28,14 @@ class PlaybackState {
     this.position = Duration.zero,
     this.duration = Duration.zero,
     this.volume = 100,
+    this.rate = 1,
   });
 
   MediaItem? get current =>
       (index >= 0 && index < playlist.length) ? playlist[index] : null;
+
+  bool isPlayingAudio(String path) =>
+      playing && current?.type == MediaType.audio && current?.path == path;
 
   bool get hasNext => index >= 0 && index < playlist.length - 1;
   bool get hasPrevious => index > 0;
@@ -41,6 +48,7 @@ class PlaybackState {
     Duration? position,
     Duration? duration,
     double? volume,
+    double? rate,
   }) {
     return PlaybackState(
       playlist: playlist ?? this.playlist,
@@ -50,6 +58,7 @@ class PlaybackState {
       position: position ?? this.position,
       duration: duration ?? this.duration,
       volume: volume ?? this.volume,
+      rate: rate ?? this.rate,
     );
   }
 }
@@ -63,7 +72,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
 
   final Player player = Player();
   late final VideoController videoController = VideoController(player);
-  final void Function(String path)? onPlay;
+  final Future<void> Function(String path)? onPlay;
 
   final List<StreamSubscription> _subs = [];
 
@@ -78,7 +87,14 @@ class PlaybackController extends StateNotifier<PlaybackState> {
       if (mounted) state = state.copyWith(duration: v);
     }));
     _subs.add(player.stream.playlist.listen((pl) {
-      if (mounted) state = state.copyWith(index: pl.index);
+      if (!mounted) return;
+      final previous = state.index;
+      state = state.copyWith(index: pl.index);
+      if (pl.index != previous &&
+          pl.index >= 0 &&
+          pl.index < state.playlist.length) {
+        onPlay?.call(state.playlist[pl.index].path);
+      }
     }));
     _subs.add(player.stream.volume.listen((v) {
       if (mounted) state = state.copyWith(volume: v);
@@ -101,7 +117,18 @@ class PlaybackController extends StateNotifier<PlaybackState> {
         index: safeIndex,
       ),
     );
-    onPlay?.call(items[safeIndex].path);
+    await onPlay?.call(items[safeIndex].path);
+  }
+
+  Future<void> openAudioPlaylist(
+    List<MediaItem> items,
+    int startIndex,
+  ) async {
+    if (items.isEmpty) return;
+    final safeIndex = startIndex.clamp(0, items.length - 1);
+    if (state.isPlayingAudio(items[safeIndex].path)) return;
+    await stop();
+    await openPlaylist(items, safeIndex);
   }
 
   Future<void> playOrPause() => player.playOrPause();
@@ -116,6 +143,12 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     final next = volume.clamp(0, 100).toDouble();
     state = state.copyWith(volume: next);
     await player.setVolume(next);
+  }
+
+  Future<void> setRate(double rate) async {
+    final next = rate.clamp(0.5, 2).toDouble();
+    state = state.copyWith(rate: next);
+    await player.setRate(next);
   }
 
   Future<void> toggleLoop() async {
@@ -146,7 +179,10 @@ final playbackControllerProvider =
   (ref) {
     final db = ref.watch(appDatabaseProvider);
     return PlaybackController(
-      onPlay: (path) => db.recordPlay(path),
+      onPlay: (path) async {
+        await db.recordPlay(path);
+        ref.invalidate(playHistoryProvider);
+      },
     );
   },
 );
