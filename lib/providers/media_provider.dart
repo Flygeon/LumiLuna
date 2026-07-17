@@ -50,15 +50,18 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
     return items;
   }
 
-  Future<void> _refreshIndex(AppDatabase db, List<String> folders) async {
-    if (_refreshTask != null) return _refreshTask;
-    final task = _performRefresh(db, folders);
-    _refreshTask = task;
-    try {
-      await task;
-    } finally {
-      _refreshTask = null;
-    }
+  Future<void> _refreshIndex(AppDatabase db, List<String> folders) {
+    final runningTask = _refreshTask;
+    if (runningTask != null) return runningTask;
+
+    late final Future<void> trackedTask;
+    trackedTask = _performRefresh(db, folders).whenComplete(() {
+      if (identical(_refreshTask, trackedTask)) {
+        _refreshTask = null;
+      }
+    });
+    _refreshTask = trackedTask;
+    return trackedTask;
   }
 
   Future<void> _performRefresh(AppDatabase db, List<String> folders) async {
