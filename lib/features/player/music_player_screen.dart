@@ -159,8 +159,9 @@ class _PlaybackSummary {
 }
 
 // ---------------------------------------------------------------------------
-// Narrow layout (phones / narrow windows — stacked)
-// Tap the album cover to toggle a full lyrics overlay.
+// Narrow layout (phones / narrow windows)
+// Page 0: player (tap cover → lyrics overlay)
+// Page 1: playlist (swipe left from player to reach)
 // ---------------------------------------------------------------------------
 class _NarrowLayout extends ConsumerStatefulWidget {
   final MediaItem current;
@@ -183,6 +184,13 @@ class _NarrowLayout extends ConsumerStatefulWidget {
 
 class _NarrowLayoutState extends ConsumerState<_NarrowLayout> {
   bool _showLyricsOverlay = false;
+  final PageController _pageController = PageController();
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -194,44 +202,56 @@ class _NarrowLayoutState extends ConsumerState<_NarrowLayout> {
       orElse: () => false,
     );
 
-    return Column(
+    return PageView(
+      controller: _pageController,
+      physics: const BouncingScrollPhysics(),
       children: [
-        // Album art / lyrics overlay — tap to toggle.
-        Expanded(
-          flex: _showLyricsOverlay ? 5 : 3,
-          child: GestureDetector(
-            onTap: hasLyrics
-                ? () =>
-                    setState(() => _showLyricsOverlay = !_showLyricsOverlay)
-                : null,
-            child: _showLyricsOverlay && hasLyrics
-                ? _LyricsPanel(
-                    lyricsAsync: lyricsAsync,
-                    translationAsync: translationAsync,
-                  )
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _AlbumArt(item: widget.current, maxWidth: 400),
-                      const SizedBox(height: 24),
-                      _SongInfo(item: widget.current),
-                      if (hasLyrics)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            '点击封面查看歌词',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.white.withValues(alpha: 0.4),
+        // ── Page 0: Player ──────────────────────────────────────────────
+        Column(
+          children: [
+            // Album art / lyrics overlay — tap to toggle.
+            Expanded(
+              flex: _showLyricsOverlay ? 5 : 3,
+              child: GestureDetector(
+                onTap: hasLyrics
+                    ? () => setState(
+                        () => _showLyricsOverlay = !_showLyricsOverlay)
+                    : null,
+                child: _showLyricsOverlay && hasLyrics
+                    ? _LyricsPanel(
+                        lyricsAsync: lyricsAsync,
+                        translationAsync: translationAsync,
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _AlbumArt(item: widget.current, maxWidth: 400),
+                          const SizedBox(height: 24),
+                          _SongInfo(item: widget.current),
+                          if (hasLyrics)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                '点击封面查看歌词',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white.withValues(alpha: 0.4),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                    ],
-                  ),
-          ),
+                        ],
+                      ),
+              ),
+            ),
+            const _PlaybackRegion(),
+            const SizedBox(height: 8),
+          ],
         ),
-        const _PlaybackRegion(),
-        const SizedBox(height: 8),
+        // ── Page 1: Playlist ────────────────────────────────────────────
+        _PlaylistPage(
+          playlist: widget.playlist,
+          currentIndex: widget.playlistIndex,
+        ),
       ],
     );
   }
@@ -291,68 +311,22 @@ class _WideLayout extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Playback region (narrow layout) — seek bar + controls + lyrics/queue toggle
+// Playback region (narrow layout) — seek bar + controls only
 // ---------------------------------------------------------------------------
-class _PlaybackRegion extends ConsumerStatefulWidget {
+class _PlaybackRegion extends ConsumerWidget {
   const _PlaybackRegion();
 
   @override
-  ConsumerState<_PlaybackRegion> createState() => _PlaybackRegionState();
-}
-
-class _PlaybackRegionState extends ConsumerState<_PlaybackRegion> {
-  bool _showLyrics = true;
-
-  @override
-  Widget build(BuildContext context) {
-    final state = ref.watch(playbackControllerProvider
-        .select((s) => _RegionState(playlist: s.playlist, index: s.index)));
-    final lyricsAsync = ref.watch(lyricsProvider);
-    final translationAsync = ref.watch(lyricsTranslationProvider);
-
-    return Column(
+  Widget build(BuildContext context, WidgetRef ref) {
+    return const Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const _SeekBar(),
-        const SizedBox(height: 8),
-        const _Controls(),
-        const SizedBox(height: 16),
-        _PanelToggle(
-          showLyrics: _showLyrics,
-          onToggle: () => setState(() => _showLyrics = !_showLyrics),
-        ),
-        SizedBox(
-          height: 180,
-          child: _showLyrics
-              ? _LyricsPanel(
-                  lyricsAsync: lyricsAsync,
-                  translationAsync: translationAsync,
-                )
-              : _Playlist(
-                  playlist: state.playlist,
-                  currentIndex: state.index,
-                  onTap: (i) => ref
-                      .read(playbackControllerProvider.notifier)
-                      .jump(i),
-                ),
-        ),
+        _SeekBar(),
+        SizedBox(height: 8),
+        _Controls(),
       ],
     );
   }
-}
-
-/// Lightweight snapshot for _PlaybackRegion.
-class _RegionState {
-  final List<MediaItem> playlist;
-  final int index;
-  const _RegionState({required this.playlist, required this.index});
-
-  @override
-  bool operator ==(Object o) =>
-      o is _RegionState && o.index == index && o.playlist == playlist;
-
-  @override
-  int get hashCode => Object.hash(index, playlist);
 }
 
 // ---------------------------------------------------------------------------
@@ -965,6 +939,42 @@ class _Playlist extends StatelessWidget {
           onTap: onTap != null ? () => onTap!(index) : null,
         );
       },
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Playlist page — used as the right page of the narrow PageView.
+// Swipe left from the player to reach this page.
+// ---------------------------------------------------------------------------
+class _PlaylistPage extends ConsumerWidget {
+  final List<MediaItem> playlist;
+  final int currentIndex;
+
+  const _PlaylistPage({
+    required this.playlist,
+    required this.currentIndex,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: const Text(
+          '播放列表',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        centerTitle: true,
+      ),
+      body: _Playlist(
+        playlist: playlist,
+        currentIndex: currentIndex,
+        onTap: (i) => ref.read(playbackControllerProvider.notifier).jump(i),
+      ),
     );
   }
 }
