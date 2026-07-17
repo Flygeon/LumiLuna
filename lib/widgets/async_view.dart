@@ -5,6 +5,12 @@ import '../l10n/l10n.dart';
 import 'empty_state.dart';
 
 /// Renders an [AsyncValue] with consistent loading / error / data handling.
+///
+/// The loading branch is intentionally **only** taken on the very first load,
+/// when there is no data to show.  During subsequent refreshes (e.g. the user
+/// toggles grid/list view, the database is refreshed by the folder watcher,
+/// or `rescan()` is invoked), the previous data is kept visible instead of
+/// flashing back to a blank/grey screen with a centred spinner.
 class AsyncView<T> extends StatelessWidget {
   final AsyncValue<T> value;
   final Widget Function(T data) builder;
@@ -21,6 +27,8 @@ class AsyncView<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return value.when(
+      skipLoadingOnRefresh: true,
+      skipLoadingOnReload: true,
       data: builder,
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => EmptyState(
