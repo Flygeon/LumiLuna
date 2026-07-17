@@ -281,4 +281,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String importSkippedDuplicates(Object duplicates, Object imported) {
     return 'Imported $imported files and skipped $duplicates duplicates';
   }
+
+  @override
+  String get playHistory => 'Play History';
+
+  @override
+  String get playHistoryEmpty => 'No play history yet';
+
+  @override
+  String get playHistoryEmptyHint => 'Media files you play will appear here.';
+
+  @override
+  String get clearHistoryConfirmTitle => 'Clear Play History';
+
+  @override
+  String get clearHistoryConfirmBody =>
+      'Are you sure you want to clear all play records? This action cannot be undone.';
 }

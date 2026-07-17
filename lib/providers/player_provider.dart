@@ -5,6 +5,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../models/media_item.dart';
+import '../main.dart';
 
 /// Immutable snapshot of the current playback session.
 class PlaybackState {
@@ -56,12 +57,13 @@ class PlaybackState {
 /// Owns the shared [media_kit] player used for both video and audio playback,
 /// enabling seamless switching between media types.
 class PlaybackController extends StateNotifier<PlaybackState> {
-  PlaybackController() : super(const PlaybackState()) {
+  PlaybackController({this.onPlay}) : super(const PlaybackState()) {
     _bind();
   }
 
   final Player player = Player();
   late final VideoController videoController = VideoController(player);
+  final void Function(String path)? onPlay;
 
   final List<StreamSubscription> _subs = [];
 
@@ -99,6 +101,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
         index: safeIndex,
       ),
     );
+    onPlay?.call(items[safeIndex].path);
   }
 
   Future<void> playOrPause() => player.playOrPause();
@@ -140,5 +143,10 @@ class PlaybackController extends StateNotifier<PlaybackState> {
 
 final playbackControllerProvider =
     StateNotifierProvider<PlaybackController, PlaybackState>(
-  (ref) => PlaybackController(),
+  (ref) {
+    final db = ref.watch(appDatabaseProvider);
+    return PlaybackController(
+      onPlay: (path) => db.recordPlay(path),
+    );
+  },
 );

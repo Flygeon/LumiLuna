@@ -2531,6 +2531,226 @@ class ScanFoldersCompanion extends UpdateCompanion<ScanFolder> {
   }
 }
 
+class $PlayHistoryTable extends PlayHistory
+    with TableInfo<$PlayHistoryTable, PlayHistoryRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PlayHistoryTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _mediaPathMeta =
+      const VerificationMeta('mediaPath');
+  @override
+  late final GeneratedColumn<String> mediaPath = GeneratedColumn<String>(
+      'media_path', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES media_items (path)'));
+  static const VerificationMeta _playedAtMeta =
+      const VerificationMeta('playedAt');
+  @override
+  late final GeneratedColumn<String> playedAt = GeneratedColumn<String>(
+      'played_at', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, mediaPath, playedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'play_history';
+  @override
+  VerificationContext validateIntegrity(Insertable<PlayHistoryRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('media_path')) {
+      context.handle(_mediaPathMeta,
+          mediaPath.isAcceptableOrUnknown(data['media_path']!, _mediaPathMeta));
+    } else if (isInserting) {
+      context.missing(_mediaPathMeta);
+    }
+    if (data.containsKey('played_at')) {
+      context.handle(_playedAtMeta,
+          playedAt.isAcceptableOrUnknown(data['played_at']!, _playedAtMeta));
+    } else if (isInserting) {
+      context.missing(_playedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PlayHistoryRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PlayHistoryRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      mediaPath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}media_path'])!,
+      playedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}played_at'])!,
+    );
+  }
+
+  @override
+  $PlayHistoryTable createAlias(String alias) {
+    return $PlayHistoryTable(attachedDatabase, alias);
+  }
+}
+
+class PlayHistoryRow extends DataClass implements Insertable<PlayHistoryRow> {
+  final int id;
+  final String mediaPath;
+  final String playedAt;
+  const PlayHistoryRow(
+      {required this.id, required this.mediaPath, required this.playedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['media_path'] = Variable<String>(mediaPath);
+    map['played_at'] = Variable<String>(playedAt);
+    return map;
+  }
+
+  PlayHistoryCompanion toCompanion(bool nullToAbsent) {
+    return PlayHistoryCompanion(
+      id: Value(id),
+      mediaPath: Value(mediaPath),
+      playedAt: Value(playedAt),
+    );
+  }
+
+  factory PlayHistoryRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PlayHistoryRow(
+      id: serializer.fromJson<int>(json['id']),
+      mediaPath: serializer.fromJson<String>(json['mediaPath']),
+      playedAt: serializer.fromJson<String>(json['playedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'mediaPath': serializer.toJson<String>(mediaPath),
+      'playedAt': serializer.toJson<String>(playedAt),
+    };
+  }
+
+  PlayHistoryRow copyWith({int? id, String? mediaPath, String? playedAt}) =>
+      PlayHistoryRow(
+        id: id ?? this.id,
+        mediaPath: mediaPath ?? this.mediaPath,
+        playedAt: playedAt ?? this.playedAt,
+      );
+  PlayHistoryRow copyWithCompanion(PlayHistoryCompanion data) {
+    return PlayHistoryRow(
+      id: data.id.present ? data.id.value : this.id,
+      mediaPath: data.mediaPath.present ? data.mediaPath.value : this.mediaPath,
+      playedAt: data.playedAt.present ? data.playedAt.value : this.playedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PlayHistoryRow(')
+          ..write('id: $id, ')
+          ..write('mediaPath: $mediaPath, ')
+          ..write('playedAt: $playedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, mediaPath, playedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PlayHistoryRow &&
+          other.id == this.id &&
+          other.mediaPath == this.mediaPath &&
+          other.playedAt == this.playedAt);
+}
+
+class PlayHistoryCompanion extends UpdateCompanion<PlayHistoryRow> {
+  final Value<int> id;
+  final Value<String> mediaPath;
+  final Value<String> playedAt;
+  const PlayHistoryCompanion({
+    this.id = const Value.absent(),
+    this.mediaPath = const Value.absent(),
+    this.playedAt = const Value.absent(),
+  });
+  PlayHistoryCompanion.insert({
+    this.id = const Value.absent(),
+    required String mediaPath,
+    required String playedAt,
+  })  : mediaPath = Value(mediaPath),
+        playedAt = Value(playedAt);
+  static Insertable<PlayHistoryRow> custom({
+    Expression<int>? id,
+    Expression<String>? mediaPath,
+    Expression<String>? playedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (mediaPath != null) 'media_path': mediaPath,
+      if (playedAt != null) 'played_at': playedAt,
+    });
+  }
+
+  PlayHistoryCompanion copyWith(
+      {Value<int>? id, Value<String>? mediaPath, Value<String>? playedAt}) {
+    return PlayHistoryCompanion(
+      id: id ?? this.id,
+      mediaPath: mediaPath ?? this.mediaPath,
+      playedAt: playedAt ?? this.playedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (mediaPath.present) {
+      map['media_path'] = Variable<String>(mediaPath.value);
+    }
+    if (playedAt.present) {
+      map['played_at'] = Variable<String>(playedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PlayHistoryCompanion(')
+          ..write('id: $id, ')
+          ..write('mediaPath: $mediaPath, ')
+          ..write('playedAt: $playedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2543,6 +2763,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PlaylistsTable playlists = $PlaylistsTable(this);
   late final $PlaylistItemsTable playlistItems = $PlaylistItemsTable(this);
   late final $ScanFoldersTable scanFolders = $ScanFoldersTable(this);
+  late final $PlayHistoryTable playHistory = $PlayHistoryTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2555,7 +2776,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         collectionItems,
         playlists,
         playlistItems,
-        scanFolders
+        scanFolders,
+        playHistory
       ];
 }
 
@@ -2637,6 +2859,21 @@ final class $$MediaItemsTableReferences
             (f) => f.mediaPath.path.sqlEquals($_itemColumn<String>('path')!));
 
     final cache = $_typedResult.readTableOrNull(_playlistItemsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$PlayHistoryTable, List<PlayHistoryRow>>
+      _playHistoryRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.playHistory,
+              aliasName: 'media_items__path__play_history__media_path');
+
+  $$PlayHistoryTableProcessedTableManager get playHistoryRefs {
+    final manager = $$PlayHistoryTableTableManager($_db, $_db.playHistory)
+        .filter(
+            (f) => f.mediaPath.path.sqlEquals($_itemColumn<String>('path')!));
+
+    final cache = $_typedResult.readTableOrNull(_playHistoryRefsTable($_db));
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
@@ -2745,6 +2982,27 @@ class $$MediaItemsTableFilterComposer
             $$PlaylistItemsTableFilterComposer(
               $db: $db,
               $table: $db.playlistItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> playHistoryRefs(
+      Expression<bool> Function($$PlayHistoryTableFilterComposer f) f) {
+    final $$PlayHistoryTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.path,
+        referencedTable: $db.playHistory,
+        getReferencedColumn: (t) => t.mediaPath,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PlayHistoryTableFilterComposer(
+              $db: $db,
+              $table: $db.playHistory,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -2913,6 +3171,27 @@ class $$MediaItemsTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> playHistoryRefs<T extends Object>(
+      Expression<T> Function($$PlayHistoryTableAnnotationComposer a) f) {
+    final $$PlayHistoryTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.path,
+        referencedTable: $db.playHistory,
+        getReferencedColumn: (t) => t.mediaPath,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PlayHistoryTableAnnotationComposer(
+              $db: $db,
+              $table: $db.playHistory,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$MediaItemsTableTableManager extends RootTableManager<
@@ -2929,7 +3208,8 @@ class $$MediaItemsTableTableManager extends RootTableManager<
     PrefetchHooks Function(
         {bool mediaTagsRefs,
         bool collectionItemsRefs,
-        bool playlistItemsRefs})> {
+        bool playlistItemsRefs,
+        bool playHistoryRefs})> {
   $$MediaItemsTableTableManager(_$AppDatabase db, $MediaItemsTable table)
       : super(TableManagerState(
           db: db,
@@ -3013,13 +3293,15 @@ class $$MediaItemsTableTableManager extends RootTableManager<
           prefetchHooksCallback: (
               {mediaTagsRefs = false,
               collectionItemsRefs = false,
-              playlistItemsRefs = false}) {
+              playlistItemsRefs = false,
+              playHistoryRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
                 if (mediaTagsRefs) db.mediaTags,
                 if (collectionItemsRefs) db.collectionItems,
-                if (playlistItemsRefs) db.playlistItems
+                if (playlistItemsRefs) db.playlistItems,
+                if (playHistoryRefs) db.playHistory
               ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
@@ -3062,6 +3344,19 @@ class $$MediaItemsTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem:
                             (item, referencedItems) => referencedItems
                                 .where((e) => e.mediaPath == item.path),
+                        typedResults: items),
+                  if (playHistoryRefs)
+                    await $_getPrefetchedData<MediaItemRow, $MediaItemsTable,
+                            PlayHistoryRow>(
+                        currentTable: table,
+                        referencedTable: $$MediaItemsTableReferences
+                            ._playHistoryRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$MediaItemsTableReferences(db, table, p0)
+                                .playHistoryRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.mediaPath == item.path),
                         typedResults: items)
                 ];
               },
@@ -3084,7 +3379,8 @@ typedef $$MediaItemsTableProcessedTableManager = ProcessedTableManager<
     PrefetchHooks Function(
         {bool mediaTagsRefs,
         bool collectionItemsRefs,
-        bool playlistItemsRefs})>;
+        bool playlistItemsRefs,
+        bool playHistoryRefs})>;
 typedef $$TagsTableCreateCompanionBuilder = TagsCompanion Function({
   Value<int> id,
   required String name,
@@ -4937,6 +5233,244 @@ typedef $$ScanFoldersTableProcessedTableManager = ProcessedTableManager<
     (ScanFolder, BaseReferences<_$AppDatabase, $ScanFoldersTable, ScanFolder>),
     ScanFolder,
     PrefetchHooks Function()>;
+typedef $$PlayHistoryTableCreateCompanionBuilder = PlayHistoryCompanion
+    Function({
+  Value<int> id,
+  required String mediaPath,
+  required String playedAt,
+});
+typedef $$PlayHistoryTableUpdateCompanionBuilder = PlayHistoryCompanion
+    Function({
+  Value<int> id,
+  Value<String> mediaPath,
+  Value<String> playedAt,
+});
+
+final class $$PlayHistoryTableReferences
+    extends BaseReferences<_$AppDatabase, $PlayHistoryTable, PlayHistoryRow> {
+  $$PlayHistoryTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $MediaItemsTable _mediaPathTable(_$AppDatabase db) =>
+      db.mediaItems.createAlias('play_history__media_path__media_items__path');
+
+  $$MediaItemsTableProcessedTableManager get mediaPath {
+    final $_column = $_itemColumn<String>('media_path')!;
+
+    final manager = $$MediaItemsTableTableManager($_db, $_db.mediaItems)
+        .filter((f) => f.path.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_mediaPathTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$PlayHistoryTableFilterComposer
+    extends Composer<_$AppDatabase, $PlayHistoryTable> {
+  $$PlayHistoryTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get playedAt => $composableBuilder(
+      column: $table.playedAt, builder: (column) => ColumnFilters(column));
+
+  $$MediaItemsTableFilterComposer get mediaPath {
+    final $$MediaItemsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.mediaPath,
+        referencedTable: $db.mediaItems,
+        getReferencedColumn: (t) => t.path,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$MediaItemsTableFilterComposer(
+              $db: $db,
+              $table: $db.mediaItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$PlayHistoryTableOrderingComposer
+    extends Composer<_$AppDatabase, $PlayHistoryTable> {
+  $$PlayHistoryTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get playedAt => $composableBuilder(
+      column: $table.playedAt, builder: (column) => ColumnOrderings(column));
+
+  $$MediaItemsTableOrderingComposer get mediaPath {
+    final $$MediaItemsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.mediaPath,
+        referencedTable: $db.mediaItems,
+        getReferencedColumn: (t) => t.path,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$MediaItemsTableOrderingComposer(
+              $db: $db,
+              $table: $db.mediaItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$PlayHistoryTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PlayHistoryTable> {
+  $$PlayHistoryTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get playedAt =>
+      $composableBuilder(column: $table.playedAt, builder: (column) => column);
+
+  $$MediaItemsTableAnnotationComposer get mediaPath {
+    final $$MediaItemsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.mediaPath,
+        referencedTable: $db.mediaItems,
+        getReferencedColumn: (t) => t.path,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$MediaItemsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.mediaItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$PlayHistoryTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $PlayHistoryTable,
+    PlayHistoryRow,
+    $$PlayHistoryTableFilterComposer,
+    $$PlayHistoryTableOrderingComposer,
+    $$PlayHistoryTableAnnotationComposer,
+    $$PlayHistoryTableCreateCompanionBuilder,
+    $$PlayHistoryTableUpdateCompanionBuilder,
+    (PlayHistoryRow, $$PlayHistoryTableReferences),
+    PlayHistoryRow,
+    PrefetchHooks Function({bool mediaPath})> {
+  $$PlayHistoryTableTableManager(_$AppDatabase db, $PlayHistoryTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PlayHistoryTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PlayHistoryTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PlayHistoryTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> mediaPath = const Value.absent(),
+            Value<String> playedAt = const Value.absent(),
+          }) =>
+              PlayHistoryCompanion(
+            id: id,
+            mediaPath: mediaPath,
+            playedAt: playedAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String mediaPath,
+            required String playedAt,
+          }) =>
+              PlayHistoryCompanion.insert(
+            id: id,
+            mediaPath: mediaPath,
+            playedAt: playedAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$PlayHistoryTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({mediaPath = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (mediaPath) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.mediaPath,
+                    referencedTable:
+                        $$PlayHistoryTableReferences._mediaPathTable(db),
+                    referencedColumn:
+                        $$PlayHistoryTableReferences._mediaPathTable(db).path,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$PlayHistoryTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $PlayHistoryTable,
+    PlayHistoryRow,
+    $$PlayHistoryTableFilterComposer,
+    $$PlayHistoryTableOrderingComposer,
+    $$PlayHistoryTableAnnotationComposer,
+    $$PlayHistoryTableCreateCompanionBuilder,
+    $$PlayHistoryTableUpdateCompanionBuilder,
+    (PlayHistoryRow, $$PlayHistoryTableReferences),
+    PlayHistoryRow,
+    PrefetchHooks Function({bool mediaPath})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4956,4 +5490,6 @@ class $AppDatabaseManager {
       $$PlaylistItemsTableTableManager(_db, _db.playlistItems);
   $$ScanFoldersTableTableManager get scanFolders =>
       $$ScanFoldersTableTableManager(_db, _db.scanFolders);
+  $$PlayHistoryTableTableManager get playHistory =>
+      $$PlayHistoryTableTableManager(_db, _db.playHistory);
 }
