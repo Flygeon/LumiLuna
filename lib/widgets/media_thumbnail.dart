@@ -59,7 +59,8 @@ class MediaThumbnail extends StatelessWidget {
 
 /// Themed icon placeholder used while a video thumbnail is generating, and
 /// for audio items (no cover art in v1).
-Widget _placeholder(BuildContext context, MediaItem item, [double iconSize = 40]) {
+Widget _placeholder(BuildContext context, MediaItem item,
+    [double iconSize = 40]) {
   final scheme = Theme.of(context).colorScheme;
   final (bg, fg) = switch (item.type) {
     MediaType.image => (scheme.primaryContainer, scheme.onPrimaryContainer),
@@ -98,6 +99,7 @@ class _VideoThumbnail extends ConsumerStatefulWidget {
 
 class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
   static final _plugin = FcNativeVideoThumbnail();
+  static final Map<String, Future<String?>> _pending = {};
   String? _thumbPath;
   bool _extractionScheduled = false;
 
@@ -114,7 +116,7 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
       final base = await getTemporaryDirectory();
       final dir = Directory('${base.path}/lumiluna_thumbs');
       if (!await dir.exists()) return;
-      final key = widget.item.path.hashCode.abs().toString();
+      final key = _cacheKey(widget.item);
       final dest = '${dir.path}${Platform.pathSeparator}$key.jpg';
       if (await File(dest).exists() && mounted) {
         setState(() => _thumbPath = dest);
@@ -151,34 +153,45 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
   Future<void> _generate() async {
     if (!mounted) return;
     try {
+      final key = _cacheKey(widget.item);
+      final path = await (_pending[key] ??= _generateThumbnail(widget.item)
+          .whenComplete(() => _pending.remove(key)));
+      if (mounted && path != null) setState(() => _thumbPath = path);
+    } catch (_) {}
+  }
+
+  static Future<String?> _generateThumbnail(MediaItem item) async {
+    try {
       final cacheDir = await getTemporaryDirectory();
       final thumbDir = Directory('${cacheDir.path}/lumiluna_thumbs');
       await thumbDir.create(recursive: true);
-
-      // Stable cache key derived from the video path.
-      final key = widget.item.path.hashCode.abs().toString();
+      final key = _cacheKey(item);
       final dest = '${thumbDir.path}${Platform.pathSeparator}$key.jpg';
 
-      if (await File(dest).exists()) {
-        if (mounted) setState(() => _thumbPath = dest);
-        return;
-      }
+      if (await File(dest).exists()) return dest;
 
       final ok = await _plugin.getVideoThumbnail(
-        srcFile: widget.item.path,
+        srcFile: item.path,
         destFile: dest,
         width: AppConstants.thumbnailCacheWidth,
         height: AppConstants.thumbnailCacheWidth,
         format: 'jpeg',
         quality: 80,
       );
-      if (!mounted) return;
-      if (ok) {
-        setState(() => _thumbPath = dest);
-      }
-      // On failure _thumbPath stays null and the placeholder remains.
+      return ok ? dest : null;
     } catch (_) {
-      // Generation failed — keep the themed placeholder shown.
+      return null;
     }
+  }
+
+  static String _cacheKey(MediaItem item) {
+    final input = '${item.path.replaceAll('\\', '/').toLowerCase()}|'
+        '${item.size}|${item.modified.millisecondsSinceEpoch}';
+    var hash = 0xcbf29ce484222325;
+    for (final unit in input.codeUnits) {
+      hash ^= unit;
+      hash = (hash * 0x100000001b3) & 0x7fffffffffffffff;
+    }
+    return hash.toRadixString(16);
   }
 }

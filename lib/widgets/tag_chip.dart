@@ -8,6 +8,7 @@ class TagChip extends StatelessWidget {
   final bool selected;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
+  final Widget? prefix;
 
   const TagChip({
     super.key,
@@ -15,6 +16,7 @@ class TagChip extends StatelessWidget {
     this.selected = false,
     this.onTap,
     this.onDelete,
+    this.prefix,
   });
 
   @override
@@ -24,10 +26,8 @@ class TagChip extends StatelessWidget {
       selected: selected,
       onSelected: onTap != null ? (_) => onTap!() : null,
       onDeleted: onDelete,
-      avatar: CircleAvatar(
-        backgroundColor: tag.colorValue,
-        radius: 6,
-      ),
+      avatar:
+          prefix ?? CircleAvatar(backgroundColor: tag.colorValue, radius: 5),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: VisualDensity.compact,
     );

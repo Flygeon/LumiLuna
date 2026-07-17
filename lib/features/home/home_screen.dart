@@ -4,7 +4,6 @@ import 'package:desktop_drop/desktop_drop.dart';
 import 'dart:io';
 
 import '../../l10n/l10n.dart';
-import '../../models/media_folder.dart';
 import '../../models/media_type.dart';
 import '../../providers/filter_provider.dart';
 import '../../providers/media_provider.dart';
@@ -18,10 +17,10 @@ import '../history/play_history_screen.dart';
 import '../media/media_type_screen.dart';
 import '../playlists/playlist_list_screen.dart';
 import '../settings/settings_screen.dart';
+import '../tags/tag_library_screen.dart';
 import '../trash/trash_screen.dart';
 import '../../main.dart';
 import '../../services/media_scanner_service.dart';
-import '../../services/database/app_database.dart';
 
 /// Root screen with a Material 3 navigation bar for switching media types,
 /// plus search, grid/list toggle, refresh and a settings entry.
@@ -106,6 +105,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
+              leading: const Icon(Icons.account_tree_outlined),
+              title: const Text('分类与标签'),
+              subtitle: const Text('按主题、人物和地点整理媒体'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const TagLibraryScreen()),
+                );
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.collections_bookmark),
               title: const Text('收藏集'),
               subtitle: const Text('整理和浏览您的媒体收藏'),
@@ -134,8 +144,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               onTap: () {
                 Navigator.of(ctx).pop();
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (_) => const PlayHistoryScreen()),
+                  MaterialPageRoute(builder: (_) => const PlayHistoryScreen()),
                 );
               },
             ),
@@ -230,6 +239,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               icon: const Icon(Icons.refresh),
               onPressed: () => ref.read(mediaProvider.notifier).rescan(),
             ),
+            PopupMenuButton<MediaSortMode>(
+              tooltip: l10n.sort,
+              icon: const Icon(Icons.sort),
+              initialValue: ref.watch(settingsProvider).mediaSortMode,
+              onSelected: ref.read(settingsProvider.notifier).setMediaSortMode,
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: MediaSortMode.modified,
+                  child: Text(l10n.sortModified),
+                ),
+                PopupMenuItem(
+                  value: MediaSortMode.name,
+                  child: Text(l10n.sortName),
+                ),
+                PopupMenuItem(
+                  value: MediaSortMode.size,
+                  child: Text(l10n.sortSize),
+                ),
+                PopupMenuItem(
+                  value: MediaSortMode.duration,
+                  child: Text(l10n.sortDuration),
+                ),
+              ],
+            ),
+            IconButton(
+              tooltip: ref.watch(settingsProvider).mediaSortAscending
+                  ? l10n.sortAscending
+                  : l10n.sortDescending,
+              icon: Icon(ref.watch(settingsProvider).mediaSortAscending
+                  ? Icons.arrow_upward
+                  : Icons.arrow_downward),
+              onPressed:
+                  ref.read(settingsProvider.notifier).toggleMediaSortDirection,
+            ),
             IconButton(
               tooltip: l10n.favorite,
               icon: const Icon(Icons.star_border),
@@ -290,9 +333,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         children: [
                           Icon(Icons.cloud_upload_outlined,
                               size: 64,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onPrimary),
+                              color: Theme.of(context).colorScheme.onPrimary),
                           const SizedBox(height: 16),
                           Text(
                             context.l10n.dropFilesHere,
@@ -335,7 +376,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           NavigationDestination(
             icon: const Icon(Icons.folder_outlined),
             selectedIcon: const Icon(Icons.folder),
-            label: groupModeName(context, GroupMode.folder),
+            label: '浏览',
           ),
           NavigationDestination(
             icon: const Icon(Icons.delete_outline),

@@ -7,6 +7,8 @@ import '../../models/media_type.dart';
 import '../../providers/filter_provider.dart';
 import '../../providers/media_provider.dart';
 import '../../providers/player_provider.dart';
+import '../../main.dart';
+import '../../providers/play_history_provider.dart';
 import '../../providers/selection_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/async_view.dart';
@@ -40,8 +42,10 @@ class _MediaTypeScreenState extends ConsumerState<MediaTypeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final async = ref.watch(mediaByTypeProvider(widget.type));
-    final query = ref.watch(searchQueryProvider).trim().toLowerCase();
+    final async = ref.watch(searchedMediaProvider).whenData(
+          (items) => items.where((item) => item.type == widget.type).toList(),
+        );
+    final query = ref.watch(searchQueryProvider).trim();
     final isGrid = ref.watch(settingsProvider.select((s) => s.isGridView));
     final sel = ref.watch(selectionProvider(_selectionId));
     final l10n = context.l10n;
@@ -49,16 +53,7 @@ class _MediaTypeScreenState extends ConsumerState<MediaTypeScreen> {
     return AsyncView<List<MediaItem>>(
       value: async,
       onRetry: () => ref.read(mediaProvider.notifier).rescan(),
-      builder: (all) {
-        final items = query.isEmpty
-            ? all
-            : all.where((i) {
-                final q = query;
-                return i.name.toLowerCase().contains(q) ||
-                    (i.title?.toLowerCase().contains(q) ?? false) ||
-                    (i.artist?.toLowerCase().contains(q) ?? false);
-              }).toList();
-
+      builder: (items) {
         if (items.isEmpty) {
           final typeLabel = mediaTypeName(context, widget.type);
           return EmptyState(
@@ -107,21 +102,24 @@ class _MediaTypeScreenState extends ConsumerState<MediaTypeScreen> {
               ),
             ),
             // Batch action bar at the bottom when in selection mode.
-            if (sel.isSelecting)
-              BatchActionBar(selectionId: _selectionId),
+            if (sel.isSelecting) BatchActionBar(selectionId: _selectionId),
           ],
         );
       },
     );
   }
 
-  void _onItemTap(List<MediaItem> items, int index, SelectionState sel) {
+  Future<void> _onItemTap(
+    List<MediaItem> items,
+    int index,
+    SelectionState sel,
+  ) async {
     final item = items[index];
     if (sel.isSelecting) {
       // Toggle selection.
       ref.read(selectionProvider(_selectionId).notifier).toggle(item.path);
     } else {
-      openMedia(context, ref, items, index);
+      await openMedia(context, ref, items, index);
     }
   }
 
@@ -143,17 +141,20 @@ class _MediaTypeScreenState extends ConsumerState<MediaTypeScreen> {
 /// - audio   -> music player with playlist
 ///
 /// Shared so the folder detail view can reuse identical behaviour.
-void openMedia(
+Future<void> openMedia(
   BuildContext context,
   WidgetRef ref,
   List<MediaItem> items,
   int index,
-) {
+) async {
   final item = items[index];
   switch (item.type) {
     case MediaType.image:
       final images = items.where((i) => i.type == MediaType.image).toList();
       final start = images.indexOf(item);
+      ref.read(appDatabaseProvider).recordPlay(item.path).then(
+            (_) => ref.invalidate(playHistoryProvider),
+          );
       Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => ImageViewerScreen(
           items: images,
@@ -174,9 +175,10 @@ void openMedia(
     case MediaType.audio:
       final tracks = items.where((i) => i.type == MediaType.audio).toList();
       final start = tracks.indexOf(item);
-      ref
+      await ref
           .read(playbackControllerProvider.notifier)
-          .openPlaylist(tracks, start < 0 ? 0 : start);
+          .openAudioPlaylist(tracks, start < 0 ? 0 : start);
+      if (!context.mounted) return;
       Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => const MusicPlayerScreen(),
       ));

@@ -66,4 +66,25 @@ class SettingsService {
   Future<void> setLocale(String tag) async {
     await _prefs.setString(AppConstants.prefLocale, tag);
   }
+
+  bool getOnboardingCompleted() =>
+      _prefs.getBool(AppConstants.prefOnboardingCompleted) ?? false;
+
+  Future<void> setOnboardingCompleted(bool completed) async {
+    await _prefs.setBool(AppConstants.prefOnboardingCompleted, completed);
+  }
+
+  String getMediaSort() =>
+      _prefs.getString(AppConstants.prefMediaSort) ?? 'modified';
+
+  Future<void> setMediaSort(String sort) async {
+    await _prefs.setString(AppConstants.prefMediaSort, sort);
+  }
+
+  bool getMediaSortAscending() =>
+      _prefs.getBool(AppConstants.prefMediaSortAscending) ?? false;
+
+  Future<void> setMediaSortAscending(bool ascending) async {
+    await _prefs.setBool(AppConstants.prefMediaSortAscending, ascending);
+  }
 }

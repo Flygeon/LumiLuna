@@ -8,17 +8,47 @@ class AppConstants {
 
   /// Supported image file extensions (lowercase, no dot).
   static const Set<String> imageExtensions = {
-    'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic', 'heif', 'tiff', 'tif', 'ico',
+    'jpg',
+    'jpeg',
+    'png',
+    'gif',
+    'bmp',
+    'webp',
+    'heic',
+    'heif',
+    'tiff',
+    'tif',
+    'ico',
   };
 
   /// Supported video file extensions.
   static const Set<String> videoExtensions = {
-    'mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv', 'webm', 'm4v', 'mpeg', 'mpg', 'ts', '3gp',
+    'mp4',
+    'mkv',
+    'avi',
+    'mov',
+    'wmv',
+    'flv',
+    'webm',
+    'm4v',
+    'mpeg',
+    'mpg',
+    'ts',
+    '3gp',
   };
 
   /// Supported audio file extensions.
   static const Set<String> audioExtensions = {
-    'mp3', 'flac', 'wav', 'aac', 'm4a', 'ogg', 'wma', 'opus', 'aiff', 'ape',
+    'mp3',
+    'flac',
+    'wav',
+    'aac',
+    'm4a',
+    'ogg',
+    'wma',
+    'opus',
+    'aiff',
+    'ape',
   };
 
   /// Resolve a media type from a file extension (lowercase, no dot).
@@ -52,6 +82,9 @@ class AppConstants {
   static const String prefScanFolders = 'pref_scan_folders';
   static const String prefGroupMode = 'pref_group_mode';
   static const String prefLocale = 'pref_locale';
+  static const String prefOnboardingCompleted = 'pref_onboarding_completed';
+  static const String prefMediaSort = 'pref_media_sort';
+  static const String prefMediaSortAscending = 'pref_media_sort_ascending';
 
   // Scan cache file name (stored in application support directory).
   static const String cacheFileName = 'lumiluna_cache.json';

@@ -42,14 +42,25 @@ class Tags extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text().unique()();
   IntColumn get color => integer().withDefault(const Constant(0xFF5C5C5C))();
+  IntColumn? get parentId => integer().nullable().references(Tags, #id)();
+  BoolColumn get isGroup => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {id};
 }
 
 class MediaTags extends Table {
-  TextColumn get mediaPath => text().references(MediaItems, #path)();
-  IntColumn get tagId => integer().references(Tags, #id)();
+  TextColumn get mediaPath => text().references(
+        MediaItems,
+        #path,
+        onUpdate: KeyAction.cascade,
+        onDelete: KeyAction.cascade,
+      )();
+  IntColumn get tagId => integer().references(
+        Tags,
+        #id,
+        onDelete: KeyAction.cascade,
+      )();
 
   @override
   Set<Column> get primaryKey => {mediaPath, tagId};
@@ -145,8 +156,10 @@ class PlayHistory extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
+  AppDatabase.forTesting(super.executor);
+
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -158,6 +171,10 @@ class AppDatabase extends _$AppDatabase {
       onUpgrade: (m, from, to) async {
         if (from < 2) {
           await m.createTable(playHistory);
+        }
+        if (from < 3) {
+          await m.addColumn(tags, tags.parentId);
+          await m.addColumn(tags, tags.isGroup);
         }
       },
       beforeOpen: (details) async {
@@ -371,21 +388,68 @@ class AppDatabase extends _$AppDatabase {
 
   Future<List<Tag>> getAllTags() async {
     final rows = await (select(tags)
-          ..orderBy([(t) => OrderingTerm(expression: t.name)]))
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.isGroup, mode: OrderingMode.desc),
+            (t) => OrderingTerm(expression: t.name),
+          ]))
         .get();
     return rows
-        .map((r) => Tag(id: r.id, name: r.name, color: r.color))
+        .map((r) => Tag(
+              id: r.id,
+              name: r.name,
+              color: r.color,
+              parentId: r.parentId,
+              isGroup: r.isGroup,
+            ))
         .toList();
   }
 
-  Future<Tag> createTag(String name, {int color = 0xFF5C5C5C}) async {
-    final id = await into(tags)
-        .insert(TagsCompanion(name: Value(name), color: Value(color)));
-    return Tag(id: id, name: name, color: color);
+  Future<Tag> createTag(
+    String name, {
+    int color = 0xFF5C5C5C,
+    int? parentId,
+    bool isGroup = false,
+  }) async {
+    final normalized = name.trim().replaceAll(RegExp(r'\s+'), ' ');
+    if (normalized.isEmpty || normalized.length > 40) {
+      throw ArgumentError('标签名称须为 1 到 40 个字符');
+    }
+    final existing = await getAllTags();
+    if (existing
+        .any((tag) => tag.name.toLowerCase() == normalized.toLowerCase())) {
+      throw ArgumentError('标签名称已存在');
+    }
+    if (isGroup && parentId != null) {
+      throw ArgumentError('分类组不能包含父级');
+    }
+    if (parentId != null) {
+      final parent = existing.where((tag) => tag.id == parentId).firstOrNull;
+      if (parent == null || !parent.isGroup) {
+        throw ArgumentError('标签父级必须是分类组');
+      }
+    }
+    final id = await into(tags).insert(TagsCompanion(
+      name: Value(normalized),
+      color: Value(color),
+      parentId: Value(parentId),
+      isGroup: Value(isGroup),
+    ));
+    return Tag(
+      id: id,
+      name: normalized,
+      color: color,
+      parentId: parentId,
+      isGroup: isGroup,
+    );
   }
 
   Future<void> deleteTag(int id) async {
-    await (delete(tags)..where((t) => t.id.equals(id))).go();
+    await transaction(() async {
+      await (update(tags)..where((t) => t.parentId.equals(id)))
+          .write(const TagsCompanion(parentId: Value(null)));
+      await (delete(mediaTags)..where((t) => t.tagId.equals(id))).go();
+      await (delete(tags)..where((t) => t.id.equals(id))).go();
+    });
   }
 
   Future<void> addTagToMedia(String mediaPath, int tagId) async {
@@ -402,6 +466,22 @@ class AppDatabase extends _$AppDatabase {
         .go();
   }
 
+  Future<void> setTagForMediaPaths(
+    List<String> paths,
+    int tagId,
+    bool selected,
+  ) async {
+    await transaction(() async {
+      for (final path in paths) {
+        if (selected) {
+          await addTagToMedia(path, tagId);
+        } else {
+          await removeTagFromMedia(path, tagId);
+        }
+      }
+    });
+  }
+
   Future<Map<String, List<Tag>>> getTagsForMediaPaths(
       List<String> paths) async {
     if (paths.isEmpty) return {};
@@ -416,7 +496,13 @@ class AppDatabase extends _$AppDatabase {
         await (select(tags)..where((t) => t.id.isIn(tagIds))).get();
     final tagMap = {
       for (final t in tagsList)
-        t.id: Tag(id: t.id, name: t.name, color: t.color)
+        t.id: Tag(
+          id: t.id,
+          name: t.name,
+          color: t.color,
+          parentId: t.parentId,
+          isGroup: t.isGroup,
+        )
     };
 
     for (final rel in relations) {
@@ -426,6 +512,20 @@ class AppDatabase extends _$AppDatabase {
       }
     }
     return result;
+  }
+
+  Future<List<MediaItem>> getMediaItemsForTag(int tagId) async {
+    final query = select(mediaItems).join([
+      innerJoin(mediaTags, mediaTags.mediaPath.equalsExp(mediaItems.path)),
+    ])
+      ..where(mediaTags.tagId.equals(tagId))
+      ..orderBy([
+        OrderingTerm(expression: mediaItems.modified, mode: OrderingMode.desc)
+      ]);
+    final rows = await query.get();
+    return rows
+        .map((row) => _mediaItemFromRow(row.readTable(mediaItems)))
+        .toList();
   }
 
   // ---------------------------------------------------------------------------
@@ -655,18 +755,22 @@ class AppDatabase extends _$AppDatabase {
   // ---------------------------------------------------------------------------
 
   Future<void> recordPlay(String mediaPath) async {
-    await into(playHistory).insert(PlayHistoryRow(
-      id: 0,
-      mediaPath: mediaPath,
-      playedAt: DateTime.now().toIso8601String(),
-    ));
+    await into(playHistory).insert(
+      PlayHistoryCompanion.insert(
+        mediaPath: mediaPath,
+        playedAt: DateTime.now().toIso8601String(),
+      ),
+    );
   }
 
-  Future<List<MediaItem>> getPlayHistory({int limit = 100, int offset = 0}) async {
+  Future<List<MediaItem>> getPlayHistory(
+      {int limit = 100, int offset = 0}) async {
     final query = select(playHistory).join([
       innerJoin(mediaItems, mediaItems.path.equalsExp(playHistory.mediaPath)),
     ])
-      ..orderBy([OrderingTerm(expression: playHistory.playedAt, mode: OrderingMode.desc)])
+      ..orderBy([
+        OrderingTerm(expression: playHistory.playedAt, mode: OrderingMode.desc)
+      ])
       ..limit(limit, offset: offset);
     final rows = await query.get();
     return rows.map((r) => _mediaItemFromRow(r.readTable(mediaItems))).toList();

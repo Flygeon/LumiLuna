@@ -18,6 +18,7 @@ final searchedMediaProvider = Provider<AsyncValue<List<MediaItem>>>((ref) {
   final async = ref.watch(mediaProvider);
   final query = ref.watch(searchQueryProvider).trim().toLowerCase();
   final typeFilter = ref.watch(libraryTypeFilterProvider);
+  final settings = ref.watch(settingsProvider);
 
   return async.whenData((items) {
     Iterable<MediaItem> result = items;
@@ -26,11 +27,26 @@ final searchedMediaProvider = Provider<AsyncValue<List<MediaItem>>>((ref) {
     }
     if (query.isNotEmpty) {
       result = result.where((i) =>
-        i.name.toLowerCase().contains(query) ||
-        (i.title?.toLowerCase().contains(query) ?? false) ||
-        (i.artist?.toLowerCase().contains(query) ?? false));
+          i.name.toLowerCase().contains(query) ||
+          (i.title?.toLowerCase().contains(query) ?? false) ||
+          (i.artist?.toLowerCase().contains(query) ?? false) ||
+          (i.album?.toLowerCase().contains(query) ?? false) ||
+          i.folderPath.toLowerCase().contains(query));
     }
-    return result.toList();
+    final sorted = result.toList();
+    sorted.sort((a, b) {
+      final comparison = switch (settings.mediaSortMode) {
+        MediaSortMode.modified => a.modified.compareTo(b.modified),
+        MediaSortMode.name =>
+          a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+        MediaSortMode.size => a.size.compareTo(b.size),
+        MediaSortMode.duration =>
+          (a.durationMs ?? 0).compareTo(b.durationMs ?? 0),
+      };
+      final value = comparison == 0 ? a.path.compareTo(b.path) : comparison;
+      return settings.mediaSortAscending ? value : -value;
+    });
+    return sorted;
   });
 });
 
@@ -51,14 +67,18 @@ List<MediaFolder> _group(List<MediaItem> items, GroupMode mode) {
     late String label;
     switch (mode) {
       case GroupMode.album:
-        // Music groups by its album tag when present, everything else by folder.
-        key = (item.type == MediaType.audio && item.album != null)
-            ? item.album!
-            : item.folderName;
-        label = key;
+        final album = item.album?.trim();
+        if (item.type == MediaType.audio && album != null && album.isNotEmpty) {
+          final artist = item.artist?.trim();
+          key = 'album:${artist?.toLowerCase() ?? ''}:${album.toLowerCase()}';
+          label = album;
+        } else {
+          key = 'folder:${item.folderPath.toLowerCase()}';
+          label = item.folderName;
+        }
         break;
       case GroupMode.folder:
-        key = item.folderPath;
+        key = 'folder:${item.folderPath.toLowerCase()}';
         label = item.folderName;
         break;
       case GroupMode.date:
@@ -82,7 +102,8 @@ List<MediaFolder> _group(List<MediaItem> items, GroupMode mode) {
   if (mode == GroupMode.date) {
     folders.sort((a, b) => b.key.compareTo(a.key));
   } else {
-    folders.sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+    folders
+        .sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
   }
   return folders;
 }

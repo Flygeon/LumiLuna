@@ -297,4 +297,68 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get clearHistoryConfirmBody =>
       'Are you sure you want to clear all play records? This action cannot be undone.';
+
+  @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get onboardingPrevious => 'Previous';
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingStart => 'Get Started';
+
+  @override
+  String get onboardingWelcomeTitle => 'Welcome to LumiLuna';
+
+  @override
+  String get onboardingWelcomeBody =>
+      'Browse, organize, and enjoy your photos, videos, and music in one elegant media library.';
+
+  @override
+  String get onboardingLibraryTitle => 'Automatic Media Organization';
+
+  @override
+  String get onboardingLibraryBody =>
+      'The app scans your default media folders, and you can add more folders in Settings. Media is automatically sorted into photo, video, and music tabs.';
+
+  @override
+  String get onboardingPlaybackTitle => 'Immersive Playback';
+
+  @override
+  String get onboardingPlaybackBody =>
+      'Open photos, play videos continuously, or manage your music queue. Play history helps you quickly find recent content.';
+
+  @override
+  String get onboardingOrganizeTitle => 'Manage Your Collection';
+
+  @override
+  String get onboardingOrganizeBody =>
+      'Long-press media to select multiple items, then favorite, delete, tag, or add them to playlists.';
+
+  @override
+  String get sort => 'Sort';
+
+  @override
+  String get sortModified => 'Modified date';
+
+  @override
+  String get sortName => 'Name';
+
+  @override
+  String get sortSize => 'File size';
+
+  @override
+  String get sortDuration => 'Duration';
+
+  @override
+  String get sortAscending => 'Ascending';
+
+  @override
+  String get sortDescending => 'Descending';
+
+  @override
+  String get playbackSpeed => 'Playback speed';
 }

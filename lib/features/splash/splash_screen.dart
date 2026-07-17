@@ -1,23 +1,26 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../home/home_screen.dart';
+import '../onboarding/onboarding_screen.dart';
+import '../../providers/settings_provider.dart';
 
 /// Animated splash screen displayed while the app initialises.
 ///
 /// Shows the brand name with a subtle glow, a loading indicator, then
 /// cross-fades into the main [HomeScreen].
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   final String? startupError;
 
   const SplashScreen({super.key, this.startupError});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _fadeIn;
@@ -70,7 +73,10 @@ class _SplashScreenState extends State<SplashScreen>
     // Navigate to home with a fade transition.
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const HomeScreen(),
+        pageBuilder: (_, __, ___) =>
+            ref.read(settingsProvider).onboardingCompleted
+                ? const HomeScreen()
+                : const OnboardingScreen(),
         transitionsBuilder: (_, anim, __, child) => FadeTransition(
           opacity: anim,
           child: child,
@@ -82,7 +88,8 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _tickProgress(double target, int durationMs) async {
     final step = 0.02;
-    final interval = Duration(milliseconds: (durationMs / ((target - _progress) / step)).round());
+    final interval = Duration(
+        milliseconds: (durationMs / ((target - _progress) / step)).round());
 
     while (_progress < target && mounted) {
       await Future.delayed(interval);
