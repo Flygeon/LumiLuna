@@ -346,11 +346,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: PageView(
                     controller: _pageController,
                     onPageChanged: _onPageChanged,
-                    // Desktop: disable swipe (avoid conflict with
-                    // drag-and-drop); mobile: enable swipe.
-                    physics: Platform.isWindows
-                        ? const NeverScrollableScrollPhysics()
-                        : const ClampingScrollPhysics(),
+                    // Enable swipe-to-change-tab on all platforms (touch,
+                    // mouse drag, etc.). External file drag-and-drop is
+                    // handled separately by DropTarget and does not conflict.
+                    physics: const ClampingScrollPhysics(),
                     children: const [
                       RepaintBoundary(
                           child: MediaTypeScreen(type: MediaType.image)),
