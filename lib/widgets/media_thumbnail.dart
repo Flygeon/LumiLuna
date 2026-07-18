@@ -10,15 +10,12 @@ import '../core/constants/app_constants.dart';
 import '../models/media_item.dart';
 import '../models/media_type.dart';
 import '../providers/tab_provider.dart';
-import 'lazy_load_widget.dart';
 
 /// Displays a thumbnail for a [MediaItem].
 ///
-/// - Images are lazy-loaded (only when near the viewport) with a themed
-///   placeholder and a smooth fade-in when ready.
+/// - Images are decoded at a limited [cacheWidth] to keep memory low.
 /// - Videos get a real frame extracted once (and cached to disk) via
-///   [FcNativeVideoThumbnail], which supports Windows out of the box. A
-///   themed placeholder is shown while the frame is being extracted.
+///   [FcNativeVideoThumbnail], which supports Windows out of the box.
 /// - Audio shows its embedded cover art when available, otherwise a themed
 ///   icon placeholder.
 class MediaThumbnail extends StatelessWidget {
@@ -36,37 +33,25 @@ class MediaThumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (item.type == MediaType.image) {
-      return LazyLoadWidget(
-        loadAheadViewports: 1.5,
-        placeholder: _placeholder(context, item),
-        builder: (context) => _FadeInImageWidget(
-          child: Image.file(
-            item.file,
-            fit: fit,
-            cacheWidth: AppConstants.thumbnailCacheWidth,
-            gaplessPlayback: true,
-            filterQuality: FilterQuality.low,
-            errorBuilder: (_, __, ___) => _placeholder(context, item),
-          ),
-        ),
+      return Image.file(
+        item.file,
+        fit: fit,
+        cacheWidth: AppConstants.thumbnailCacheWidth,
+        gaplessPlayback: true,
+        filterQuality: FilterQuality.low,
+        errorBuilder: (_, __, ___) => _placeholder(context, item),
       );
     }
     if (item.type == MediaType.video) {
       return _VideoThumbnail(item: item, fit: fit, iconSize: iconSize);
     }
     if (item.type == MediaType.audio && item.artworkPath != null) {
-      return LazyLoadWidget(
-        loadAheadViewports: 1.5,
-        placeholder: _placeholder(context, item),
-        builder: (context) => _FadeInImageWidget(
-          child: Image.file(
-            File(item.artworkPath!),
-            fit: fit,
-            gaplessPlayback: true,
-            filterQuality: FilterQuality.low,
-            errorBuilder: (_, __, ___) => _placeholder(context, item),
-          ),
-        ),
+      return Image.file(
+        File(item.artworkPath!),
+        fit: fit,
+        gaplessPlayback: true,
+        filterQuality: FilterQuality.low,
+        errorBuilder: (_, __, ___) => _placeholder(context, item),
       );
     }
     return _placeholder(context, item);
@@ -116,49 +101,25 @@ class _VideoThumbnail extends ConsumerStatefulWidget {
 class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
   static final _plugin = FcNativeVideoThumbnail();
   static final Map<String, Future<String?>> _pending = {};
-
-  /// Cached temp directory path so subsequent thumbnails can perform a
-  /// synchronous disk-cache check and avoid a skeleton flash.
-  static String? _cachedTempDir;
-
   String? _thumbPath;
   bool _extractionScheduled = false;
 
   @override
   void initState() {
     super.initState();
-    // Attempt a synchronous cache lookup first — if the cache file exists,
-    // the thumbnail is ready on frame 1 and no skeleton placeholder is shown.
-    _trySyncCacheLoad();
-    // Async fallback for the very first thumbnail (when _cachedTempDir is
-    // still null) and to populate the cache for future sync lookups.
     _loadFromDiskCache();
   }
 
-  /// Synchronous disk-cache lookup using the cached temp directory path.
-  ///
-  /// When [File.existsSync] returns true we set [_thumbPath] immediately
-  /// so the [build] method returns the cached image on the very first frame
-  /// instead of rendering a shimmer skeleton.
-  void _trySyncCacheLoad() {
-    if (_cachedTempDir == null) return;
-    final key = _cacheKey(widget.item);
-    final dest = p.join(_cachedTempDir!, 'lumiluna_thumbs', '$key.jpg');
-    if (File(dest).existsSync()) {
-      _thumbPath = dest;
-    }
-  }
-
-  /// Asynchronous disk-cache check.
-  ///
-  /// Also populates [_cachedTempDir] so that subsequent thumbnails can use
-  /// the synchronous [_trySyncCacheLoad] fast path.
+  /// Check the disk cache immediately so already-cached thumbnails show
+  /// without waiting for the tab-animation deferral.
   Future<void> _loadFromDiskCache() async {
     try {
       final base = await getTemporaryDirectory();
-      _cachedTempDir = base.path;
-      // The sync check already found it — no need to continue.
-      if (_thumbPath != null) return;
+      // Use package:path join so the path separator is correct on every
+      // platform (Windows uses '\', POSIX uses '/').  Mixing them — as the
+      // previous string interpolation did — produced paths that *usually*
+      // worked on Windows but could confuse File.exists() in some edge
+      // cases, contributing to thumbnail-state flicker on sort.
       final dir = Directory(p.join(base.path, 'lumiluna_thumbs'));
       if (!await dir.exists()) return;
       final key = _cacheKey(widget.item);
@@ -167,6 +128,9 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
         setState(() => _thumbPath = dest);
       }
     } catch (e, st) {
+      // Surface cache-load errors instead of swallowing them silently — a
+      // silent failure here is exactly what made the grey-screen bug on
+      // Windows impossible to diagnose.
       debugPrint('_loadFromDiskCache failed: $e\n$st');
     }
   }
@@ -182,20 +146,16 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
     }
 
     if (_thumbPath != null) {
-      return _FadeInImageWidget(
-        child: Image.file(
-          File(_thumbPath!),
-          fit: widget.fit,
-          gaplessPlayback: true,
-          filterQuality: FilterQuality.low,
-          errorBuilder: (_, __, ___) =>
-              _placeholder(context, widget.item, widget.iconSize),
-        ),
+      return Image.file(
+        File(_thumbPath!),
+        fit: widget.fit,
+        gaplessPlayback: true,
+        filterQuality: FilterQuality.low,
+        errorBuilder: (_, __, ___) =>
+            _placeholder(context, widget.item, widget.iconSize),
       );
     }
-    // Loading, deferred or failed: show a static themed placeholder
-    // instead of a shimmer skeleton — the shimmer draws unwanted attention
-    // during page switches and feels like a loading failure.
+    // Loading, deferred or failed: keep the themed icon placeholder.
     return _placeholder(context, widget.item, widget.iconSize);
   }
 
@@ -245,56 +205,5 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
       hash = (hash * 0x100000001b3) & 0x7fffffffffffffff;
     }
     return hash.toRadixString(16);
-  }
-}
-
-/// Wraps [child] with a fade-in animation triggered on insertion.
-///
-/// Used when the thumbnail content becomes available (e.g. after lazy-loading
-/// or video-frame extraction completes) so the user sees a smooth transition
-/// instead of a hard pop-in.
-class _FadeInImageWidget extends StatefulWidget {
-  final Widget child;
-
-  const _FadeInImageWidget({required this.child});
-
-  @override
-  State<_FadeInImageWidget> createState() => _FadeInImageWidgetState();
-}
-
-class _FadeInImageWidgetState extends State<_FadeInImageWidget>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    );
-    // Start fading in on the next frame so the widget tree is settled.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _controller.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _animation,
-      child: widget.child,
-    );
   }
 }

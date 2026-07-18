@@ -168,9 +168,6 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     _subs.add(player.stream.volume.listen((v) {
       if (mounted) state = state.copyWith(volume: v);
     }));
-    _subs.add(player.stream.rate.listen((v) {
-      if (mounted) state = state.copyWith(rate: v);
-    }));
     // When a track completes naturally and shuffle is on, jump to a random
     // track instead of letting media_kit proceed sequentially.  We force
     // PlaylistMode.none while shuffling so that `completed` fires (loop mode

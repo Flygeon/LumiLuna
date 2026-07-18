@@ -9,8 +9,6 @@
 .history
 .svn/
 migrate_working_dir/
-nul
-FVP_FEASIBILITY_ANALYSIS.md
 
 # IntelliJ related
 *.iml
@@ -20,9 +18,6 @@ FVP_FEASIBILITY_ANALYSIS.md
 
 # VS Code
 .vscode/
-
-# Workbuddy
-.workbuddy/
 
 # Flutter/Dart/Pub related
 **/doc/api/
