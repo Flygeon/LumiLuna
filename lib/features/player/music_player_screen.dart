@@ -205,6 +205,8 @@ class _NarrowLayout extends ConsumerStatefulWidget {
 class _NarrowLayoutState extends ConsumerState<_NarrowLayout> {
   bool _showLyricsOverlay = false;
   final PageController _pageController = PageController();
+  final GlobalKey<_LyricsOverlayState> _lyricsOverlayKey =
+      GlobalKey<_LyricsOverlayState>();
 
   void _closeLyricsOverlay() {
     if (!_showLyricsOverlay) return;
@@ -238,9 +240,11 @@ class _NarrowLayoutState extends ConsumerState<_NarrowLayout> {
             Expanded(
               flex: _showLyricsOverlay ? 5 : 3,
               child: GestureDetector(
-                onTap: hasLyrics
-                    ? () => setState(
-                        () => _showLyricsOverlay = !_showLyricsOverlay)
+                // Only the cover/background toggles the lyrics overlay. When
+                // the child LyricView handles a lyric-line tap, its tap
+                // callback marks the gesture so this ancestor does nothing.
+                onTap: !_showLyricsOverlay && hasLyrics
+                    ? () => setState(() => _showLyricsOverlay = true)
                     : null,
                 child: _showLyricsOverlay && hasLyrics
                     // When the lyrics overlay is open, grab primary focus so
@@ -259,10 +263,14 @@ class _NarrowLayoutState extends ConsumerState<_NarrowLayout> {
                           return KeyEventResult.ignored;
                         },
                         child: _LyricsOverlay(
-                          onTapUp: _closeLyricsOverlay,
+                          key: _lyricsOverlayKey,
+                          onLyricLineTap: () {},
+                          onBackgroundTap: _closeLyricsOverlay,
                           child: _LyricsPanel(
                             lyricsAsync: lyricsAsync,
                             translationAsync: translationAsync,
+                            onLyricLineTap: () =>
+                                _lyricsOverlayKey.currentState?.markLyricLineTap(),
                           ),
                         ),
                       )
@@ -428,10 +436,12 @@ class _LyricsOrQueueState extends ConsumerState<_LyricsOrQueue> {
 class _LyricsPanel extends ConsumerStatefulWidget {
   final AsyncValue<String?> lyricsAsync;
   final AsyncValue<String?> translationAsync;
+  final VoidCallback? onLyricLineTap;
 
   const _LyricsPanel({
     required this.lyricsAsync,
     required this.translationAsync,
+    this.onLyricLineTap,
   });
 
   @override
@@ -478,6 +488,7 @@ class _LyricsPanelState extends ConsumerState<_LyricsPanel> {
                 rawLyrics: rawLyrics,
                 translation: hasTranslation ? translation : null,
                 showTranslation: _showTranslation && hasTranslation,
+                onLyricLineTap: widget.onLyricLineTap,
               ),
             ),
           ],
@@ -1055,11 +1066,13 @@ class _LyricsView extends ConsumerStatefulWidget {
   final String rawLyrics;
   final String? translation;
   final bool showTranslation;
+  final VoidCallback? onLyricLineTap;
 
   const _LyricsView({
     required this.rawLyrics,
     this.translation,
     this.showTranslation = false,
+    this.onLyricLineTap,
   });
 
   @override
@@ -1120,6 +1133,7 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
     _posSub = pc.player.stream.position.listen(_controller.setProgress);
     // Tap a lyric line → seek the player.
     _controller.setOnTapLineCallback((position) {
+      widget.onLyricLineTap?.call();
       pc.seek(position);
     });
   }
@@ -1164,11 +1178,14 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
 // =============================================================================
 class _LyricsOverlay extends StatefulWidget {
   final Widget child;
-  final VoidCallback onTapUp;
+  final VoidCallback onLyricLineTap;
+  final VoidCallback onBackgroundTap;
 
   const _LyricsOverlay({
+    super.key,
     required this.child,
-    required this.onTapUp,
+    required this.onLyricLineTap,
+    required this.onBackgroundTap,
   });
 
   @override
@@ -1176,30 +1193,53 @@ class _LyricsOverlay extends StatefulWidget {
 }
 
 class _LyricsOverlayState extends State<_LyricsOverlay> {
-  Offset? _downPos;
+  Offset? _downPosition;
+  bool _lineTapHandled = false;
+  int? _pointerId;
 
   @override
   Widget build(BuildContext context) {
     return Listener(
       behavior: HitTestBehavior.translucent,
       onPointerDown: (event) {
-        _downPos = event.localPosition;
+        _pointerId = event.pointer;
+        _downPosition = event.localPosition;
+        _lineTapHandled = false;
       },
       onPointerUp: (event) {
-        final start = _downPos;
-        _downPos = null;
-        if (start == null) return;
-        // If the pointer barely moved between down and up, treat it as a
-        // tap and close the overlay.  Otherwise the user was swiping the
-        // lyrics and we leave the overlay open.
-        final moved = (event.localPosition - start).distance;
-        if (moved < 10) {
-          widget.onTapUp();
+        if (event.pointer != _pointerId) return;
+        final down = _downPosition;
+        _downPosition = null;
+        _pointerId = null;
+        if (down == null) return;
+        final moved = (event.localPosition - down).distance;
+        if (moved >= 10) {
+          _lineTapHandled = false;
+          return;
         }
+
+        // LyricView resolves its tap recognizer after pointer-up dispatch.
+        // Defer the background decision so a lyric-line callback can mark this
+        // same gesture first; otherwise a line tap would also close the view.
+        Future<void>.delayed(Duration.zero, () {
+          if (!mounted) return;
+          if (!_lineTapHandled) widget.onBackgroundTap();
+          _lineTapHandled = false;
+        });
       },
-      onPointerCancel: (_) => _downPos = null,
+      onPointerCancel: (event) {
+        if (event.pointer != _pointerId) return;
+        _downPosition = null;
+        _pointerId = null;
+        _lineTapHandled = false;
+      },
       child: widget.child,
     );
+  }
+
+  void markLyricLineTap() {
+    _lineTapHandled = true;
+    widget.onLyricLineTap();
   }
 }
 
