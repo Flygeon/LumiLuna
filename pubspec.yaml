@@ -1,7 +1,7 @@
 name: lumiluna
 description: LumiLuna — a Material Design media library app for Windows desktop, browsing and playing local images, videos and music.
 publish_to: "none"
-version: 1.0.0+1
+version: 1.0.1+1
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
