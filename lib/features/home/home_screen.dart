@@ -132,6 +132,84 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
+  /// The main body content — wraps in [DropTarget] only on Windows where
+  /// external file drag-and-drop is supported.
+  Widget _buildBody(BuildContext context) {
+    final body = _buildPageView(context);
+    if (!Platform.isWindows) return body;
+    return DropTarget(
+      onDragEntered: (_) => setState(() => _dragging = true),
+      onDragExited: (_) => setState(() => _dragging = false),
+      onDragDone: (detail) {
+        setState(() => _dragging = false);
+        _importDroppedFiles(detail.files);
+      },
+      child: body,
+    );
+  }
+
+  Widget _buildPageView(BuildContext context) {
+    return Stack(
+      children: [
+        Column(
+          children: [
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: _onPageChanged,
+                physics: const ClampingScrollPhysics(),
+                children: const [
+                  RepaintBoundary(
+                      child: MediaTypeScreen(type: MediaType.image)),
+                  RepaintBoundary(
+                      child: MediaTypeScreen(type: MediaType.video)),
+                  RepaintBoundary(
+                      child: MediaTypeScreen(type: MediaType.audio)),
+                  RepaintBoundary(child: FoldersScreen()),
+                  RepaintBoundary(child: TrashScreen()),
+                ],
+              ),
+            ),
+            // Mini player capsule (animated show/hide when music is playing).
+            const MiniPlayerCapsule(),
+          ],
+        ),
+        if (_dragging)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ColoredBox(
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.85),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.cloud_upload_outlined,
+                          size: 64,
+                          color: Theme.of(context).colorScheme.onPrimary),
+                      const SizedBox(height: 16),
+                      Text(
+                        context.l10n.dropFilesHere,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimary),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   void _showMoreMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -331,76 +409,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ],
       ),
-      body: DropTarget(
-        onDragEntered: (_) => setState(() => _dragging = true),
-        onDragExited: (_) => setState(() => _dragging = false),
-        onDragDone: (detail) {
-          setState(() => _dragging = false);
-          _importDroppedFiles(detail.files);
-        },
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                Expanded(
-                  child: PageView(
-                    controller: _pageController,
-                    onPageChanged: _onPageChanged,
-                    // Enable swipe-to-change-tab on all platforms (touch,
-                    // mouse drag, etc.). External file drag-and-drop is
-                    // handled separately by DropTarget and does not conflict.
-                    physics: const ClampingScrollPhysics(),
-                    children: const [
-                      RepaintBoundary(
-                          child: MediaTypeScreen(type: MediaType.image)),
-                      RepaintBoundary(
-                          child: MediaTypeScreen(type: MediaType.video)),
-                      RepaintBoundary(
-                          child: MediaTypeScreen(type: MediaType.audio)),
-                      RepaintBoundary(child: FoldersScreen()),
-                      RepaintBoundary(child: TrashScreen()),
-                    ],
-                  ),
-                ),
-                // Mini player capsule (animated show/hide when music is playing).
-                const MiniPlayerCapsule(),
-              ],
-            ),
-            if (_dragging)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: ColoredBox(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withValues(alpha: 0.85),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.cloud_upload_outlined,
-                              size: 64,
-                              color: Theme.of(context).colorScheme.onPrimary),
-                          const SizedBox(height: 16),
-                          Text(
-                            context.l10n.dropFilesHere,
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onPrimary),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
+      body: _buildBody(context),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
         onDestinationSelected: _onTabSelected,
