@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lyric/core/lyric_model.dart' show LyricModel;
@@ -10,6 +11,7 @@ import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/format_utils.dart';
+import '../../core/theme/app_theme.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../l10n/l10n.dart';
 import '../../models/media_item.dart';
@@ -35,7 +37,14 @@ class MusicPlayerScreen extends ConsumerWidget {
         .select((s) => _PlaybackSummary.fromState(s)));
     final controller = ref.read(playbackControllerProvider.notifier);
     final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
+    final appTheme = Theme.of(context);
+    final scheme = ColorScheme.fromSeed(
+      seedColor: const Color(0xFF6750A4),
+      brightness: appTheme.brightness,
+    );
+    final playerTheme = appTheme.brightness == Brightness.dark
+        ? AppTheme.dark(const Color(0xFF6750A4))
+        : AppTheme.light(const Color(0xFF6750A4));
     final blurBackground = ref.watch(
       settingsProvider.select((settings) => settings.musicBackgroundBlur),
     );
@@ -47,66 +56,66 @@ class MusicPlayerScreen extends ConsumerWidget {
       hasPrev: state.index > 0,
       hasNext: state.current != null && state.index < state.playlist.length - 1,
       child: Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.chevron_left),
-          onPressed: () => Navigator.of(context).pop(),
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.chevron_left),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Text(
+            l10n.nowPlaying,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+          centerTitle: true,
         ),
-        title: Text(
-          l10n.nowPlaying,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-        ),
-        centerTitle: true,
-      ),
-      body: state.current == null
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+        body: state.current == null
+            ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.music_note_outlined,
+                        size: 80, color: scheme.onSurfaceVariant),
+                    const SizedBox(height: 16),
+                    Text(l10n.notPlaying,
+                        style: Theme.of(context).textTheme.titleMedium),
+                  ],
+                ),
+              )
+            : Stack(
                 children: [
-                  Icon(Icons.music_note_outlined,
-                      size: 80, color: scheme.onSurfaceVariant),
-                  const SizedBox(height: 16),
-                  Text(l10n.notPlaying,
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Positioned.fill(
+                      child: _buildBackground(
+                          state.current!, scheme, blurBackground)),
+                  SafeArea(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isWide = constraints.maxWidth > 900;
+                        return isWide
+                            ? _WideLayout(
+                                current: state.current!,
+                                scheme: scheme,
+                                controller: controller,
+                                playlist: state.playlist,
+                                playlistIndex: state.index,
+                              )
+                            : _NarrowLayout(
+                                current: state.current!,
+                                scheme: scheme,
+                                controller: controller,
+                                playlist: state.playlist,
+                                playlistIndex: state.index,
+                              );
+                      },
+                    ),
+                  ),
                 ],
               ),
-            )
-          : Stack(
-              children: [
-                Positioned.fill(
-                    child: _buildBackground(
-                        state.current!, scheme, blurBackground)),
-                SafeArea(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isWide = constraints.maxWidth > 900;
-                      return isWide
-                          ? _WideLayout(
-                              current: state.current!,
-                              scheme: scheme,
-                              controller: controller,
-                              playlist: state.playlist,
-                              playlistIndex: state.index,
-                            )
-                          : _NarrowLayout(
-                              current: state.current!,
-                              scheme: scheme,
-                              controller: controller,
-                              playlist: state.playlist,
-                              playlistIndex: state.index,
-                            );
-                    },
-                  ),
-                ),
-              ],
-            ),
-    ),
+      ),
     );
 
-    return player;
+    return Theme(data: playerTheme, child: player);
   }
 
   /// True when shortcuts should be active.  Only the Windows / macOS / Linux
@@ -122,7 +131,7 @@ class MusicPlayerScreen extends ConsumerWidget {
 
   Widget _buildBackground(
       MediaItem item, ColorScheme scheme, bool blurBackground) {
-    if (item.artworkPath != null) {
+    if (item.artworkPath != null && File(item.artworkPath!).existsSync()) {
       try {
         final image = Image.file(
           File(item.artworkPath!),
@@ -268,8 +277,7 @@ class _NarrowLayoutState extends ConsumerState<_NarrowLayout> {
                         autofocus: true,
                         onKeyEvent: (node, event) {
                           if (event is KeyDownEvent &&
-                              event.logicalKey ==
-                                  LogicalKeyboardKey.escape) {
+                              event.logicalKey == LogicalKeyboardKey.escape) {
                             _closeLyricsOverlay();
                             return KeyEventResult.handled;
                           }
@@ -282,8 +290,8 @@ class _NarrowLayoutState extends ConsumerState<_NarrowLayout> {
                           child: _LyricsPanel(
                             lyricsAsync: lyricsAsync,
                             translationAsync: translationAsync,
-                            onLyricLineTap: () =>
-                                _lyricsOverlayKey.currentState?.markLyricLineTap(),
+                            onLyricLineTap: () => _lyricsOverlayKey.currentState
+                                ?.markLyricLineTap(),
                           ),
                         ),
                       )
@@ -433,9 +441,8 @@ class _LyricsOrQueueState extends ConsumerState<_LyricsOrQueue> {
               : _Playlist(
                   playlist: widget.playlist,
                   currentIndex: widget.playlistIndex,
-                  onTap: (i) => ref
-                      .read(playbackControllerProvider.notifier)
-                      .jump(i),
+                  onTap: (i) =>
+                      ref.read(playbackControllerProvider.notifier).jump(i),
                 ),
         ),
       ],
@@ -509,8 +516,7 @@ class _LyricsPanelState extends ConsumerState<_LyricsPanel> {
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (_, __) => const Center(
-          child: Text('无法加载歌词',
-              style: TextStyle(color: Colors.white60))),
+          child: Text('无法加载歌词', style: TextStyle(color: Colors.white60))),
     );
   }
 }
@@ -553,9 +559,8 @@ class _TranslationToggle extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: active
-                  ? Colors.white
-                  : Colors.white.withValues(alpha: 0.3),
+              color:
+                  active ? Colors.white : Colors.white.withValues(alpha: 0.3),
             ),
           ),
           child: Text(
@@ -593,7 +598,7 @@ class _AlbumArt extends StatelessWidget {
     );
 
     Widget art;
-    if (item.artworkPath != null) {
+    if (item.artworkPath != null && File(item.artworkPath!).existsSync()) {
       art = ClipRRect(
         borderRadius: borderRadius,
         child: Image.file(
@@ -612,7 +617,8 @@ class _AlbumArt extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(borderRadius: borderRadius, boxShadow: [shadow]),
+      decoration:
+          BoxDecoration(borderRadius: borderRadius, boxShadow: [shadow]),
       child: art,
     );
   }
@@ -629,7 +635,8 @@ class _AlbumArt extends StatelessWidget {
           ),
         ),
         child: Center(
-          child: Icon(Icons.music_note, size: size * 0.35, color: Colors.white38),
+          child:
+              Icon(Icons.music_note, size: size * 0.35, color: Colors.white38),
         ),
       );
 }
@@ -688,14 +695,15 @@ class _SeekBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(
       playbackControllerProvider.select((s) => _SeekState(
-        position: s.position,
-        duration: s.duration,
-      )),
+            position: s.position,
+            duration: s.duration,
+          )),
     );
     final controller = ref.read(playbackControllerProvider.notifier);
     final duration = state.duration.inMilliseconds.toDouble();
     final maxValue = duration <= 0 ? 1.0 : duration;
-    final position = state.position.inMilliseconds.toDouble().clamp(0.0, maxValue);
+    final position =
+        state.position.inMilliseconds.toDouble().clamp(0.0, maxValue);
 
     return SizedBox(
       width: 600,
@@ -726,9 +734,11 @@ class _SeekBar extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(FormatUtils.duration(state.position),
-                    style: const TextStyle(fontSize: 12, color: Colors.white60)),
+                    style:
+                        const TextStyle(fontSize: 12, color: Colors.white60)),
                 Text(FormatUtils.duration(state.duration),
-                    style: const TextStyle(fontSize: 12, color: Colors.white60)),
+                    style:
+                        const TextStyle(fontSize: 12, color: Colors.white60)),
               ],
             ),
           ),
@@ -746,9 +756,7 @@ class _SeekState {
 
   @override
   bool operator ==(Object o) =>
-      o is _SeekState &&
-      o.position == position &&
-      o.duration == duration;
+      o is _SeekState && o.position == position && o.duration == duration;
 
   @override
   int get hashCode => Object.hash(position, duration);
@@ -848,20 +856,20 @@ class _PlayModeButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final (icon, label, active) = switch (mode) {
       PlaybackMode.sequential => (
-        Icons.repeat,
-        l10n.playModeSequential,
-        false,
-      ),
+          Icons.repeat,
+          l10n.playModeSequential,
+          false,
+        ),
       PlaybackMode.loop => (
-        Icons.repeat_one,
-        l10n.playModeLoop,
-        true,
-      ),
+          Icons.repeat_one,
+          l10n.playModeLoop,
+          true,
+        ),
       PlaybackMode.shuffle => (
-        Icons.shuffle,
-        l10n.playModeShuffle,
-        true,
-      ),
+          Icons.shuffle,
+          l10n.playModeShuffle,
+          true,
+        ),
     };
     return IconButton(
       tooltip: l10n.playModeTooltip(label),
@@ -1000,7 +1008,8 @@ class _Playlist extends StatelessWidget {
           dense: true,
           selected: isCurrent,
           selectedTileColor: Colors.white.withValues(alpha: 0.08),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           leading: isCurrent
               ? const Icon(Icons.play_arrow, color: Colors.white, size: 20)
               : SizedBox(
@@ -1015,7 +1024,9 @@ class _Playlist extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: isCurrent ? Colors.white : Colors.white.withValues(alpha: 0.85),
+              color: isCurrent
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.85),
               fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
             ),
           ),
@@ -1112,8 +1123,8 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
     translationActiveColor: Colors.white.withValues(alpha: 0.85),
     lineGap: 30,
     translationLineGap: 8,
-    contentPadding: const EdgeInsets.only(
-        top: 200, left: 30, right: 30, bottom: 200),
+    contentPadding:
+        const EdgeInsets.only(top: 200, left: 30, right: 30, bottom: 200),
     fadeRange: FadeRange(top: 100, bottom: 100),
     activeHighlightColor: Colors.white,
     activeHighlightGradient: null,
