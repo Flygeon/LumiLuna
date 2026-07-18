@@ -231,6 +231,43 @@ void main() {
     });
   });
 
+  group('inline bilingual pairing', () {
+    test('Japanese and Chinese rows with same timestamp become one line', () {
+      final model = parseLrcWithTranslation(
+        '[00:10.50]浅く夕立を 絶った跡\n'
+        '[00:10.50]浅浅地穿过 骤雨的痕迹\n'
+        '[00:15.00]透いた瞳で 浮いている',
+      );
+
+      expect(model.lines.length, 2);
+      expect(model.lines[0].text, '浅く夕立を 絶った跡');
+      expect(model.lines[0].translation, '浅浅地穿过 骤雨的痕迹');
+      expect(model.lines[0].words, isNotNull);
+      expect(model.lines[0].words!.length, greaterThan(2));
+      expect(model.lines[1].text, '透いた瞳で 浮いている');
+      expect(model.lines[1].translation, isNull);
+    });
+
+    test('nearby inline translation within tolerance is paired', () {
+      final model = parseLrcWithTranslation(
+        '[00:10.500]浅く夕立を 絶った跡\n'
+        '[00:10.580]浅浅地穿过 骤雨的痕迹',
+      );
+      expect(model.lines.length, 1);
+      expect(model.lines.first.translation, '浅浅地穿过 骤雨的痕迹');
+    });
+
+    test('other languages remain independent rows', () {
+      final model = parseLrcWithTranslation(
+        '[00:10.50]Hello world\n'
+        '[00:10.50]你好世界',
+      );
+      expect(model.lines.length, 2);
+      expect(model.lines[0].translation, isNull);
+      expect(model.lines[1].translation, isNull);
+    });
+  });
+
   group('user-reported bug scenario (Japanese + Chinese)', () {
     test('each Japanese line paired with its Chinese translation', () {
       const main = '[00:10.50]さんざめく様な 残響が\n'

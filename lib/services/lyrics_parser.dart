@@ -43,7 +43,7 @@ LyricModel parseLrcWithTranslation(
   String? translationLyric,
 }) {
   final idTags = <String, String>{};
-  final lines = <LyricLine>[];
+  final parsedLines = <_ParsedLine>[];
   final translations = _parseTranslationEntries(translationLyric);
 
   for (final rawLine in mainLyric.split('\n')) {
@@ -64,19 +64,39 @@ LyricModel parseLrcWithTranslation(
     final text = rawLine.replaceAll(_timestampRe, '').trim();
     if (text.isEmpty) continue; // 纯时间戳行（如间奏标记）跳过
 
-    // 4. 为每个时间戳生成一条 LyricLine，附加模糊匹配的翻译
+    // 4. 暂存主歌词行；翻译在后续统一匹配，便于同时兼容：
+    //    a) 独立 translationLyric 文件；
+    //    b) 主 LRC 内原文/译文相邻成对的写法。
     for (final duration in timestamps) {
-      lines.add(LyricLine(
-        start: duration,
-        text: text,
-        translation: _findTranslation(translations, duration),
-      ));
+      parsedLines.add(_ParsedLine(start: duration, text: text));
     }
   }
 
-  // 主 LRC 的时间戳通常已有序，但多时间戳行展开后需要重排。
-  lines.sort((a, b) => a.start.compareTo(b.start));
-  return LyricModel(lines: lines, tags: idTags);
+  parsedLines.sort((a, b) => a.start.compareTo(b.start));
+
+  // 先合并独立翻译文件；如果没有命中，再尝试识别主 LRC 中相邻的
+  // "原文行 + 中文翻译行"。这样不会改变单语歌词或已有翻译的行为。
+  final lines = <LyricLine>[];
+  for (var i = 0; i < parsedLines.length; i++) {
+    final current = parsedLines[i];
+    final translation = _findTranslation(translations, current.start) ??
+        _findInlineTranslation(parsedLines, i);
+    final words = _buildApproximateWords(
+      current.text,
+      current.start,
+      _nextStart(parsedLines, i),
+    );
+    lines.add(LyricLine(
+      start: current.start,
+      text: current.text,
+      translation: translation,
+      words: words,
+    ));
+  }
+
+  // 内嵌双语歌词的译文行不再作为独立主歌词显示。
+  final filteredLines = _removeInlineTranslationRows(lines, parsedLines);
+  return LyricModel(lines: filteredLines, tags: idTags);
 }
 
 /// 解析翻译歌词为按时间排序的翻译条目列表。
@@ -185,6 +205,93 @@ String? _findTranslation(List<_TranslationEntry> translations, Duration main) {
     }
   }
   return best;
+}
+
+/// 内嵌双语的识别容差。内嵌翻译通常与原文共享时间戳，部分来源会有
+/// 少量偏移；不能放得太大，否则普通相邻歌词可能被误合并。
+const int _inlineTranslationToleranceMs = 120;
+
+class _ParsedLine {
+  final Duration start;
+  final String text;
+
+  const _ParsedLine({required this.start, required this.text});
+}
+
+Duration? _nextStart(List<_ParsedLine> lines, int index) {
+  final current = lines[index].start;
+  for (var i = index + 1; i < lines.length; i++) {
+    if (lines[i].start > current) return lines[i].start;
+  }
+  return null;
+}
+
+/// 判断一行是否更像中文翻译，而不是原文。
+/// 只在同时存在日文假名和中文字符时启用合并，避免破坏英文、韩文、
+/// 西里尔文等其他语言的既有逐行显示逻辑。
+bool _isChineseTranslation(String text) {
+  final hasHan = RegExp(r'[\u4e00-\u9fff]').hasMatch(text);
+  final hasJapaneseKana = RegExp(r'[\u3040-\u309f\u30a0-\u30ff]').hasMatch(text);
+  return hasHan && !hasJapaneseKana;
+}
+
+bool _isJapaneseOriginal(String text) {
+  return RegExp(r'[\u3040-\u309f\u30a0-\u30ff]').hasMatch(text);
+}
+
+String? _findInlineTranslation(List<_ParsedLine> lines, int index) {
+  if (index + 1 >= lines.length) return null;
+  final current = lines[index];
+  final next = lines[index + 1];
+  final delta = next.start.inMilliseconds - current.start.inMilliseconds;
+  if (delta < 0 || delta > _inlineTranslationToleranceMs) return null;
+  if (!_isJapaneseOriginal(current.text) || !_isChineseTranslation(next.text)) {
+    return null;
+  }
+  return next.text;
+}
+
+List<LyricWord>? _buildApproximateWords(
+  String text,
+  Duration start,
+  Duration? nextStart,
+) {
+  if (text.isEmpty) return null;
+  final end = nextStart ?? (start + const Duration(seconds: 3));
+  final total = end - start;
+  if (total <= Duration.zero) return null;
+
+  // LRC 没有字级时间，只能均匀估算；真实 QRC 会在 flutter_lyric 的
+  // QrcParser 中提供精确 LyricWord，此处仅作为 LRC 的安全降级效果。
+  final characters = text.runes.map(String.fromCharCode).toList();
+  if (characters.length < 2) return null;
+  final perWord = total.inMicroseconds ~/ characters.length;
+  return characters.asMap().entries.map((entry) {
+    final wordStart = start + Duration(microseconds: perWord * entry.key);
+    final wordEnd = entry.key == characters.length - 1
+        ? end
+        : start + Duration(microseconds: perWord * (entry.key + 1));
+    return LyricWord(text: entry.value, start: wordStart, end: wordEnd);
+  }).toList();
+}
+
+List<LyricLine> _removeInlineTranslationRows(
+  List<LyricLine> lines,
+  List<_ParsedLine> parsedLines,
+) {
+  if (lines.length != parsedLines.length) return lines;
+  final removedKeys = <String>{};
+  for (var i = 0; i < parsedLines.length - 1; i++) {
+    if (_findInlineTranslation(parsedLines, i) != null) {
+      final translationRow = parsedLines[i + 1];
+      removedKeys.add('${translationRow.start.inMicroseconds}|${translationRow.text}');
+    }
+  }
+  if (removedKeys.isEmpty) return lines;
+  return lines
+      .where((line) =>
+          !removedKeys.contains('${line.start.inMicroseconds}|${line.text}'))
+      .toList();
 }
 
 /// 内部翻译条目：时间戳（毫秒）+ 翻译文本。
