@@ -59,33 +59,56 @@ class VideoPlayerScreen extends ConsumerWidget {
 
   MaterialVideoControlsThemeData _themeData(BuildContext context) {
     return MaterialVideoControlsThemeData(
+      // ── Behaviour ──────────────────────────────────────────────────
       speedUpOnLongPress: true,
       speedUpFactor: 2.0,
       speedUpIndicatorBuilder: (_, double factor) => _SpeedIndicator(
         label: '${factor.toStringAsFixed(1)}x',
       ),
+      // Clean design: no center-overlay buttons — all controls live in the
+      // bottom bar where they are easy to reach and do not obscure the video.
+      primaryButtonBar: const [],
+      // ── Bottom bar: play/pause, time, spacer, volume, rate, fullscreen ──
+      buttonBarButtonSize: 28.0,
       bottomButtonBar: [
+        const MaterialPlayOrPauseButton(),
         const MaterialPositionIndicator(),
-        const _RateButton(),
         const Spacer(),
+        const MaterialDesktopVolumeButton(),
+        const _RateButton(),
         const MaterialFullscreenButton(),
       ],
+      bottomButtonBarMargin: const EdgeInsets.only(
+        left: 8.0,
+        right: 8.0,
+        bottom: 8.0,
+      ),
     );
   }
 
   MaterialVideoControlsThemeData _themeDataFullscreen(BuildContext context) {
     return MaterialVideoControlsThemeData(
+      // ── Behaviour ──────────────────────────────────────────────────
       speedUpOnLongPress: true,
       speedUpFactor: 2.0,
       speedUpIndicatorBuilder: (_, double factor) => _SpeedIndicator(
         label: '${factor.toStringAsFixed(1)}x',
       ),
+      primaryButtonBar: const [],
+      buttonBarButtonSize: 28.0,
       bottomButtonBar: [
+        const MaterialPlayOrPauseButton(),
         const MaterialPositionIndicator(),
-        const _RateButton(),
         const Spacer(),
+        const MaterialDesktopVolumeButton(),
+        const _RateButton(),
         const MaterialFullscreenButton(),
       ],
+      bottomButtonBarMargin: const EdgeInsets.only(
+        left: 8.0,
+        right: 8.0,
+        bottom: 8.0,
+      ),
     );
   }
 }

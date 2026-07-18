@@ -129,25 +129,49 @@ class _VideoThumbnail extends ConsumerStatefulWidget {
 class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
   static final _plugin = FcNativeVideoThumbnail();
   static final Map<String, Future<String?>> _pending = {};
+
+  /// Cached temp directory path so subsequent thumbnails can perform a
+  /// synchronous disk-cache check and avoid a skeleton flash.
+  static String? _cachedTempDir;
+
   String? _thumbPath;
   bool _extractionScheduled = false;
 
   @override
   void initState() {
     super.initState();
+    // Attempt a synchronous cache lookup first — if the cache file exists,
+    // the thumbnail is ready on frame 1 and no skeleton placeholder is shown.
+    _trySyncCacheLoad();
+    // Async fallback for the very first thumbnail (when _cachedTempDir is
+    // still null) and to populate the cache for future sync lookups.
     _loadFromDiskCache();
   }
 
-  /// Check the disk cache immediately so already-cached thumbnails show
-  /// without waiting for the tab-animation deferral.
+  /// Synchronous disk-cache lookup using the cached temp directory path.
+  ///
+  /// When [File.existsSync] returns true we set [_thumbPath] immediately
+  /// so the [build] method returns the cached image on the very first frame
+  /// instead of rendering a shimmer skeleton.
+  void _trySyncCacheLoad() {
+    if (_cachedTempDir == null) return;
+    final key = _cacheKey(widget.item);
+    final dest = p.join(_cachedTempDir!, 'lumiluna_thumbs', '$key.jpg');
+    if (File(dest).existsSync()) {
+      _thumbPath = dest;
+    }
+  }
+
+  /// Asynchronous disk-cache check.
+  ///
+  /// Also populates [_cachedTempDir] so that subsequent thumbnails can use
+  /// the synchronous [_trySyncCacheLoad] fast path.
   Future<void> _loadFromDiskCache() async {
     try {
       final base = await getTemporaryDirectory();
-      // Use package:path join so the path separator is correct on every
-      // platform (Windows uses '\', POSIX uses '/').  Mixing them — as the
-      // previous string interpolation did — produced paths that *usually*
-      // worked on Windows but could confuse File.exists() in some edge
-      // cases, contributing to thumbnail-state flicker on sort.
+      _cachedTempDir = base.path;
+      // The sync check already found it — no need to continue.
+      if (_thumbPath != null) return;
       final dir = Directory(p.join(base.path, 'lumiluna_thumbs'));
       if (!await dir.exists()) return;
       final key = _cacheKey(widget.item);
@@ -156,9 +180,6 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
         setState(() => _thumbPath = dest);
       }
     } catch (e, st) {
-      // Surface cache-load errors instead of swallowing them silently — a
-      // silent failure here is exactly what made the grey-screen bug on
-      // Windows impossible to diagnose.
       debugPrint('_loadFromDiskCache failed: $e\n$st');
     }
   }
