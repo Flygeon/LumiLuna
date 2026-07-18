@@ -9,6 +9,8 @@
 .history
 .svn/
 migrate_working_dir/
+nul
+FVP_FEASIBILITY_ANALYSIS.md
 
 # IntelliJ related
 *.iml
