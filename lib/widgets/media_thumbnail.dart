@@ -10,6 +10,7 @@ import '../core/constants/app_constants.dart';
 import '../models/media_item.dart';
 import '../models/media_type.dart';
 import '../providers/tab_provider.dart';
+import 'lazy_load_widget.dart';
 
 /// Displays a thumbnail for a [MediaItem].
 ///
@@ -33,25 +34,31 @@ class MediaThumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (item.type == MediaType.image) {
-      return Image.file(
-        item.file,
-        fit: fit,
-        cacheWidth: AppConstants.thumbnailCacheWidth,
-        gaplessPlayback: true,
-        filterQuality: FilterQuality.low,
-        errorBuilder: (_, __, ___) => _placeholder(context, item),
+      return LazyLoadWidget(
+        placeholder: _placeholder(context, item),
+        child: Image.file(
+          item.file,
+          fit: fit,
+          cacheWidth: AppConstants.thumbnailCacheWidth,
+          gaplessPlayback: true,
+          filterQuality: FilterQuality.low,
+          errorBuilder: (_, __, ___) => _placeholder(context, item),
+        ),
       );
     }
     if (item.type == MediaType.video) {
       return _VideoThumbnail(item: item, fit: fit, iconSize: iconSize);
     }
     if (item.type == MediaType.audio && item.artworkPath != null) {
-      return Image.file(
-        File(item.artworkPath!),
-        fit: fit,
-        gaplessPlayback: true,
-        filterQuality: FilterQuality.low,
-        errorBuilder: (_, __, ___) => _placeholder(context, item),
+      return LazyLoadWidget(
+        placeholder: _placeholder(context, item),
+        child: Image.file(
+          File(item.artworkPath!),
+          fit: fit,
+          gaplessPlayback: true,
+          filterQuality: FilterQuality.low,
+          errorBuilder: (_, __, ___) => _placeholder(context, item),
+        ),
       );
     }
     return _placeholder(context, item);
