@@ -117,6 +117,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
+  /// Called when the user swipes the [PageView] to a different tab.
+  ///
+  /// Synchronises [activeTypeProvider] and the [NavigationBar] highlight with
+  /// the new page. [tabAnimatingProvider] is briefly set to `true` so that
+  /// heavy work (video frame extraction) is deferred during the swipe.
+  void _onPageChanged(int index) {
+    if (_tab == index) return;
+    setState(() => _tab = index);
+    ref.read(activeTypeProvider.notifier).state = _typeForIndex(index);
+    ref.read(tabAnimatingProvider.notifier).state = true;
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted) ref.read(tabAnimatingProvider.notifier).state = false;
+    });
+  }
+
   void _showMoreMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -330,7 +345,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Expanded(
                   child: PageView(
                     controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
+                    onPageChanged: _onPageChanged,
+                    // Desktop: disable swipe (avoid conflict with
+                    // drag-and-drop); mobile: enable swipe.
+                    physics: Platform.isWindows
+                        ? const NeverScrollableScrollPhysics()
+                        : const ClampingScrollPhysics(),
                     children: const [
                       RepaintBoundary(
                           child: MediaTypeScreen(type: MediaType.image)),
