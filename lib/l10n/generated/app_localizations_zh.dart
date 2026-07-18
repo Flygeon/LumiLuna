@@ -299,6 +299,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get clearHistoryConfirmBody => '确定清空所有播放记录？此操作不可撤销。';
 
   @override
+  String get alreadyAtTopLevel => '已是最顶层';
+
+  @override
+  String get escBackHint => '按 ESC 返回上一级';
+
+  @override
   String get onboardingSkip => '跳过引导';
 
   @override

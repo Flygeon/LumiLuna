@@ -104,6 +104,8 @@
   "playHistoryEmptyHint": "播放过的媒体文件会显示在这里。",
   "clearHistoryConfirmTitle": "清空播放历史",
   "clearHistoryConfirmBody": "确定清空所有播放记录？此操作不可撤销。",
+  "alreadyAtTopLevel": "已是最顶层",
+  "escBackHint": "按 ESC 返回上一级",
   "onboardingSkip": "跳过引导",
   "onboardingPrevious": "上一步",
   "onboardingNext": "下一步",

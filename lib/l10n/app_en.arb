@@ -104,6 +104,8 @@
   "playHistoryEmptyHint": "Media files you play will appear here.",
   "clearHistoryConfirmTitle": "Clear Play History",
   "clearHistoryConfirmBody": "Are you sure you want to clear all play records? This action cannot be undone.",
+  "alreadyAtTopLevel": "Already at the top level",
+  "escBackHint": "Press ESC to go back",
   "onboardingSkip": "Skip",
   "onboardingPrevious": "Previous",
   "onboardingNext": "Next",

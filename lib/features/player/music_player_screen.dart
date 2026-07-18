@@ -243,18 +243,27 @@ class _NarrowLayoutState extends ConsumerState<_NarrowLayout> {
                         () => _showLyricsOverlay = !_showLyricsOverlay)
                     : null,
                 child: _showLyricsOverlay && hasLyrics
-                    ? _LyricsOverlay(
-                        // Wrap LyricView in a Listener that closes the
-                        // overlay on a *quick tap*.  A `Listener` sees raw
-                        // pointer events without participating in the
-                        // gesture arena, so it does NOT consume the events
-                        // — the LyricView's own GestureDetector still wins
-                        // and handles taps-to-seek, vertical-drag scroll,
-                        // and the long-press selection.
-                        onTapUp: _closeLyricsOverlay,
-                        child: _LyricsPanel(
-                          lyricsAsync: lyricsAsync,
-                          translationAsync: translationAsync,
+                    // When the lyrics overlay is open, grab primary focus so
+                    // ESC closes the overlay locally (instead of falling
+                    // through to the global handler which would pop the whole
+                    // player route). Tapping the overlay still closes it too.
+                    ? Focus(
+                        autofocus: true,
+                        onKeyEvent: (node, event) {
+                          if (event is KeyDownEvent &&
+                              event.logicalKey ==
+                                  LogicalKeyboardKey.escape) {
+                            _closeLyricsOverlay();
+                            return KeyEventResult.handled;
+                          }
+                          return KeyEventResult.ignored;
+                        },
+                        child: _LyricsOverlay(
+                          onTapUp: _closeLyricsOverlay,
+                          child: _LyricsPanel(
+                            lyricsAsync: lyricsAsync,
+                            translationAsync: translationAsync,
+                          ),
                         ),
                       )
                     : Column(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'dart:io';
@@ -42,6 +43,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _dragging = false;
   final TextEditingController _searchController = TextEditingController();
   late final PageController _pageController;
+  final FocusNode _escFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -53,6 +55,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void dispose() {
     _pageController.dispose();
     _searchController.dispose();
+    _escFocusNode.dispose();
     super.dispose();
   }
 
@@ -62,6 +65,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     setState(() => _searching = false);
     _searchController.clear();
     ref.read(searchQueryProvider.notifier).state = '';
+  }
+
+  /// Local ESC handler: when the search bar is active, ESC closes the search
+  /// instead of falling through to the global [EscBackScope] (which would pop
+  /// the route — meaningless at the home screen). Returning
+  /// [KeyEventResult.ignored] when not searching lets ESC propagate to the
+  /// global handler, preserving the normal back behaviour.
+  KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (event.logicalKey != LogicalKeyboardKey.escape) {
+      return KeyEventResult.ignored;
+    }
+    if (_searching) {
+      _closeSearch();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   MediaType _typeForIndex(int index) {
@@ -200,7 +220,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final sortAscending =
         ref.watch(settingsProvider.select((s) => s.mediaSortAscending));
 
-    return Scaffold(
+    return Focus(
+      focusNode: _escFocusNode,
+      onKeyEvent: _onKeyEvent,
+      child: Scaffold(
       appBar: AppBar(
         leading: _searching
             ? IconButton(
@@ -389,6 +412,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             label: l10n.trashTitle,
           ),
         ],
+      ),
       ),
     );
   }

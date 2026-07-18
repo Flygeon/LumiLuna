@@ -765,11 +765,26 @@ class AppDatabase extends _$AppDatabase {
 
   Future<List<MediaItem>> getPlayHistory(
       {int limit = 100, int offset = 0}) async {
+    // Deduplicate by media path: each media appears at most once, positioned
+    // by its most recent play time. This both fixes the symptom of the
+    // historical double-recording bug (where the same media showed up two or
+    // three times in a row) and gives a cleaner "recently played" list — a
+    // track replayed several times only occupies one slot, at its latest
+    // play time.
+    //
+    // GROUP BY media_path collapses all rows for the same media into one;
+    // MAX(played_at) drives the ordering. Because the join is on
+    // media_items.path = play_history.media_path, every row in a group
+    // carries identical media_items columns, so reading the joined
+    // media_items row is well-defined.
+    final latestPlayed = playHistory.playedAt.max();
     final query = select(playHistory).join([
       innerJoin(mediaItems, mediaItems.path.equalsExp(playHistory.mediaPath)),
     ])
+      ..addColumns([latestPlayed])
+      ..groupBy([playHistory.mediaPath])
       ..orderBy([
-        OrderingTerm(expression: playHistory.playedAt, mode: OrderingMode.desc)
+        OrderingTerm(expression: latestPlayed, mode: OrderingMode.desc)
       ])
       ..limit(limit, offset: offset);
     final rows = await query.get();

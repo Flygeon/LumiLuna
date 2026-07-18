@@ -108,6 +108,43 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   final List<StreamSubscription> _subs = [];
   final Random _random = Random();
 
+  /// Path / time of the most recent [onPlay] notification. Used by
+  /// [_notifyPlay] to suppress duplicate recordings of the same track within
+  /// a short window — see the comment on [_notifyPlay] for why this is
+  /// needed.
+  String? _lastNotifiedPath;
+  DateTime? _lastNotifiedAt;
+
+  /// Forwards a play notification to [onPlay] while suppressing duplicate
+  /// recordings of the same track within a 3-second window.
+  ///
+  /// Why this exists: when a playlist is opened, [openPlaylist] calls
+  /// [onPlay] explicitly *and* the `player.stream.playlist` listener can
+  /// also fire [onPlay] for the same index. The race is caused by
+  /// `player.open()` / `player.stop()` emitting playlist events
+  /// asynchronously — a delayed event from a previous [stop] can reset
+  /// `state.index` to -1, so when the new playlist event arrives the
+  /// `pl.index != previous` guard no longer matches and the listener
+  /// records the play a second time. The explicit call in [openPlaylist]
+  /// then records it a third time. The result was the same media appearing
+  /// two or three times in a row in the play history.
+  ///
+  /// The time-based guard below collapses these near-simultaneous
+  /// notifications into a single recording, while still allowing the same
+  /// track to be legitimately re-recorded later (e.g. when the user replays
+  /// it after listening to other tracks).
+  Future<void> _notifyPlay(String path) async {
+    final now = DateTime.now();
+    if (_lastNotifiedPath == path &&
+        _lastNotifiedAt != null &&
+        now.difference(_lastNotifiedAt!) < const Duration(seconds: 3)) {
+      return;
+    }
+    _lastNotifiedPath = path;
+    _lastNotifiedAt = now;
+    await onPlay?.call(path);
+  }
+
   void _bind() {
     _subs.add(player.stream.playing.listen((v) {
       if (mounted) state = state.copyWith(playing: v);
@@ -125,7 +162,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
       if (pl.index != previous &&
           pl.index >= 0 &&
           pl.index < state.playlist.length) {
-        onPlay?.call(state.playlist[pl.index].path);
+        _notifyPlay(state.playlist[pl.index].path);
       }
     }));
     _subs.add(player.stream.volume.listen((v) {
@@ -170,7 +207,11 @@ class PlaybackController extends StateNotifier<PlaybackState> {
         index: safeIndex,
       ),
     );
-    await onPlay?.call(items[safeIndex].path);
+    // Record the play. _notifyPlay de-duplicates against any concurrent
+    // notification from the playlist stream listener (see its comment), so
+    // this never produces a duplicate history entry even if the stream
+    // fires for the same index during [player.open].
+    await _notifyPlay(items[safeIndex].path);
   }
 
   Future<void> openAudioPlaylist(

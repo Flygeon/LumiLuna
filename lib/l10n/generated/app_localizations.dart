@@ -626,6 +626,18 @@ abstract class AppLocalizations {
   /// **'Are you sure you want to clear all play records? This action cannot be undone.'**
   String get clearHistoryConfirmBody;
 
+  /// No description provided for @alreadyAtTopLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Already at the top level'**
+  String get alreadyAtTopLevel;
+
+  /// No description provided for @escBackHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Press ESC to go back'**
+  String get escBackHint;
+
   /// No description provided for @onboardingSkip.
   ///
   /// In en, this message translates to:

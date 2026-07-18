@@ -307,6 +307,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Are you sure you want to clear all play records? This action cannot be undone.';
 
   @override
+  String get alreadyAtTopLevel => 'Already at the top level';
+
+  @override
+  String get escBackHint => 'Press ESC to go back';
+
+  @override
   String get onboardingSkip => 'Skip';
 
   @override

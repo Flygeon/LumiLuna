@@ -8,6 +8,7 @@ import 'core/theme/app_theme.dart';
 import 'features/splash/splash_screen.dart';
 import 'main.dart';
 import 'providers/settings_provider.dart';
+import 'widgets/esc_back_scope.dart';
 
 class MediaLibraryApp extends ConsumerWidget {
   const MediaLibraryApp({super.key});
@@ -34,6 +35,12 @@ class MediaLibraryApp extends ConsumerWidget {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       home: SplashScreen(startupError: startupError),
+      // Wrap the whole navigator in an ESC-aware scope. ESC pops the current
+      // route (dialog / sub-page / player) exactly like the back button; at
+      // the root it shows a short "already at the top level" hint. Local
+      // widgets (search bar, lyrics overlay) can intercept ESC themselves by
+      // returning `KeyEventResult.handled` from their own Focus handler.
+      builder: (context, child) => EscBackScope(child: child!),
     );
   }
 }
