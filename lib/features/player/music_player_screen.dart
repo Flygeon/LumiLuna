@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_lyric/core/lyric_model.dart' show LyricModel;
 import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,6 +14,7 @@ import '../../l10n/l10n.dart';
 import '../../models/media_item.dart';
 import '../../providers/lyrics_provider.dart';
 import '../../providers/player_provider.dart';
+import '../../services/lyrics_parser.dart';
 
 /// Music player inspired by Apple Music's design language, retaining some
 /// Material Design affordances for consistency.
@@ -35,10 +37,8 @@ class MusicPlayerScreen extends ConsumerWidget {
 
     final player = _PlayerKeyboardShortcuts(
       enabled: _isDesktop,
-      onTogglePlay: controller.playOrPause,
       onPrevious: controller.previous,
       onNext: controller.next,
-      hasCurrent: state.current != null,
       hasPrev: state.index > 0,
       hasNext: state.current != null && state.index < state.playlist.length - 1,
       child: Scaffold(
@@ -1103,10 +1103,15 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
   }
 
   void _loadLyrics() {
-    _controller.loadLyric(
+    // Bypass flutter_lyric 3.0.7's buggy LrcParser (strict ms match + padRight
+    // bug) by parsing ourselves and injecting the resulting LyricModel via
+    // `loadLyricModel`. The custom parser correctly handles 1/2/3-digit ms
+    // fractions and fuzzy-matches translations with ±20ms tolerance.
+    final LyricModel model = parseLrcWithTranslation(
       widget.rawLyrics,
       translationLyric: widget.showTranslation ? widget.translation : null,
     );
+    _controller.loadLyricModel(model);
   }
 
   void _startPositionListener() {
@@ -1199,58 +1204,58 @@ class _LyricsOverlayState extends State<_LyricsOverlay> {
 }
 
 // =============================================================================
-// Windows keyboard shortcuts: Space = play/pause, ←/→ = previous/next.
+// Windows keyboard shortcuts: ←/→ = previous/next.
 //
-// Wraps the screen in a `Focus` + `CallbackShortcuts` pair.  `autofocus: true`
-// so the player claims focus as soon as the screen opens and the shortcuts
-// work without an extra click.  `CallbackShortcuts` consumes the bound key
-// events before they propagate to descendants, which is exactly what we want
-// here — the player screen has no other widgets that need Space / ← / →.
+// Space / mediaPlayPause is handled globally by `MediaKeyShortcuts` (installed
+// in MaterialApp.builder) — it works in the music player, video player, and
+// even on the Home screen with the mini-player.
+//
+// Only ←/→ remain here. The previous structure was
+// `Focus(autofocus: true) > CallbackShortcuts(...)`, but the outer Focus took
+// the primary focus *without* an `onKeyEvent`, so key events bubbled past the
+// CallbackShortcuts (whose internal Focus has `canRequestFocus: false` and
+// `skipTraversal: true` — it can only act when a descendant holds primary
+// focus). Result: nothing worked until the user clicked a focusable widget.
+//
+// Fix: handle ←/→ directly in the Focus's `onKeyEvent`. Same node that grabs
+// focus also processes the keys — no bubbling ambiguity.
 // =============================================================================
 class _PlayerKeyboardShortcuts extends StatelessWidget {
   final Widget child;
   final bool enabled;
-  final Future<void> Function() onTogglePlay;
   final Future<void> Function() onPrevious;
   final Future<void> Function() onNext;
-  final bool hasCurrent;
   final bool hasPrev;
   final bool hasNext;
 
   const _PlayerKeyboardShortcuts({
     required this.child,
     required this.enabled,
-    required this.onTogglePlay,
     required this.onPrevious,
     required this.onNext,
-    required this.hasCurrent,
     required this.hasPrev,
     required this.hasNext,
   });
-
-  static final _playPause = SingleActivator(LogicalKeyboardKey.space);
-  static final _previous = SingleActivator(LogicalKeyboardKey.arrowLeft);
-  static final _next = SingleActivator(LogicalKeyboardKey.arrowRight);
 
   @override
   Widget build(BuildContext context) {
     if (!enabled) return child;
     return Focus(
       autofocus: true,
-      child: CallbackShortcuts(
-        bindings: {
-          _playPause: () {
-            if (hasCurrent) onTogglePlay();
-          },
-          _previous: () {
-            if (hasPrev) onPrevious();
-          },
-          _next: () {
-            if (hasNext) onNext();
-          },
-        },
-        child: child,
-      ),
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+          if (hasPrev) onPrevious();
+          return KeyEventResult.handled;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+          if (hasNext) onNext();
+          return KeyEventResult.handled;
+        }
+        // Space / other keys fall through to the global MediaKeyShortcuts.
+        return KeyEventResult.ignored;
+      },
+      child: child,
     );
   }
 }
