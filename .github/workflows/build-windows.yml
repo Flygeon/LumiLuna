@@ -108,18 +108,12 @@ jobs:
           retention-days: 30
 
   # ---------------------------------------------------------------------------
-  # Release (only on push to master/main or manual dispatch)
-  #
-  # Temporarily disabled (`if: false`): this run is a build-only verification
-  # of the ESC-back + play-history fixes. The Windows / Android build jobs
-  # above still run and upload their artifacts, but no GitHub Release is
-  # created. Re-enable by restoring the original condition:
-  #   if: github.event_name != 'pull_request'
+  # Release (on push to master/main or manual dispatch)
   # ---------------------------------------------------------------------------
   release:
     name: Create Release
     needs: [build-windows, build-android]
-    if: false
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: write
