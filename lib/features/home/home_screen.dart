@@ -330,7 +330,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Expanded(
                   child: PageView(
                     controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
+                    onPageChanged: (index) {
+                      if (index == _tab) return;
+                      ref.read(activeTypeProvider.notifier).state =
+                          _typeForIndex(index);
+                      ref.read(tabAnimatingProvider.notifier).state = true;
+                      setState(() => _tab = index);
+                      Future.delayed(const Duration(milliseconds: 320), () {
+                        if (mounted) {
+                          ref.read(tabAnimatingProvider.notifier).state = false;
+                        }
+                      });
+                    },
                     children: const [
                       RepaintBoundary(
                           child: MediaTypeScreen(type: MediaType.image)),

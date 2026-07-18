@@ -109,69 +109,68 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # Release (on push to master/main or manual dispatch)
+  # Temporarily disabled — uncomment to re-enable.
   # ---------------------------------------------------------------------------
-  release:
-    name: Create Release
-    needs: [build-windows, build-android]
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Read app version
-        id: version
-        run: |
-          RAW=$(grep '^version: ' pubspec.yaml | sed 's/version: //')
-          # Flutter pubspec version is "X.Y.Z+buildNumber"; strip the build number
-          # so the release shows "v1.0.0" instead of "v1.0.0+1".
-          VERSION=${RAW%%+*}
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-        shell: bash
-
-      - name: Download Windows build
-        uses: actions/download-artifact@v4
-        with:
-          name: lumiluna-windows
-          path: release/windows
-
-      - name: Download Android APK (arm64-v8a)
-        uses: actions/download-artifact@v4
-        with:
-          name: lumiluna-android-arm64
-          path: release/android
-
-      - name: Download Android APK (armeabi-v7a)
-        uses: actions/download-artifact@v4
-        with:
-          name: lumiluna-android-arm32
-          path: release/android
-
-      - name: Download Android APK (x86_64)
-        uses: actions/download-artifact@v4
-        with:
-          name: lumiluna-android-x86_64
-          path: release/android
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.version.outputs.version }}+${{ github.run_id }}
-          name: "LumiLuna v${{ steps.version.outputs.version }}"
-          body: |
-            ## LumiLuna v${{ steps.version.outputs.version }}
-
-            Automated release from commit `${{ github.sha }}`.
-
-            ### Downloads
-
-            - **Windows**: `lumiluna-windows-x64.zip` — x64 portable bundle (unzip and run `lumiluna.exe`)
-            - **Android**: `app-arm64-v8a-release.apk` / `app-armeabi-v7a-release.apk` / `app-x86_64-release.apk`
-          files: |
-            release/**
-          generate_release_notes: true
-          make_latest: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+  # release:
+  #   name: Create Release
+  #   needs: [build-windows, build-android]
+  #   if: github.event_name != 'pull_request'
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: write
+  #
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v5
+  #
+  #     - name: Read app version
+  #       id: version
+  #       run: |
+  #         RAW=$(grep '^version: ' pubspec.yaml | sed 's/version: //')
+  #         VERSION=${RAW%%+*}
+  #         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+  #       shell: bash
+  #
+  #     - name: Download Windows build
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: lumiluna-windows
+  #         path: release/windows
+  #
+  #     - name: Download Android APK (arm64-v8a)
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: lumiluna-android-arm64
+  #         path: release/android
+  #
+  #     - name: Download Android APK (armeabi-v7a)
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: lumiluna-android-arm32
+  #         path: release/android
+  #
+  #     - name: Download Android APK (x86_64)
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: lumiluna-android-x86_64
+  #         path: release/android
+  #
+  #     - name: Create GitHub Release
+  #       uses: softprops/action-gh-release@v2
+  #       with:
+  #         tag_name: v${{ steps.version.outputs.version }}+${{ github.run_id }}
+  #         name: "LumiLuna v${{ steps.version.outputs.version }}"
+  #         body: |
+  #           ## LumiLuna v${{ steps.version.outputs.version }}
+  #
+  #           Automated release from commit `${{ github.sha }}`.
+  #
+  #           ### Downloads
+  #
+  #           - **Windows**: `lumiluna-windows-x64.zip` — x64 portable bundle (unzip and run `lumiluna.exe`)
+  #           - **Android**: `app-arm64-v8a-release.apk` / `app-armeabi-v7a-release.apk` / `app-x86_64-release.apk`
+  #         files: |
+  #           release/**
+  #         generate_release_notes: true
+  #         make_latest: true
+  #         token: ${{ secrets.GITHUB_TOKEN }}

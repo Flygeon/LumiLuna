@@ -10,12 +10,16 @@ import '../core/constants/app_constants.dart';
 import '../models/media_item.dart';
 import '../models/media_type.dart';
 import '../providers/tab_provider.dart';
+import 'lazy_load_widget.dart';
+import 'skeleton_placeholder.dart';
 
 /// Displays a thumbnail for a [MediaItem].
 ///
-/// - Images are decoded at a limited [cacheWidth] to keep memory low.
+/// - Images are lazy-loaded (only when near the viewport) with a shimmer
+///   skeleton placeholder and a smooth fade-in when ready.
 /// - Videos get a real frame extracted once (and cached to disk) via
-///   [FcNativeVideoThumbnail], which supports Windows out of the box.
+///   [FcNativeVideoThumbnail], which supports Windows out of the box. A
+///   skeleton is shown while the frame is being extracted.
 /// - Audio shows its embedded cover art when available, otherwise a themed
 ///   icon placeholder.
 class MediaThumbnail extends StatelessWidget {
@@ -33,25 +37,49 @@ class MediaThumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (item.type == MediaType.image) {
-      return Image.file(
-        item.file,
-        fit: fit,
-        cacheWidth: AppConstants.thumbnailCacheWidth,
-        gaplessPlayback: true,
-        filterQuality: FilterQuality.low,
-        errorBuilder: (_, __, ___) => _placeholder(context, item),
+      return LazyLoadWidget(
+        loadAheadViewports: 1.5,
+        placeholder: LayoutBuilder(
+          builder: (context, constraints) => SkeletonPlaceholder(
+            width: constraints.maxWidth > 0 ? constraints.maxWidth : 180,
+            height: constraints.maxHeight > 0 ? constraints.maxHeight : 180,
+            borderRadius: 0,
+          ),
+        ),
+        builder: (context) => _FadeInImageWidget(
+          child: Image.file(
+            item.file,
+            fit: fit,
+            cacheWidth: AppConstants.thumbnailCacheWidth,
+            gaplessPlayback: true,
+            filterQuality: FilterQuality.low,
+            errorBuilder: (_, __, ___) => _placeholder(context, item),
+          ),
+        ),
       );
     }
     if (item.type == MediaType.video) {
       return _VideoThumbnail(item: item, fit: fit, iconSize: iconSize);
     }
     if (item.type == MediaType.audio && item.artworkPath != null) {
-      return Image.file(
-        File(item.artworkPath!),
-        fit: fit,
-        gaplessPlayback: true,
-        filterQuality: FilterQuality.low,
-        errorBuilder: (_, __, ___) => _placeholder(context, item),
+      return LazyLoadWidget(
+        loadAheadViewports: 1.5,
+        placeholder: LayoutBuilder(
+          builder: (context, constraints) => SkeletonPlaceholder(
+            width: constraints.maxWidth > 0 ? constraints.maxWidth : 180,
+            height: constraints.maxHeight > 0 ? constraints.maxHeight : 180,
+            borderRadius: 8,
+          ),
+        ),
+        builder: (context) => _FadeInImageWidget(
+          child: Image.file(
+            File(item.artworkPath!),
+            fit: fit,
+            gaplessPlayback: true,
+            filterQuality: FilterQuality.low,
+            errorBuilder: (_, __, ___) => _placeholder(context, item),
+          ),
+        ),
       );
     }
     return _placeholder(context, item);
@@ -146,17 +174,25 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
     }
 
     if (_thumbPath != null) {
-      return Image.file(
-        File(_thumbPath!),
-        fit: widget.fit,
-        gaplessPlayback: true,
-        filterQuality: FilterQuality.low,
-        errorBuilder: (_, __, ___) =>
-            _placeholder(context, widget.item, widget.iconSize),
+      return _FadeInImageWidget(
+        child: Image.file(
+          File(_thumbPath!),
+          fit: widget.fit,
+          gaplessPlayback: true,
+          filterQuality: FilterQuality.low,
+          errorBuilder: (_, __, ___) =>
+              _placeholder(context, widget.item, widget.iconSize),
+        ),
       );
     }
-    // Loading, deferred or failed: keep the themed icon placeholder.
-    return _placeholder(context, widget.item, widget.iconSize);
+    // Loading, deferred or failed: show a shimmer skeleton.
+    return LayoutBuilder(
+      builder: (context, constraints) => SkeletonPlaceholder(
+        width: constraints.maxWidth > 0 ? constraints.maxWidth : 180,
+        height: constraints.maxHeight > 0 ? constraints.maxHeight : 180,
+        borderRadius: 8,
+      ),
+    );
   }
 
   Future<void> _generate() async {
@@ -205,5 +241,56 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
       hash = (hash * 0x100000001b3) & 0x7fffffffffffffff;
     }
     return hash.toRadixString(16);
+  }
+}
+
+/// Wraps [child] with a fade-in animation triggered on insertion.
+///
+/// Used when the thumbnail content becomes available (e.g. after lazy-loading
+/// or video-frame extraction completes) so the user sees a smooth transition
+/// instead of a hard pop-in.
+class _FadeInImageWidget extends StatefulWidget {
+  final Widget child;
+
+  const _FadeInImageWidget({required this.child});
+
+  @override
+  State<_FadeInImageWidget> createState() => _FadeInImageWidgetState();
+}
+
+class _FadeInImageWidgetState extends State<_FadeInImageWidget>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
+    // Start fading in on the next frame so the widget tree is settled.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _animation,
+      child: widget.child,
+    );
   }
 }
