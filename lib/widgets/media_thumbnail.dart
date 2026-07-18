@@ -11,15 +11,14 @@ import '../models/media_item.dart';
 import '../models/media_type.dart';
 import '../providers/tab_provider.dart';
 import 'lazy_load_widget.dart';
-import 'skeleton_placeholder.dart';
 
 /// Displays a thumbnail for a [MediaItem].
 ///
-/// - Images are lazy-loaded (only when near the viewport) with a shimmer
-///   skeleton placeholder and a smooth fade-in when ready.
+/// - Images are lazy-loaded (only when near the viewport) with a themed
+///   placeholder and a smooth fade-in when ready.
 /// - Videos get a real frame extracted once (and cached to disk) via
 ///   [FcNativeVideoThumbnail], which supports Windows out of the box. A
-///   skeleton is shown while the frame is being extracted.
+///   themed placeholder is shown while the frame is being extracted.
 /// - Audio shows its embedded cover art when available, otherwise a themed
 ///   icon placeholder.
 class MediaThumbnail extends StatelessWidget {
@@ -39,13 +38,7 @@ class MediaThumbnail extends StatelessWidget {
     if (item.type == MediaType.image) {
       return LazyLoadWidget(
         loadAheadViewports: 1.5,
-        placeholder: LayoutBuilder(
-          builder: (context, constraints) => SkeletonPlaceholder(
-            width: constraints.maxWidth > 0 ? constraints.maxWidth : 180,
-            height: constraints.maxHeight > 0 ? constraints.maxHeight : 180,
-            borderRadius: 0,
-          ),
-        ),
+        placeholder: _placeholder(context, item),
         builder: (context) => _FadeInImageWidget(
           child: Image.file(
             item.file,
@@ -64,13 +57,7 @@ class MediaThumbnail extends StatelessWidget {
     if (item.type == MediaType.audio && item.artworkPath != null) {
       return LazyLoadWidget(
         loadAheadViewports: 1.5,
-        placeholder: LayoutBuilder(
-          builder: (context, constraints) => SkeletonPlaceholder(
-            width: constraints.maxWidth > 0 ? constraints.maxWidth : 180,
-            height: constraints.maxHeight > 0 ? constraints.maxHeight : 180,
-            borderRadius: 8,
-          ),
-        ),
+        placeholder: _placeholder(context, item),
         builder: (context) => _FadeInImageWidget(
           child: Image.file(
             File(item.artworkPath!),
@@ -206,14 +193,10 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
         ),
       );
     }
-    // Loading, deferred or failed: show a shimmer skeleton.
-    return LayoutBuilder(
-      builder: (context, constraints) => SkeletonPlaceholder(
-        width: constraints.maxWidth > 0 ? constraints.maxWidth : 180,
-        height: constraints.maxHeight > 0 ? constraints.maxHeight : 180,
-        borderRadius: 8,
-      ),
-    );
+    // Loading, deferred or failed: show a static themed placeholder
+    // instead of a shimmer skeleton — the shimmer draws unwanted attention
+    // during page switches and feels like a loading failure.
+    return _placeholder(context, widget.item, widget.iconSize);
   }
 
   Future<void> _generate() async {
