@@ -11,6 +11,8 @@ final settingsServiceProvider = Provider<SettingsService>((ref) {
 
 enum MediaSortMode { modified, name, size, duration }
 
+enum MediaLayoutDensity { standard, compact }
+
 /// App-wide user settings (theme, view mode, scan folders, grouping).
 class AppSettings {
   final ThemeMode themeMode;
@@ -21,6 +23,8 @@ class AppSettings {
   final bool onboardingCompleted;
   final MediaSortMode mediaSortMode;
   final bool mediaSortAscending;
+  final MediaLayoutDensity imageLayoutDensity;
+  final MediaLayoutDensity videoLayoutDensity;
 
   const AppSettings({
     required this.themeMode,
@@ -31,6 +35,8 @@ class AppSettings {
     this.onboardingCompleted = false,
     this.mediaSortMode = MediaSortMode.modified,
     this.mediaSortAscending = false,
+    this.imageLayoutDensity = MediaLayoutDensity.standard,
+    this.videoLayoutDensity = MediaLayoutDensity.standard,
   });
 
   AppSettings copyWith({
@@ -42,6 +48,8 @@ class AppSettings {
     bool? onboardingCompleted,
     MediaSortMode? mediaSortMode,
     bool? mediaSortAscending,
+    MediaLayoutDensity? imageLayoutDensity,
+    MediaLayoutDensity? videoLayoutDensity,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -52,6 +60,8 @@ class AppSettings {
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       mediaSortMode: mediaSortMode ?? this.mediaSortMode,
       mediaSortAscending: mediaSortAscending ?? this.mediaSortAscending,
+      imageLayoutDensity: imageLayoutDensity ?? this.imageLayoutDensity,
+      videoLayoutDensity: videoLayoutDensity ?? this.videoLayoutDensity,
     );
   }
 }
@@ -70,7 +80,15 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
             orElse: () => MediaSortMode.modified,
           ),
           mediaSortAscending: _service.getMediaSortAscending(),
+          imageLayoutDensity: _layoutDensity(_service.getImageLayoutDensity()),
+          videoLayoutDensity: _layoutDensity(_service.getVideoLayoutDensity()),
         ));
+
+  static MediaLayoutDensity _layoutDensity(String value) =>
+      MediaLayoutDensity.values.firstWhere(
+        (density) => density.name == value,
+        orElse: () => MediaLayoutDensity.standard,
+      );
 
   final SettingsService _service;
 
@@ -132,6 +150,16 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     final ascending = !state.mediaSortAscending;
     state = state.copyWith(mediaSortAscending: ascending);
     await _service.setMediaSortAscending(ascending);
+  }
+
+  Future<void> setImageLayoutDensity(MediaLayoutDensity density) async {
+    state = state.copyWith(imageLayoutDensity: density);
+    await _service.setImageLayoutDensity(density.name);
+  }
+
+  Future<void> setVideoLayoutDensity(MediaLayoutDensity density) async {
+    state = state.copyWith(videoLayoutDensity: density);
+    await _service.setVideoLayoutDensity(density.name);
   }
 }
 

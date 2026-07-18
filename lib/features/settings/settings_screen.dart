@@ -42,6 +42,18 @@ class SettingsScreen extends ConsumerWidget {
             value: settings.isGridView,
             onChanged: (v) => notifier.setGridView(v),
           ),
+          if (settings.isGridView)
+            _LayoutDensityTile(
+              title: '图片排列方式',
+              value: settings.imageLayoutDensity,
+              onChanged: notifier.setImageLayoutDensity,
+            ),
+          if (settings.isGridView)
+            _LayoutDensityTile(
+              title: '视频排列方式',
+              value: settings.videoLayoutDensity,
+              onChanged: notifier.setVideoLayoutDensity,
+            ),
           const Divider(),
           _SectionTitle(l10n.mediaGrouping),
           ...GroupMode.values.map(
@@ -210,6 +222,41 @@ class _LocaleTile extends ConsumerWidget {
             .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
             .toList(),
         onChanged: (loc) => notifier.setLocale(loc == null ? '' : loc.languageCode),
+      ),
+    );
+  }
+}
+
+class _LayoutDensityTile extends StatelessWidget {
+  final String title;
+  final MediaLayoutDensity value;
+  final ValueChanged<MediaLayoutDensity> onChanged;
+
+  const _LayoutDensityTile({
+    required this.title,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.grid_view_outlined),
+      title: Text(title),
+      trailing: SegmentedButton<MediaLayoutDensity>(
+        showSelectedIcon: false,
+        segments: const [
+          ButtonSegment(
+            value: MediaLayoutDensity.standard,
+            label: Text('标准'),
+          ),
+          ButtonSegment(
+            value: MediaLayoutDensity.compact,
+            label: Text('紧密'),
+          ),
+        ],
+        selected: {value},
+        onSelectionChanged: (selected) => onChanged(selected.first),
       ),
     );
   }

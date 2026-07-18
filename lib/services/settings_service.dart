@@ -87,4 +87,18 @@ class SettingsService {
   Future<void> setMediaSortAscending(bool ascending) async {
     await _prefs.setBool(AppConstants.prefMediaSortAscending, ascending);
   }
+
+  String getImageLayoutDensity() =>
+      _prefs.getString(AppConstants.prefImageLayoutDensity) ?? 'standard';
+
+  Future<void> setImageLayoutDensity(String density) async {
+    await _prefs.setString(AppConstants.prefImageLayoutDensity, density);
+  }
+
+  String getVideoLayoutDensity() =>
+      _prefs.getString(AppConstants.prefVideoLayoutDensity) ?? 'standard';
+
+  Future<void> setVideoLayoutDensity(String density) async {
+    await _prefs.setString(AppConstants.prefVideoLayoutDensity, density);
+  }
 }

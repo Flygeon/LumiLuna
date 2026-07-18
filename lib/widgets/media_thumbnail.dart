@@ -47,7 +47,10 @@ class MediaThumbnail extends StatelessWidget {
       );
     }
     if (item.type == MediaType.video) {
-      return _VideoThumbnail(item: item, fit: fit, iconSize: iconSize);
+      return LazyLoadWidget(
+        placeholder: _placeholder(context, item, iconSize),
+        child: _VideoThumbnail(item: item, fit: fit, iconSize: iconSize),
+      );
     }
     if (item.type == MediaType.audio && item.artworkPath != null) {
       return LazyLoadWidget(

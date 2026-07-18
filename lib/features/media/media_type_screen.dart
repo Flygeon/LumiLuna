@@ -49,7 +49,13 @@ class _MediaTypeScreenState extends ConsumerState<MediaTypeScreen> {
           (items) => items.where((item) => item.type == widget.type).toList(),
         );
     final query = ref.watch(searchQueryProvider).trim();
-    final isGrid = ref.watch(settingsProvider.select((s) => s.isGridView));
+    final settings = ref.watch(settingsProvider);
+    final isGrid = settings.isGridView;
+    final density = switch (widget.type) {
+      MediaType.image => settings.imageLayoutDensity,
+      MediaType.video => settings.videoLayoutDensity,
+      MediaType.audio => MediaLayoutDensity.standard,
+    };
     final sel = ref.watch(selectionProvider(_selectionId));
     final l10n = context.l10n;
 
@@ -76,19 +82,26 @@ class _MediaTypeScreenState extends ConsumerState<MediaTypeScreen> {
               child: RefreshIndicator(
                 onRefresh: () => ref.read(mediaProvider.notifier).rescan(),
                 child: isGrid
-                    ? MediaGridView(
-                        items: items,
-                        onTap: (i) => _onItemTap(items, i, sel),
-                        onLongPress: (i) => _onItemLongPress(items, i),
-                        onSecondaryTap: sel.isSelecting
-                            ? null
-                            : (i) => MediaContextSheet.show(
-                                  context: context,
-                                  item: items[i],
-                                  ref: ref,
-                                  selectionId: _selectionId,
-                                ),
-                        selectedPaths: sel.selected,
+                    ? AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 180),
+                        switchInCurve: Curves.easeOut,
+                        switchOutCurve: Curves.easeIn,
+                        child: MediaGridView(
+                          key: ValueKey(density),
+                          items: items,
+                          density: density,
+                          onTap: (i) => _onItemTap(items, i, sel),
+                          onLongPress: (i) => _onItemLongPress(items, i),
+                          onSecondaryTap: sel.isSelecting
+                              ? null
+                              : (i) => MediaContextSheet.show(
+                                    context: context,
+                                    item: items[i],
+                                    ref: ref,
+                                    selectionId: _selectionId,
+                                  ),
+                          selectedPaths: sel.selected,
+                        ),
                       )
                     : MediaListView(
                         items: items,

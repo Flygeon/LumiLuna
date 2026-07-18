@@ -126,10 +126,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (_tab == index) return;
     setState(() => _tab = index);
     ref.read(activeTypeProvider.notifier).state = _typeForIndex(index);
-    ref.read(tabAnimatingProvider.notifier).state = true;
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (mounted) ref.read(tabAnimatingProvider.notifier).state = false;
-    });
+  }
+
+  bool _onPageScrollNotification(ScrollNotification notification) {
+    if (notification.depth != 0) return false;
+    if (notification is ScrollStartNotification) {
+      ref.read(tabAnimatingProvider.notifier).state = true;
+    } else if (notification is ScrollEndNotification) {
+      ref.read(tabAnimatingProvider.notifier).state = false;
+    }
+    return false;
   }
 
   /// The main body content — wraps in [DropTarget] only on Windows where
@@ -154,20 +160,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         Column(
           children: [
             Expanded(
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: _onPageChanged,
-                physics: const ClampingScrollPhysics(),
-                children: const [
-                  RepaintBoundary(
-                      child: MediaTypeScreen(type: MediaType.image)),
-                  RepaintBoundary(
-                      child: MediaTypeScreen(type: MediaType.video)),
-                  RepaintBoundary(
-                      child: MediaTypeScreen(type: MediaType.audio)),
-                  RepaintBoundary(child: FoldersScreen()),
-                  RepaintBoundary(child: TrashScreen()),
-                ],
+              child: NotificationListener<ScrollNotification>(
+                onNotification: _onPageScrollNotification,
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: _onPageChanged,
+                  physics: const ClampingScrollPhysics(),
+                  children: const [
+                    RepaintBoundary(
+                        child: MediaTypeScreen(type: MediaType.image)),
+                    RepaintBoundary(
+                        child: MediaTypeScreen(type: MediaType.video)),
+                    RepaintBoundary(
+                        child: MediaTypeScreen(type: MediaType.audio)),
+                    RepaintBoundary(child: FoldersScreen()),
+                    RepaintBoundary(child: TrashScreen()),
+                  ],
+                ),
               ),
             ),
             // Mini player capsule (animated show/hide when music is playing).

@@ -85,6 +85,8 @@ class AppConstants {
   static const String prefOnboardingCompleted = 'pref_onboarding_completed';
   static const String prefMediaSort = 'pref_media_sort';
   static const String prefMediaSortAscending = 'pref_media_sort_ascending';
+  static const String prefImageLayoutDensity = 'pref_image_layout_density';
+  static const String prefVideoLayoutDensity = 'pref_video_layout_density';
 
   // Scan cache file name (stored in application support directory).
   static const String cacheFileName = 'lumiluna_cache.json';

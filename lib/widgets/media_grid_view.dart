@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/constants/app_constants.dart';
 import '../models/media_item.dart';
 import '../models/media_type.dart';
+import '../providers/settings_provider.dart';
 import 'media_thumbnail.dart';
 
 /// Responsive grid of media items. Column count adapts to available width so
@@ -19,6 +20,7 @@ class MediaGridView extends StatelessWidget {
   final void Function(int index)? onSecondaryTap;
   final void Function(int index)? onLongPress;
   final Set<String> selectedPaths;
+  final MediaLayoutDensity density;
 
   const MediaGridView({
     super.key,
@@ -27,25 +29,29 @@ class MediaGridView extends StatelessWidget {
     this.onSecondaryTap,
     this.onLongPress,
     this.selectedPaths = const {},
+    this.density = MediaLayoutDensity.standard,
   });
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = (constraints.maxWidth / AppConstants.gridTargetTileWidth)
+        final compact = density == MediaLayoutDensity.compact;
+        final targetWidth = compact ? 110.0 : AppConstants.gridTargetTileWidth;
+        final columns = (constraints.maxWidth / targetWidth)
             .floor()
             .clamp(
               AppConstants.gridMinColumns.toInt(),
               AppConstants.gridMaxColumns.toInt(),
             );
+        final spacing = compact ? 3.0 : 10.0;
         return GridView.builder(
-          padding: const EdgeInsets.all(10),
+          padding: EdgeInsets.all(compact ? 4 : 10),
           physics: const AlwaysScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columns,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
             childAspectRatio: 1,
           ),
           itemCount: items.length,
@@ -57,6 +63,7 @@ class MediaGridView extends StatelessWidget {
             key: ValueKey(items[index].path),
             child: _GridTile(
               item: items[index],
+              compact: compact,
               selected: selectedPaths.contains(items[index].path),
               onTap: () => onTap(index),
               onSecondaryTap: onSecondaryTap != null
@@ -79,6 +86,7 @@ class _GridTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onSecondaryTap;
   final VoidCallback? onLongPress;
+  final bool compact;
 
   const _GridTile({
     required this.item,
@@ -86,6 +94,7 @@ class _GridTile extends StatelessWidget {
     required this.onTap,
     this.onSecondaryTap,
     this.onLongPress,
+    this.compact = false,
   });
 
   @override
@@ -103,7 +112,7 @@ class _GridTile extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              MediaThumbnail(item: item),
+              MediaThumbnail(item: item, iconSize: compact ? 24 : 40),
               // Selection overlay
               if (selected)
                 Positioned.fill(
@@ -118,11 +127,11 @@ class _GridTile extends StatelessWidget {
                     child: Align(
                       alignment: Alignment.topRight,
                       child: Padding(
-                        padding: const EdgeInsets.all(6),
+                        padding: EdgeInsets.all(compact ? 3 : 6),
                         child: Icon(
                           Icons.check_circle,
                           color: scheme.primary,
-                          size: 22,
+                          size: compact ? 16 : 22,
                         ),
                       ),
                     ),
@@ -132,15 +141,15 @@ class _GridTile extends StatelessWidget {
               if (item.type != MediaType.image && !selected)
                 Center(
                   child: Container(
-                    padding: const EdgeInsets.all(8),
+                        padding: EdgeInsets.all(compact ? 5 : 8),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.45),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.play_arrow,
                       color: Colors.white,
-                      size: 28,
+                      size: compact ? 20 : 28,
                     ),
                   ),
                 ),
@@ -152,7 +161,8 @@ class _GridTile extends StatelessWidget {
                 child: selected
                     ? const SizedBox.shrink()
                     : Container(
-                        padding: const EdgeInsets.fromLTRB(8, 16, 8, 6),
+                        padding: EdgeInsets.fromLTRB(
+                            compact ? 4 : 8, compact ? 8 : 16, compact ? 4 : 8, compact ? 3 : 6),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
@@ -167,9 +177,9 @@ class _GridTile extends StatelessWidget {
                           item.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
+                            fontSize: compact ? 9 : 12,
                           ),
                         ),
                       ),
@@ -177,16 +187,16 @@ class _GridTile extends StatelessWidget {
               // Small type badge, top-left.
               if (!selected)
                 Positioned(
-                  top: 6,
-                  left: 6,
+                  top: compact ? 3 : 6,
+                  left: compact ? 3 : 6,
                   child: Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: EdgeInsets.all(compact ? 2 : 4),
                     decoration: BoxDecoration(
                       color: scheme.surface.withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Icon(item.type.icon,
-                        size: 14, color: scheme.onSurface),
+                        size: compact ? 10 : 14, color: scheme.onSurface),
                   ),
                 ),
             ],
