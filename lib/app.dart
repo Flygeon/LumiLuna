@@ -8,6 +8,7 @@ import 'core/theme/app_theme.dart';
 import 'features/splash/splash_screen.dart';
 import 'main.dart';
 import 'providers/settings_provider.dart';
+import 'services/dynamic_color_service.dart';
 import 'widgets/esc_back_scope.dart';
 import 'widgets/media_key_shortcuts.dart';
 
@@ -18,14 +19,21 @@ class MediaLibraryApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     // Empty tag -> follow the system locale.
-    final locale = settings.localeTag.isEmpty ? null : Locale(settings.localeTag);
+    final locale =
+        settings.localeTag.isEmpty ? null : Locale(settings.localeTag);
     final startupError = ref.watch(startupErrorProvider);
+    final dynamicColor = ref.watch(dynamicColorProvider).valueOrNull;
+    final seed = settings.dynamicColor && dynamicColor != null
+        ? Color(dynamicColor)
+        : settings.themeSeed == null
+            ? null
+            : Color(settings.themeSeed!);
 
     return MaterialApp(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      theme: AppTheme.light(seed),
+      darkTheme: AppTheme.dark(seed),
       themeMode: settings.themeMode,
       locale: locale,
       localizationsDelegates: const [
@@ -52,3 +60,7 @@ class MediaLibraryApp extends ConsumerWidget {
     );
   }
 }
+
+final dynamicColorProvider = FutureProvider<int?>(
+  (ref) => DynamicColorService.getSeedColor(),
+);

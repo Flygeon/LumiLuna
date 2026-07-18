@@ -174,7 +174,10 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     // would auto-advance and skip our shuffle logic).
     _subs.add(player.stream.completed.listen((completed) async {
       if (!completed || !mounted) return;
-      if (state.shuffling && state.playlist.length > 1) {
+      if (state.looping) {
+        await player.seek(Duration.zero);
+        await player.play();
+      } else if (state.shuffling && state.playlist.length > 1) {
         await player.jump(_randomIndexExcluding(state.index));
         await player.play();
       }
@@ -288,24 +291,9 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   Future<void> cyclePlayMode() => setMode(state.mode.next);
 
   /// Set the playback mode and sync media_kit's playlist mode accordingly.
-  ///
-  /// Shuffle requires `PlaylistMode.none` so the `completed` event fires and
-  /// our random-advance logic runs.  Loop sets `PlaylistMode.loop` so
-  /// media_kit auto-restarts the current track.  Sequential uses `none` so
-  /// the playlist simply stops at the end (no auto-advance).
   Future<void> setMode(PlaybackMode mode) async {
     state = state.copyWith(mode: mode);
-    final PlaylistMode playlistMode;
-    switch (mode) {
-      case PlaybackMode.loop:
-        playlistMode = PlaylistMode.loop;
-        break;
-      case PlaybackMode.shuffle:
-      case PlaybackMode.sequential:
-        playlistMode = PlaylistMode.none;
-        break;
-    }
-    await player.setPlaylistMode(playlistMode);
+    await player.setPlaylistMode(PlaylistMode.none);
   }
 
   Future<void> stop() async {

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ import '../../l10n/l10n.dart';
 import '../../models/media_item.dart';
 import '../../providers/lyrics_provider.dart';
 import '../../providers/player_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../services/lyrics_parser.dart';
 
 /// Music player inspired by Apple Music's design language, retaining some
@@ -34,6 +36,9 @@ class MusicPlayerScreen extends ConsumerWidget {
     final controller = ref.read(playbackControllerProvider.notifier);
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
+    final blurBackground = ref.watch(
+      settingsProvider.select((settings) => settings.musicBackgroundBlur),
+    );
 
     final player = _PlayerKeyboardShortcuts(
       enabled: _isDesktop,
@@ -72,7 +77,8 @@ class MusicPlayerScreen extends ConsumerWidget {
           : Stack(
               children: [
                 Positioned.fill(
-                    child: _buildBackground(state.current!, scheme)),
+                    child: _buildBackground(
+                        state.current!, scheme, blurBackground)),
                 SafeArea(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
@@ -114,15 +120,22 @@ class MusicPlayerScreen extends ConsumerWidget {
         defaultTargetPlatform == TargetPlatform.linux;
   }
 
-  Widget _buildBackground(MediaItem item, ColorScheme scheme) {
+  Widget _buildBackground(
+      MediaItem item, ColorScheme scheme, bool blurBackground) {
     if (item.artworkPath != null) {
       try {
-        return Image.file(
+        final image = Image.file(
           File(item.artworkPath!),
           fit: BoxFit.cover,
           color: Colors.black.withValues(alpha: 0.55),
           colorBlendMode: BlendMode.darken,
         );
+        return blurBackground
+            ? ImageFiltered(
+                imageFilter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: image,
+              )
+            : image;
       } catch (_) {}
     }
     return Container(

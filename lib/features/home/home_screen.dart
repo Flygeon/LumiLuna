@@ -11,14 +11,12 @@ import '../../providers/media_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/tab_provider.dart';
 import '../../widgets/mini_player_capsule.dart';
-import '../collections/collection_list_screen.dart';
 import '../folders/folders_screen.dart';
 import '../favorites/favorites_screen.dart';
 import '../history/play_history_screen.dart';
 import '../media/media_type_screen.dart';
 import '../playlists/playlist_list_screen.dart';
 import '../settings/settings_screen.dart';
-import '../tags/tag_library_screen.dart';
 import '../trash/trash_screen.dart';
 import '../../main.dart';
 import '../../services/media_scanner_service.dart';
@@ -226,29 +224,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.account_tree_outlined),
-              title: const Text('分类与标签'),
-              subtitle: const Text('按主题、人物和地点整理媒体'),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const TagLibraryScreen()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.collections_bookmark),
-              title: const Text('收藏集'),
-              subtitle: const Text('整理和浏览您的媒体收藏'),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (_) => const CollectionListScreen()),
-                );
-              },
-            ),
             ListTile(
               leading: const Icon(Icons.playlist_play),
               title: const Text('播放列表'),

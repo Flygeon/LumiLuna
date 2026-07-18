@@ -32,6 +32,23 @@ class SettingsService {
     await _prefs.setString(AppConstants.prefThemeMode, mode.name);
   }
 
+  int? getThemeSeed() => _prefs.getInt(AppConstants.prefThemeSeed);
+
+  Future<void> setThemeSeed(int? seed) async {
+    if (seed == null) {
+      await _prefs.remove(AppConstants.prefThemeSeed);
+    } else {
+      await _prefs.setInt(AppConstants.prefThemeSeed, seed);
+    }
+  }
+
+  bool getDynamicColor() =>
+      _prefs.getBool(AppConstants.prefDynamicColor) ?? false;
+
+  Future<void> setDynamicColor(bool enabled) async {
+    await _prefs.setBool(AppConstants.prefDynamicColor, enabled);
+  }
+
   // ---- View mode (grid / list) ----
   bool getIsGridView() => _prefs.getBool(AppConstants.prefViewMode) ?? true;
 
@@ -100,5 +117,12 @@ class SettingsService {
 
   Future<void> setVideoLayoutDensity(String density) async {
     await _prefs.setString(AppConstants.prefVideoLayoutDensity, density);
+  }
+
+  bool getMusicBackgroundBlur() =>
+      _prefs.getBool(AppConstants.prefMusicBackgroundBlur) ?? true;
+
+  Future<void> setMusicBackgroundBlur(bool enabled) async {
+    await _prefs.setBool(AppConstants.prefMusicBackgroundBlur, enabled);
   }
 }

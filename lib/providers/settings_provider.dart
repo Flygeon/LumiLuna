@@ -16,6 +16,8 @@ enum MediaLayoutDensity { standard, compact }
 /// App-wide user settings (theme, view mode, scan folders, grouping).
 class AppSettings {
   final ThemeMode themeMode;
+  final int? themeSeed;
+  final bool dynamicColor;
   final bool isGridView;
   final List<String> scanFolders;
   final GroupMode groupMode;
@@ -25,9 +27,12 @@ class AppSettings {
   final bool mediaSortAscending;
   final MediaLayoutDensity imageLayoutDensity;
   final MediaLayoutDensity videoLayoutDensity;
+  final bool musicBackgroundBlur;
 
   const AppSettings({
     required this.themeMode,
+    this.themeSeed,
+    this.dynamicColor = false,
     required this.isGridView,
     required this.scanFolders,
     required this.groupMode,
@@ -37,10 +42,13 @@ class AppSettings {
     this.mediaSortAscending = false,
     this.imageLayoutDensity = MediaLayoutDensity.standard,
     this.videoLayoutDensity = MediaLayoutDensity.standard,
+    this.musicBackgroundBlur = true,
   });
 
   AppSettings copyWith({
     ThemeMode? themeMode,
+    int? themeSeed,
+    bool? dynamicColor,
     bool? isGridView,
     List<String>? scanFolders,
     GroupMode? groupMode,
@@ -50,9 +58,12 @@ class AppSettings {
     bool? mediaSortAscending,
     MediaLayoutDensity? imageLayoutDensity,
     MediaLayoutDensity? videoLayoutDensity,
+    bool? musicBackgroundBlur,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
+      themeSeed: themeSeed ?? this.themeSeed,
+      dynamicColor: dynamicColor ?? this.dynamicColor,
       isGridView: isGridView ?? this.isGridView,
       scanFolders: scanFolders ?? this.scanFolders,
       groupMode: groupMode ?? this.groupMode,
@@ -62,6 +73,7 @@ class AppSettings {
       mediaSortAscending: mediaSortAscending ?? this.mediaSortAscending,
       imageLayoutDensity: imageLayoutDensity ?? this.imageLayoutDensity,
       videoLayoutDensity: videoLayoutDensity ?? this.videoLayoutDensity,
+      musicBackgroundBlur: musicBackgroundBlur ?? this.musicBackgroundBlur,
     );
   }
 }
@@ -70,6 +82,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   SettingsNotifier(this._service)
       : super(AppSettings(
           themeMode: _service.getThemeMode(),
+          themeSeed: _service.getThemeSeed(),
+          dynamicColor: _service.getDynamicColor(),
           isGridView: _service.getIsGridView(),
           scanFolders: _service.getScanFolders(),
           groupMode: _service.getGroupMode(),
@@ -82,6 +96,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
           mediaSortAscending: _service.getMediaSortAscending(),
           imageLayoutDensity: _layoutDensity(_service.getImageLayoutDensity()),
           videoLayoutDensity: _layoutDensity(_service.getVideoLayoutDensity()),
+          musicBackgroundBlur: _service.getMusicBackgroundBlur(),
         ));
 
   static MediaLayoutDensity _layoutDensity(String value) =>
@@ -95,6 +110,17 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> setThemeMode(ThemeMode mode) async {
     state = state.copyWith(themeMode: mode);
     await _service.setThemeMode(mode);
+  }
+
+  Future<void> setThemeSeed(int seed) async {
+    state = state.copyWith(themeSeed: seed, dynamicColor: false);
+    await _service.setThemeSeed(seed);
+    await _service.setDynamicColor(false);
+  }
+
+  Future<void> setDynamicColor(bool enabled) async {
+    state = state.copyWith(dynamicColor: enabled);
+    await _service.setDynamicColor(enabled);
   }
 
   Future<void> setLocale(String tag) async {
@@ -160,6 +186,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> setVideoLayoutDensity(MediaLayoutDensity density) async {
     state = state.copyWith(videoLayoutDensity: density);
     await _service.setVideoLayoutDensity(density.name);
+  }
+
+  Future<void> setMusicBackgroundBlur(bool enabled) async {
+    state = state.copyWith(musicBackgroundBlur: enabled);
+    await _service.setMusicBackgroundBlur(enabled);
   }
 }
 

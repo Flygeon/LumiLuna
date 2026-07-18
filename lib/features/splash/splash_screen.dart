@@ -25,6 +25,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late final AnimationController _controller;
   late final Animation<double> _fadeIn;
   late final Animation<double> _scale;
+  late final AnimationController _glowController;
+  late final Animation<double> _glow;
   double _progress = 0.0;
 
   @override
@@ -46,6 +48,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         parent: _controller,
         curve: const Interval(0.0, 0.6, curve: Curves.easeOutBack),
       ),
+    );
+
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+    _glow = CurvedAnimation(
+      parent: _glowController,
+      curve: Curves.easeInOut,
     );
 
     // Start the entrance animation.
@@ -107,6 +118,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   void dispose() {
     _controller.dispose();
+    _glowController.dispose();
     super.dispose();
   }
 
@@ -141,23 +153,39 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 const Spacer(flex: 3),
 
                 // App icon / logo area
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: scheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(
-                        color: scheme.primary.withValues(alpha: 0.3),
-                        blurRadius: 32,
-                        offset: const Offset(0, 8),
+                AnimatedBuilder(
+                  animation: _glow,
+                  builder: (context, child) => Transform.scale(
+                    scale: 0.96 + _glow.value * 0.04,
+                    child: Container(
+                      width: 112,
+                      height: 112,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            scheme.primaryContainer,
+                            scheme.secondaryContainer,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(32),
+                        boxShadow: [
+                          BoxShadow(
+                            color: scheme.primary
+                                .withValues(alpha: 0.18 + _glow.value * 0.2),
+                            blurRadius: 24 + _glow.value * 18,
+                            spreadRadius: _glow.value * 3,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
                       ),
-                    ],
+                      child: child,
+                    ),
                   ),
                   child: Icon(
-                    Icons.auto_stories,
-                    size: 48,
+                    Icons.auto_stories_rounded,
+                    size: 52,
                     color: scheme.onPrimaryContainer,
                   ),
                 ),
@@ -165,13 +193,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 const SizedBox(height: 32),
 
                 // App name
-                Text(
-                  'LumiLuna',
-                  style: TextStyle(
-                    fontSize: 42,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 2,
-                    color: scheme.onSurface,
+                AnimatedBuilder(
+                  animation: _glow,
+                  builder: (context, child) => Opacity(
+                    opacity: 0.86 + _glow.value * 0.14,
+                    child: child,
+                  ),
+                  child: Text(
+                    'LumiLuna',
+                    style: TextStyle(
+                      fontSize: 42,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2,
+                      color: scheme.onSurface,
+                    ),
                   ),
                 ),
 

@@ -78,6 +78,8 @@ class AppConstants {
 
   // SharedPreferences keys.
   static const String prefThemeMode = 'pref_theme_mode';
+  static const String prefThemeSeed = 'pref_theme_seed';
+  static const String prefDynamicColor = 'pref_dynamic_color';
   static const String prefViewMode = 'pref_view_mode';
   static const String prefScanFolders = 'pref_scan_folders';
   static const String prefGroupMode = 'pref_group_mode';
@@ -87,6 +89,7 @@ class AppConstants {
   static const String prefMediaSortAscending = 'pref_media_sort_ascending';
   static const String prefImageLayoutDensity = 'pref_image_layout_density';
   static const String prefVideoLayoutDensity = 'pref_video_layout_density';
+  static const String prefMusicBackgroundBlur = 'pref_music_background_blur';
 
   // Scan cache file name (stored in application support directory).
   static const String cacheFileName = 'lumiluna_cache.json';
