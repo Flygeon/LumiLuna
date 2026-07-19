@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_lyric/core/lyric_model.dart' show LyricModel, LyricLine;
 import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1129,6 +1128,9 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
   final List<GlobalKey> _lineKeys = [];
   LyricModel? _model;
   int _activeIndex = -1;
+  int _scrollRequest = 0;
+
+  static const double _lineExtent = 112;
 
   @override
   void initState() {
@@ -1169,18 +1171,26 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
       if (next == _activeIndex) return;
       _activeIndex = next;
       if (mounted) setState(() {});
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || next >= _lineKeys.length) return;
-        final lineContext = _lineKeys[next].currentContext;
-        if (lineContext != null) {
-          Scrollable.ensureVisible(
-            lineContext,
-            alignment: 0.5,
-            duration: const Duration(milliseconds: 420),
-            curve: Curves.easeOutCubic,
-          );
-        }
-      });
+      _scrollToLine(next);
+    });
+  }
+
+  void _scrollToLine(int index) {
+    final request = ++_scrollRequest;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted ||
+          request != _scrollRequest ||
+          !_scrollController.hasClients) {
+        return;
+      }
+      final viewport = _scrollController.position.viewportDimension;
+      final target = (200 + index * _lineExtent - (viewport - _lineExtent) / 2)
+          .clamp(0.0, _scrollController.position.maxScrollExtent);
+      _scrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+      );
     });
   }
 
@@ -1235,7 +1245,7 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
   }
 }
 
-class _LyricLineTile extends StatelessWidget {
+class _LyricLineTile extends StatefulWidget {
   final LyricLine line;
   final bool active;
   final bool blurEnabled;
@@ -1252,7 +1262,50 @@ class _LyricLineTile extends StatelessWidget {
   });
 
   @override
+  State<_LyricLineTile> createState() => _LyricLineTileState();
+}
+
+class _LyricLineTileState extends State<_LyricLineTile>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _spring;
+
+  @override
+  void initState() {
+    super.initState();
+    _spring = AnimationController.unbounded(vsync: this)
+      ..value = widget.active ? 1 : 0;
+  }
+
+  @override
+  void didUpdateWidget(covariant _LyricLineTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.active != widget.active) {
+      _spring.animateWith(
+        SpringSimulation(
+          const SpringDescription(
+            mass: 1,
+            stiffness: 360,
+            damping: 28,
+          ),
+          _spring.value,
+          widget.active ? 1 : 0,
+          0,
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _spring.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final line = widget.line;
+    final active = widget.active;
+    final fontSize = widget.fontSize;
     final content = Padding(
       padding: const EdgeInsets.symmetric(vertical: 15),
       child: Column(
@@ -1261,6 +1314,8 @@ class _LyricLineTile extends StatelessWidget {
           Text(
             line.text,
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: fontSize,
               fontWeight: active ? FontWeight.w600 : FontWeight.normal,
@@ -1272,6 +1327,8 @@ class _LyricLineTile extends StatelessWidget {
             Text(
               line.translation!,
               textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: fontSize * 0.875,
                 color: active ? Colors.white70 : Colors.white38,
@@ -1281,29 +1338,33 @@ class _LyricLineTile extends StatelessWidget {
         ],
       ),
     );
-    final rendered = active || !blurEnabled
+    final rendered = active || !widget.blurEnabled
         ? content
         : ImageFiltered(
             imageFilter: ui.ImageFilter.blur(sigmaX: 1, sigmaY: 1),
             child: content,
           );
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedSlide(
-        offset: active ? const Offset(0, -0.035) : Offset.zero,
-        duration: 380.ms,
-        curve: Curves.easeOutBack,
-        child: AnimatedScale(
-          scale: active ? 1.06 : 1,
-          duration: 380.ms,
-          curve: Curves.easeOutBack,
-          alignment: Alignment.center,
-          child: AnimatedOpacity(
-            opacity: active ? 1 : 0.82,
-            duration: 380.ms,
-            curve: Curves.easeOut,
-            child: rendered,
-          ),
+    return SizedBox(
+      height: _LyricsViewState._lineExtent,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedBuilder(
+          animation: _spring,
+          child: rendered,
+          builder: (context, child) {
+            final progress = _spring.value.clamp(0.0, 1.0);
+            return Opacity(
+              opacity: 0.82 + progress * 0.18,
+              child: Transform.translate(
+                offset: Offset(0, -7 * progress),
+                child: Transform.scale(
+                  scale: 1 + progress * 0.06,
+                  alignment: Alignment.center,
+                  child: child,
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
