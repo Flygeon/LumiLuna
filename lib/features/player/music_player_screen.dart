@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lyric/core/lyric_model.dart' show LyricModel, LyricLine;
 import 'package:flutter_lyric/flutter_lyric.dart';
