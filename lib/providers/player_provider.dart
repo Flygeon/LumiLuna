@@ -180,6 +180,10 @@ class PlaybackController extends StateNotifier<PlaybackState> {
       } else if (state.shuffling && state.playlist.length > 1) {
         await player.jump(_randomIndexExcluding(state.index));
         await player.play();
+      } else if (state.playlist.length > 1 &&
+          state.index < state.playlist.length - 1) {
+        await player.next();
+        await player.play();
       }
     }));
   }

@@ -46,6 +46,10 @@ class MusicPlayerScreen extends ConsumerWidget {
     final playerTheme = appTheme.brightness == Brightness.dark
         ? AppTheme.dark(const Color(0xFF6750A4))
         : AppTheme.light(const Color(0xFF6750A4));
+    final playerScheme = ColorScheme.fromSeed(
+      seedColor: const Color(0xFF6750A4),
+      brightness: Brightness.dark,
+    );
     final blurBackground = ref.watch(
       settingsProvider.select((settings) => settings.musicBackgroundBlur),
     );
@@ -95,14 +99,14 @@ class MusicPlayerScreen extends ConsumerWidget {
                         return isWide
                             ? _WideLayout(
                                 current: state.current!,
-                                scheme: scheme,
+                                scheme: playerScheme,
                                 controller: controller,
                                 playlist: state.playlist,
                                 playlistIndex: state.index,
                               )
                             : _NarrowLayout(
                                 current: state.current!,
-                                scheme: scheme,
+                                scheme: playerScheme,
                                 controller: controller,
                                 playlist: state.playlist,
                                 playlistIndex: state.index,

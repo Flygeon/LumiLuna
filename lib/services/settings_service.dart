@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -32,7 +34,9 @@ class SettingsService {
     await _prefs.setString(AppConstants.prefThemeMode, mode.name);
   }
 
-  int? getThemeSeed() => _prefs.getInt(AppConstants.prefThemeSeed);
+  int? getThemeSeed() =>
+      _prefs.getInt(AppConstants.prefThemeSeed) ??
+      const Color(0xFF1976D2).value;
 
   Future<void> setThemeSeed(int? seed) async {
     if (seed == null) {
@@ -133,7 +137,12 @@ class SettingsService {
   }
 
   double getLyricsFontSize() =>
-      _prefs.getDouble(AppConstants.prefLyricsFontSize) ?? 16.0;
+      _prefs.getDouble(AppConstants.prefLyricsFontSize) ??
+      (Platform.isAndroid
+          ? 20.0
+          : Platform.isWindows
+              ? 22.0
+              : 16.0);
 
   Future<void> setLyricsFontSize(double size) async {
     await _prefs.setDouble(AppConstants.prefLyricsFontSize, size);

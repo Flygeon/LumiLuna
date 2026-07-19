@@ -46,7 +46,7 @@ class AppSettings {
     this.videoLayoutDensity = MediaLayoutDensity.standard,
     this.musicBackgroundBlur = true,
     this.lyricsBlur = true,
-    this.lyricsFontSize = 16.0,
+    this.lyricsFontSize = 18.0,
   });
 
   AppSettings copyWith({
