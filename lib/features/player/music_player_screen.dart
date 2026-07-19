@@ -249,7 +249,12 @@ class _MusicBackgroundState extends State<_MusicBackground>
           : artwork;
       return Stack(
         fit: StackFit.expand,
-        children: [image, DecoratedBox(decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.45)))],
+        children: [
+          image,
+          DecoratedBox(
+              decoration:
+                  BoxDecoration(color: Colors.black.withValues(alpha: 0.45)))
+        ],
       );
     }
     return AnimatedBuilder(
@@ -279,7 +284,6 @@ class _MusicBackgroundState extends State<_MusicBackground>
                         child: artwork,
                       ),
                     ),
-              ),
             ),
           DecoratedBox(
             decoration:
