@@ -94,11 +94,11 @@ class MusicPlayerScreen extends ConsumerWidget {
                 children: [
                   Positioned.fill(
                       child: _LiquidBackground(
-                        item: state.current!,
-                        scheme: scheme,
-                        blur: blurBackground,
-                        liquid: liquidBackground,
-                      )),
+                    item: state.current!,
+                    scheme: scheme,
+                    blur: blurBackground,
+                    liquid: liquidBackground,
+                  )),
                   SafeArea(
                     child: LayoutBuilder(
                       builder: (context, constraints) {
@@ -139,7 +139,6 @@ class MusicPlayerScreen extends ConsumerWidget {
         defaultTargetPlatform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.linux;
   }
-
 }
 
 class _LiquidBackground extends StatefulWidget {
@@ -1312,12 +1311,12 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
   Widget build(BuildContext context) {
     final view = RepaintBoundary(
       child: LyricView(
-          controller: _controller,
-          style: _style,
-          width: double.infinity,
-          height: double.infinity,
-        ),
-      );
+        controller: _controller,
+        style: _style,
+        width: double.infinity,
+        height: double.infinity,
+      ),
+    );
     if (!widget.blurEnabled) return view;
     return Stack(
       fit: StackFit.expand,
@@ -1333,7 +1332,7 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
           height: double.infinity,
         ),
       ],
-      ),
+    );
   }
 }
 
