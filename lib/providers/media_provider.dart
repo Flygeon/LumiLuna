@@ -46,7 +46,7 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
             File(item.artworkPath!).existsSync()) {
           return item;
         }
-        return item.copyWith(artworkPath: null);
+        return item.withoutArtwork();
       }).toList();
     }
 
