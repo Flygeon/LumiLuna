@@ -16,6 +16,8 @@ dependencies:
 
   # State management
   flutter_riverpod: ^2.5.1
+  flutter_animate: ^4.5.2
+  flutter_typeahead: ^6.0.0
 
   # Unified audio + video playback (native Windows support)
   media_kit: ^1.1.11

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'dart:io';
 
 import '../../l10n/l10n.dart';
 import '../../models/media_type.dart';
+import '../../models/media_item.dart';
 import '../../providers/filter_provider.dart';
 import '../../providers/media_provider.dart';
 import '../../providers/settings_provider.dart';
@@ -93,6 +96,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       default:
         return MediaType.image; // folders / trash: placeholder
     }
+  }
+
+  IconData _iconForMediaType(MediaType type) {
+    switch (type) {
+      case MediaType.image:
+        return Icons.image_outlined;
+      case MediaType.video:
+        return Icons.movie_outlined;
+      case MediaType.audio:
+        return Icons.music_note_outlined;
+    }
+    return Icons.description_outlined;
   }
 
   /// Animate the body to [index] and keep the nav bar highlight in sync.
@@ -203,11 +218,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             .textTheme
                             .headlineSmall
                             ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onPrimary),
+                                color: Theme.of(context).colorScheme.onPrimary),
                       ),
-                    ],
+                    ].animate(interval: 70.ms).fadeIn(duration: 260.ms).slideY(
+                          begin: 0.12,
+                          end: 0,
+                          duration: 320.ms,
+                          curve: Curves.easeOutCubic,
+                        ),
                   ),
                 ),
               ),
@@ -292,8 +310,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Read sort state via select so that HomeScreen only rebuilds when the
     // sort fields actually change — not on every settings mutation
     // (e.g. favourite toggles, view-mode switches).
-    final sortMode =
-        ref.watch(settingsProvider.select((s) => s.mediaSortMode));
+    final sortMode = ref.watch(settingsProvider.select((s) => s.mediaSortMode));
     final sortAscending =
         ref.watch(settingsProvider.select((s) => s.mediaSortAscending));
 
@@ -301,130 +318,178 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       focusNode: _escFocusNode,
       onKeyEvent: _onKeyEvent,
       child: Scaffold(
-      appBar: AppBar(
-        leading: _searching
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _closeSearch,
+        appBar: AppBar(
+          leading: _searching
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: _closeSearch,
+                )
+              : null,
+          title: _searching
+              ? TypeAheadField<MediaItem>(
+                  controller: _searchController,
+                  suggestionsCallback: (pattern) {
+                    final query = pattern.trim().toLowerCase();
+                    if (query.isEmpty) return const <MediaItem>[];
+                    return ref.read(mediaProvider).maybeWhen(
+                          data: (items) => items
+                              .where((item) {
+                                final values = [
+                                  item.name,
+                                  item.title,
+                                  item.artist,
+                                  item.album,
+                                  item.folderPath,
+                                ].whereType<String>();
+                                return values.any(
+                                  (value) =>
+                                      value.toLowerCase().contains(query),
+                                );
+                              })
+                              .take(8)
+                              .toList(),
+                          orElse: () => const <MediaItem>[],
+                        );
+                  },
+                  itemBuilder: (context, item) => ListTile(
+                    dense: true,
+                    leading: Icon(_iconForMediaType(item.type)),
+                    title: Text(item.title ?? item.name),
+                    subtitle: Text(
+                      [item.artist, item.album]
+                          .whereType<String>()
+                          .where((value) => value.isNotEmpty)
+                          .join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  onSelected: (item) {
+                    _searchController.text = item.title ?? item.name;
+                    ref.read(searchQueryProvider.notifier).state =
+                        item.title ?? item.name;
+                  },
+                  builder: (context, controller, focusNode) => TextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: l10n.searchHint,
+                      border: InputBorder.none,
+                    ),
+                    onChanged: (value) =>
+                        ref.read(searchQueryProvider.notifier).state = value,
+                  ),
+                )
+              : Text(l10n.homeTitle),
+          actions: [
+            if (_searching)
+              IconButton(
+                tooltip: l10n.clear,
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  _searchController.clear();
+                  ref.read(searchQueryProvider.notifier).state = '';
+                },
               )
-            : null,
-        title: _searching
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: l10n.searchHint,
-                  border: InputBorder.none,
-                ),
-                onChanged: (v) =>
-                    ref.read(searchQueryProvider.notifier).state = v,
-              )
-            : Text(l10n.homeTitle),
-        actions: [
-          if (_searching)
-            IconButton(
-              tooltip: l10n.clear,
-              icon: const Icon(Icons.close),
-              onPressed: () {
-                _searchController.clear();
-                ref.read(searchQueryProvider.notifier).state = '';
-              },
-            )
-          else ...[
-            IconButton(
-              tooltip: l10n.search,
-              icon: const Icon(Icons.search),
-              onPressed: _openSearch,
-            ),
-            IconButton(
-              tooltip: isGrid ? l10n.listView : l10n.gridView,
-              icon: Icon(isGrid ? Icons.view_list : Icons.grid_view),
-              onPressed: () => ref.read(settingsProvider.notifier).toggleView(),
-            ),
-            IconButton(
-              tooltip: l10n.refresh,
-              icon: const Icon(Icons.refresh),
-              onPressed: () => ref.read(mediaProvider.notifier).rescan(),
-            ),
-            PopupMenuButton<MediaSortMode>(
-              tooltip: l10n.sort,
-              icon: const Icon(Icons.sort),
-              initialValue: sortMode,
-              onSelected: ref.read(settingsProvider.notifier).setMediaSortMode,
-              itemBuilder: (_) => [
-                PopupMenuItem(
-                  value: MediaSortMode.modified,
-                  child: Text(l10n.sortModified),
-                ),
-                PopupMenuItem(
-                  value: MediaSortMode.name,
-                  child: Text(l10n.sortName),
-                ),
-                PopupMenuItem(
-                  value: MediaSortMode.size,
-                  child: Text(l10n.sortSize),
-                ),
-                PopupMenuItem(
-                  value: MediaSortMode.duration,
-                  child: Text(l10n.sortDuration),
-                ),
-              ],
-            ),
-            IconButton(
-              tooltip: sortAscending ? l10n.sortAscending : l10n.sortDescending,
-              icon: Icon(sortAscending
-                  ? Icons.arrow_upward
-                  : Icons.arrow_downward),
-              onPressed:
-                  ref.read(settingsProvider.notifier).toggleMediaSortDirection,
-            ),
-            IconButton(
-              tooltip: l10n.favorite,
-              icon: const Icon(Icons.star_border),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+            else ...[
+              IconButton(
+                tooltip: l10n.search,
+                icon: const Icon(Icons.search),
+                onPressed: _openSearch,
               ),
+              IconButton(
+                tooltip: isGrid ? l10n.listView : l10n.gridView,
+                icon: Icon(isGrid ? Icons.view_list : Icons.grid_view),
+                onPressed: () =>
+                    ref.read(settingsProvider.notifier).toggleView(),
+              ),
+              IconButton(
+                tooltip: l10n.refresh,
+                icon: const Icon(Icons.refresh),
+                onPressed: () => ref.read(mediaProvider.notifier).rescan(),
+              ),
+              PopupMenuButton<MediaSortMode>(
+                tooltip: l10n.sort,
+                icon: const Icon(Icons.sort),
+                initialValue: sortMode,
+                onSelected:
+                    ref.read(settingsProvider.notifier).setMediaSortMode,
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: MediaSortMode.modified,
+                    child: Text(l10n.sortModified),
+                  ),
+                  PopupMenuItem(
+                    value: MediaSortMode.name,
+                    child: Text(l10n.sortName),
+                  ),
+                  PopupMenuItem(
+                    value: MediaSortMode.size,
+                    child: Text(l10n.sortSize),
+                  ),
+                  PopupMenuItem(
+                    value: MediaSortMode.duration,
+                    child: Text(l10n.sortDuration),
+                  ),
+                ],
+              ),
+              IconButton(
+                tooltip:
+                    sortAscending ? l10n.sortAscending : l10n.sortDescending,
+                icon: Icon(
+                    sortAscending ? Icons.arrow_upward : Icons.arrow_downward),
+                onPressed: ref
+                    .read(settingsProvider.notifier)
+                    .toggleMediaSortDirection,
+              ),
+              IconButton(
+                tooltip: l10n.favorite,
+                icon: const Icon(Icons.star_border),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+                ),
+              ),
+              IconButton(
+                tooltip: l10n.settings,
+                icon: const Icon(Icons.more_vert),
+                onPressed: () => _showMoreMenu(context),
+              ),
+            ],
+          ],
+        ),
+        body: _buildBody(context),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _tab,
+          onDestinationSelected: _onTabSelected,
+          destinations: [
+            NavigationDestination(
+              icon: const Icon(Icons.image_outlined),
+              selectedIcon: const Icon(Icons.image),
+              label: mediaTypeName(context, MediaType.image),
             ),
-            IconButton(
-              tooltip: l10n.settings,
-              icon: const Icon(Icons.more_vert),
-              onPressed: () => _showMoreMenu(context),
+            NavigationDestination(
+              icon: const Icon(Icons.movie_outlined),
+              selectedIcon: const Icon(Icons.movie),
+              label: mediaTypeName(context, MediaType.video),
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.music_note_outlined),
+              selectedIcon: const Icon(Icons.music_note),
+              label: mediaTypeName(context, MediaType.audio),
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.folder_outlined),
+              selectedIcon: const Icon(Icons.folder),
+              label: '浏览',
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.delete_outline),
+              selectedIcon: const Icon(Icons.delete),
+              label: l10n.trashTitle,
             ),
           ],
-        ],
-      ),
-      body: _buildBody(context),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _tab,
-        onDestinationSelected: _onTabSelected,
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.image_outlined),
-            selectedIcon: const Icon(Icons.image),
-            label: mediaTypeName(context, MediaType.image),
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.movie_outlined),
-            selectedIcon: const Icon(Icons.movie),
-            label: mediaTypeName(context, MediaType.video),
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.music_note_outlined),
-            selectedIcon: const Icon(Icons.music_note),
-            label: mediaTypeName(context, MediaType.audio),
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.folder_outlined),
-            selectedIcon: const Icon(Icons.folder),
-            label: '浏览',
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.delete_outline),
-            selectedIcon: const Icon(Icons.delete),
-            label: l10n.trashTitle,
-          ),
-        ],
-      ),
+        ),
       ),
     );
   }

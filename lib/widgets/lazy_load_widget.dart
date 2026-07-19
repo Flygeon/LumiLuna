@@ -31,6 +31,7 @@ class LazyLoadWidget extends StatefulWidget {
 
 class _LazyLoadWidgetState extends State<LazyLoadWidget> {
   bool _isVisible = false;
+  ScrollPosition? _scrollPosition;
 
   @override
   void didChangeDependencies() {
@@ -45,20 +46,22 @@ class _LazyLoadWidgetState extends State<LazyLoadWidget> {
   }
 
   void _startListening() {
+    _stopListening();
     final scrollable = Scrollable.maybeOf(context);
     if (scrollable == null) {
       // Not inside a scrollable — always visible.
       setState(() => _isVisible = true);
       return;
     }
-    scrollable.position.addListener(_checkVisibility);
+    _scrollPosition = scrollable.position;
+    _scrollPosition!.addListener(_checkVisibility);
     // Wait for layout, then check initial visibility.
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkVisibility());
   }
 
   void _stopListening() {
-    final scrollable = Scrollable.maybeOf(context);
-    scrollable?.position.removeListener(_checkVisibility);
+    _scrollPosition?.removeListener(_checkVisibility);
+    _scrollPosition = null;
   }
 
   void _checkVisibility() {

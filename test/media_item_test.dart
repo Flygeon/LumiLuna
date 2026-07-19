@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lumiluna/models/media_item.dart';
 import 'package:lumiluna/models/media_type.dart';
 import 'package:lumiluna/providers/player_provider.dart';
+import 'package:lumiluna/providers/filter_provider.dart';
 
 void main() {
   test('recognizes supported media extensions case-insensitively', () {
@@ -64,5 +65,29 @@ void main() {
 
       expect(state.isPlayingAudio(first.path), isFalse);
     });
+  });
+
+  test('filters media by metadata and type without case sensitivity', () {
+    final image = MediaItem(
+      path: 'C:/Photos/moon.png',
+      name: 'moon.png',
+      type: MediaType.image,
+      size: 1,
+      modified: DateTime(2026),
+    );
+    final song = MediaItem(
+      path: 'C:/Music/Night.mp3',
+      name: 'Night.mp3',
+      type: MediaType.audio,
+      size: 1,
+      modified: DateTime(2026),
+      artist: 'Lumi',
+    );
+
+    expect(filterMediaItems([image, song], query: 'LUMI'), [song]);
+    expect(
+      filterMediaItems([image, song], typeFilter: MediaType.image),
+      [image],
+    );
   });
 }

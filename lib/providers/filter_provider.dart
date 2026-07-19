@@ -21,18 +21,11 @@ final searchedMediaProvider = Provider<AsyncValue<List<MediaItem>>>((ref) {
   final settings = ref.watch(settingsProvider);
 
   return async.whenData((items) {
-    Iterable<MediaItem> result = items;
-    if (typeFilter != null) {
-      result = result.where((i) => i.type == typeFilter);
-    }
-    if (query.isNotEmpty) {
-      result = result.where((i) =>
-          i.name.toLowerCase().contains(query) ||
-          (i.title?.toLowerCase().contains(query) ?? false) ||
-          (i.artist?.toLowerCase().contains(query) ?? false) ||
-          (i.album?.toLowerCase().contains(query) ?? false) ||
-          i.folderPath.toLowerCase().contains(query));
-    }
+    final result = filterMediaItems(
+      items,
+      query: query,
+      typeFilter: typeFilter,
+    );
     final sorted = result.toList();
     sorted.sort((a, b) {
       final comparison = switch (settings.mediaSortMode) {
@@ -49,6 +42,26 @@ final searchedMediaProvider = Provider<AsyncValue<List<MediaItem>>>((ref) {
     return sorted;
   });
 });
+
+List<MediaItem> filterMediaItems(
+  Iterable<MediaItem> items, {
+  String query = '',
+  MediaType? typeFilter,
+}) {
+  final normalizedQuery = query.trim().toLowerCase();
+  return items.where((item) {
+    if (typeFilter != null && item.type != typeFilter) return false;
+    if (normalizedQuery.isEmpty) return true;
+    final values = [
+      item.name,
+      item.title,
+      item.artist,
+      item.album,
+      item.folderPath,
+    ].whereType<String>();
+    return values.any((value) => value.toLowerCase().contains(normalizedQuery));
+  }).toList();
+}
 
 /// Grouped folders for the library view, honouring the current group mode.
 final groupedMediaProvider = Provider<AsyncValue<List<MediaFolder>>>((ref) {
