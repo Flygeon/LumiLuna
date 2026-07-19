@@ -132,7 +132,7 @@ class MediaScannerService {
     }
     if (audioItems.isEmpty) return items;
 
-    final cacheDir = await getApplicationSupportDirectory();
+    final cacheDir = await getTemporaryDirectory();
     final artDir = Directory('${cacheDir.path}/lumiluna_artwork');
     await artDir.create(recursive: true);
 
@@ -188,10 +188,6 @@ class MediaScannerService {
     if (mime.contains('png')) return '.png';
     if (mime.contains('webp')) return '.webp';
     if (mime.contains('bmp')) return '.bmp';
-    if (mime.contains('gif')) return '.gif';
-    if (mime.contains('avif')) return '.avif';
-    if (mime.contains('heic')) return '.heic';
-    if (mime.contains('heif')) return '.heif';
     return '.jpg';
   }
 
@@ -220,14 +216,14 @@ class MediaScannerService {
         String? artPath;
         if (meta.pictures.isNotEmpty) {
           final pic = meta.pictures.first;
-          final key =
-              '${item.path.hashCode.abs()}_${item.size}_${item.modified.millisecondsSinceEpoch}';
+          final key = item.path.hashCode.abs().toString();
           final dest = '$artworkDir/$key${_extForMime(pic.mimetype)}';
           final file = File(dest);
-          file.writeAsBytesSync(pic.bytes);
+          if (!file.existsSync()) {
+            file.writeAsBytesSync(pic.bytes);
+          }
           artPath = dest;
         }
-        artPath ??= _findSidecarArtwork(item.path);
         results.add(item
             .copyWith(
               title: meta.title,
@@ -243,24 +239,6 @@ class MediaScannerService {
       }
     }
     return results;
-  }
-
-  static String? _findSidecarArtwork(String audioPath) {
-    final file = File(audioPath);
-    final directory = file.parent.path;
-    for (final name in const [
-      'cover.jpg',
-      'cover.jpeg',
-      'cover.png',
-      'folder.jpg',
-      'folder.png',
-      'front.jpg',
-      'front.png',
-    ]) {
-      final candidate = File('$directory${Platform.pathSeparator}$name');
-      if (candidate.existsSync()) return candidate.path;
-    }
-    return null;
   }
 
   /// Isolate entry point for the initial filesystem scan.

@@ -107,58 +107,15 @@ class MediaItem {
     );
   }
 
-  MediaItem withoutArtwork() => MediaItem(
-        path: path,
-        name: name,
-        type: type,
-        size: size,
-        modified: modified,
-        title: title,
-        artist: artist,
-        album: album,
-        durationMs: durationMs,
-        isFavorite: isFavorite,
-      );
-
   static MediaType? _typeForExt(String ext) {
     const image = {
-      'jpg',
-      'jpeg',
-      'png',
-      'gif',
-      'bmp',
-      'webp',
-      'heic',
-      'heif',
-      'tiff',
-      'tif',
-      'ico',
+      'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic', 'heif', 'tiff', 'tif', 'ico',
     };
     const video = {
-      'mp4',
-      'mkv',
-      'avi',
-      'mov',
-      'wmv',
-      'flv',
-      'webm',
-      'm4v',
-      'mpeg',
-      'mpg',
-      'ts',
-      '3gp',
+      'mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv', 'webm', 'm4v', 'mpeg', 'mpg', 'ts', '3gp',
     };
     const audio = {
-      'mp3',
-      'flac',
-      'wav',
-      'aac',
-      'm4a',
-      'ogg',
-      'wma',
-      'opus',
-      'aiff',
-      'ape',
+      'mp3', 'flac', 'wav', 'aac', 'm4a', 'ogg', 'wma', 'opus', 'aiff', 'ape',
     };
     if (image.contains(ext)) return MediaType.image;
     if (video.contains(ext)) return MediaType.video;
@@ -197,7 +154,8 @@ class MediaItem {
       );
 
   @override
-  bool operator ==(Object other) => other is MediaItem && other.path == path;
+  bool operator ==(Object other) =>
+      other is MediaItem && other.path == path;
 
   @override
   int get hashCode => path.hashCode;

@@ -28,13 +28,8 @@ class AppSettings {
   final MediaLayoutDensity imageLayoutDensity;
   final MediaLayoutDensity videoLayoutDensity;
   final bool musicBackgroundBlur;
-  final bool musicDynamicBackground;
-  final double musicAnimationIntensity;
-  final double musicLyricsFontSize;
-  final int musicLyricsOffset;
-  final double musicDefaultVolume;
-  final double musicDefaultRate;
-  final bool musicAutoPlay;
+  final bool lyricsBlur;
+  final bool liquidBackground;
 
   const AppSettings({
     required this.themeMode,
@@ -50,13 +45,8 @@ class AppSettings {
     this.imageLayoutDensity = MediaLayoutDensity.standard,
     this.videoLayoutDensity = MediaLayoutDensity.standard,
     this.musicBackgroundBlur = true,
-    this.musicDynamicBackground = true,
-    this.musicAnimationIntensity = 1,
-    this.musicLyricsFontSize = 22,
-    this.musicLyricsOffset = 0,
-    this.musicDefaultVolume = 100,
-    this.musicDefaultRate = 1,
-    this.musicAutoPlay = true,
+    this.lyricsBlur = true,
+    this.liquidBackground = true,
   });
 
   AppSettings copyWith({
@@ -73,13 +63,8 @@ class AppSettings {
     MediaLayoutDensity? imageLayoutDensity,
     MediaLayoutDensity? videoLayoutDensity,
     bool? musicBackgroundBlur,
-    bool? musicDynamicBackground,
-    double? musicAnimationIntensity,
-    double? musicLyricsFontSize,
-    int? musicLyricsOffset,
-    double? musicDefaultVolume,
-    double? musicDefaultRate,
-    bool? musicAutoPlay,
+    bool? lyricsBlur,
+    bool? liquidBackground,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -95,15 +80,8 @@ class AppSettings {
       imageLayoutDensity: imageLayoutDensity ?? this.imageLayoutDensity,
       videoLayoutDensity: videoLayoutDensity ?? this.videoLayoutDensity,
       musicBackgroundBlur: musicBackgroundBlur ?? this.musicBackgroundBlur,
-      musicDynamicBackground:
-          musicDynamicBackground ?? this.musicDynamicBackground,
-      musicAnimationIntensity:
-          musicAnimationIntensity ?? this.musicAnimationIntensity,
-      musicLyricsFontSize: musicLyricsFontSize ?? this.musicLyricsFontSize,
-      musicLyricsOffset: musicLyricsOffset ?? this.musicLyricsOffset,
-      musicDefaultVolume: musicDefaultVolume ?? this.musicDefaultVolume,
-      musicDefaultRate: musicDefaultRate ?? this.musicDefaultRate,
-      musicAutoPlay: musicAutoPlay ?? this.musicAutoPlay,
+      lyricsBlur: lyricsBlur ?? this.lyricsBlur,
+      liquidBackground: liquidBackground ?? this.liquidBackground,
     );
   }
 }
@@ -127,13 +105,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
           imageLayoutDensity: _layoutDensity(_service.getImageLayoutDensity()),
           videoLayoutDensity: _layoutDensity(_service.getVideoLayoutDensity()),
           musicBackgroundBlur: _service.getMusicBackgroundBlur(),
-          musicDynamicBackground: _service.getMusicDynamicBackground(),
-          musicAnimationIntensity: _service.getMusicAnimationIntensity(),
-          musicLyricsFontSize: _service.getMusicLyricsFontSize(),
-          musicLyricsOffset: _service.getMusicLyricsOffset(),
-          musicDefaultVolume: _service.getMusicDefaultVolume(),
-          musicDefaultRate: _service.getMusicDefaultRate(),
-          musicAutoPlay: _service.getMusicAutoPlay(),
+          lyricsBlur: _service.getLyricsBlur(),
+          liquidBackground: _service.getLiquidBackground(),
         ));
 
   static MediaLayoutDensity _layoutDensity(String value) =>
@@ -230,39 +203,14 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     await _service.setMusicBackgroundBlur(enabled);
   }
 
-  Future<void> setMusicDynamicBackground(bool enabled) async {
-    state = state.copyWith(musicDynamicBackground: enabled);
-    await _service.setMusicDynamicBackground(enabled);
+  Future<void> setLyricsBlur(bool enabled) async {
+    state = state.copyWith(lyricsBlur: enabled);
+    await _service.setLyricsBlur(enabled);
   }
 
-  Future<void> setMusicAnimationIntensity(double value) async {
-    state = state.copyWith(musicAnimationIntensity: value);
-    await _service.setMusicAnimationIntensity(value);
-  }
-
-  Future<void> setMusicLyricsFontSize(double value) async {
-    state = state.copyWith(musicLyricsFontSize: value);
-    await _service.setMusicLyricsFontSize(value);
-  }
-
-  Future<void> setMusicLyricsOffset(int value) async {
-    state = state.copyWith(musicLyricsOffset: value);
-    await _service.setMusicLyricsOffset(value);
-  }
-
-  Future<void> setMusicDefaultVolume(double value) async {
-    state = state.copyWith(musicDefaultVolume: value);
-    await _service.setMusicDefaultVolume(value);
-  }
-
-  Future<void> setMusicDefaultRate(double value) async {
-    state = state.copyWith(musicDefaultRate: value);
-    await _service.setMusicDefaultRate(value);
-  }
-
-  Future<void> setMusicAutoPlay(bool enabled) async {
-    state = state.copyWith(musicAutoPlay: enabled);
-    await _service.setMusicAutoPlay(enabled);
+  Future<void> setLiquidBackground(bool enabled) async {
+    state = state.copyWith(liquidBackground: enabled);
+    await _service.setLiquidBackground(enabled);
   }
 }
 

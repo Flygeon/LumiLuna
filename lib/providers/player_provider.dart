@@ -9,7 +9,6 @@ import '../models/media_item.dart';
 import '../models/media_type.dart';
 import '../main.dart';
 import 'play_history_provider.dart';
-import 'settings_provider.dart';
 
 /// How the playlist advances when a track finishes.
 ///
@@ -98,21 +97,13 @@ class PlaybackState {
 /// Owns the shared [media_kit] player used for both video and audio playback,
 /// enabling seamless switching between media types.
 class PlaybackController extends StateNotifier<PlaybackState> {
-  PlaybackController(
-      {this.onPlay,
-      this.defaultVolume = 100,
-      this.defaultRate = 1,
-      this.autoPlay = true})
-      : super(const PlaybackState()) {
+  PlaybackController({this.onPlay}) : super(const PlaybackState()) {
     _bind();
   }
 
   final Player player = Player();
   late final VideoController videoController = VideoController(player);
   final Future<void> Function(String path)? onPlay;
-  final double defaultVolume;
-  final double defaultRate;
-  final bool autoPlay;
 
   final List<StreamSubscription> _subs = [];
   final Random _random = Random();
@@ -219,9 +210,6 @@ class PlaybackController extends StateNotifier<PlaybackState> {
         index: safeIndex,
       ),
     );
-    await player.setVolume(defaultVolume);
-    await player.setRate(defaultRate);
-    if (!autoPlay) await player.pause();
     // Record the play. _notifyPlay de-duplicates against any concurrent
     // notification from the playlist stream listener (see its comment), so
     // this never produces a duplicate history entry even if the stream
@@ -327,15 +315,11 @@ final playbackControllerProvider =
     StateNotifierProvider<PlaybackController, PlaybackState>(
   (ref) {
     final db = ref.watch(appDatabaseProvider);
-    final settings = ref.read(settingsProvider);
     return PlaybackController(
       onPlay: (path) async {
         await db.recordPlay(path);
         ref.invalidate(playHistoryProvider);
       },
-      defaultVolume: settings.musicDefaultVolume,
-      defaultRate: settings.musicDefaultRate,
-      autoPlay: settings.musicAutoPlay,
     );
   },
 );

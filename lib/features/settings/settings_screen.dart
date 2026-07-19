@@ -12,7 +12,6 @@ import '../../l10n/l10n.dart';
 import '../../models/media_folder.dart';
 import '../../providers/media_provider.dart';
 import '../../providers/settings_provider.dart';
-import 'music_advanced_settings_screen.dart';
 
 /// Provides the app's [PackageInfo] (version / build number) for the About page.
 final packageInfoProvider =
@@ -57,16 +56,17 @@ class SettingsScreen extends ConsumerWidget {
                   value: settings.musicBackgroundBlur,
                   onChanged: notifier.setMusicBackgroundBlur,
                 ),
-                ListTile(
-                  leading: const Icon(Icons.tune_outlined),
-                  title: const Text('音乐高级设置'),
-                  subtitle: const Text('播放、歌词与动态背景参数'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const MusicAdvancedSettingsScreen(),
-                    ),
-                  ),
+                SwitchListTile.adaptive(
+                  title: const Text('歌词模糊效果'),
+                  subtitle: const Text('突出当前歌词，弱化并模糊其他歌词'),
+                  value: settings.lyricsBlur,
+                  onChanged: notifier.setLyricsBlur,
+                ),
+                SwitchListTile.adaptive(
+                  title: const Text('液体流动背景'),
+                  subtitle: const Text('显示随音乐播放器缓慢流动的背景光晕'),
+                  value: settings.liquidBackground,
+                  onChanged: notifier.setLiquidBackground,
                 ),
               ]),
           _SettingsGroup(title: '通用', icon: Icons.tune_outlined, children: [
