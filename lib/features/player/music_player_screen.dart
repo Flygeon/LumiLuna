@@ -1126,12 +1126,12 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
   late final LyricController _controller;
   StreamSubscription<Duration>? _posSub;
   final ScrollController _scrollController = ScrollController();
-  final List<GlobalKey> _lineKeys = [];
   LyricModel? _model;
   int _activeIndex = -1;
+  Duration _position = Duration.zero;
   int _scrollRequest = 0;
 
-  static const double _lineExtent = 112;
+  static const double _lineExtent = 104;
 
   @override
   void initState() {
@@ -1152,9 +1152,7 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
     );
     _model = model;
     _activeIndex = -1;
-    _lineKeys
-      ..clear()
-      ..addAll(model.lines.map((_) => GlobalKey()));
+    _position = Duration.zero;
     _controller.loadLyricModel(model);
     if (mounted) setState(() {});
   }
@@ -1162,6 +1160,7 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
   void _startPositionListener() {
     final pc = ref.read(playbackControllerProvider.notifier);
     _posSub = pc.player.stream.position.listen((position) {
+      _position = position;
       _controller.setProgress(position);
       final lines = _model?.lines;
       if (lines == null || lines.isEmpty) return;
@@ -1169,7 +1168,10 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
       for (var i = 0; i < lines.length; i++) {
         if (lines[i].start <= position) next = i;
       }
-      if (next == _activeIndex) return;
+      if (next == _activeIndex) {
+        if (mounted) setState(() {});
+        return;
+      }
       _activeIndex = next;
       if (mounted) setState(() {});
       _scrollToLine(next);
@@ -1229,9 +1231,9 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
         padding: const EdgeInsets.symmetric(vertical: 200, horizontal: 30),
         itemCount: model.lines.length,
         itemBuilder: (context, index) => _LyricLineTile(
-          key: _lineKeys[index],
           line: model.lines[index],
           active: index == _activeIndex,
+          position: _position,
           blurEnabled: settings.$1,
           fontSize: settings.$2,
           onTap: () {
@@ -1251,14 +1253,15 @@ class _LyricLineTile extends StatefulWidget {
   final bool active;
   final bool blurEnabled;
   final double fontSize;
+  final Duration position;
   final VoidCallback onTap;
 
   const _LyricLineTile({
-    super.key,
     required this.line,
     required this.active,
     required this.blurEnabled,
     required this.fontSize,
+    required this.position,
     required this.onTap,
   });
 
@@ -1308,23 +1311,19 @@ class _LyricLineTileState extends State<_LyricLineTile>
     final active = widget.active;
     final fontSize = widget.fontSize;
     final content = Padding(
-      padding: const EdgeInsets.symmetric(vertical: 15),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            line.text,
+          _buildLyricText(
             textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: active ? FontWeight.w600 : FontWeight.normal,
-              color: active ? Colors.white : Colors.white54,
-            ),
+            line: line,
+            fontSize: fontSize,
+            active: active,
+            position: widget.position,
           ),
           if (line.translation?.isNotEmpty ?? false) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               line.translation!,
               textAlign: TextAlign.center,
@@ -1368,6 +1367,51 @@ class _LyricLineTileState extends State<_LyricLineTile>
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildLyricText({
+    required TextAlign textAlign,
+    required LyricLine line,
+    required double fontSize,
+    required bool active,
+    required Duration position,
+  }) {
+    final baseStyle = TextStyle(
+      fontSize: fontSize,
+      fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+      color: active ? Colors.white : Colors.white54,
+    );
+    final words = line.words;
+    if (!active || words == null || words.isEmpty) {
+      return Text(
+        line.text,
+        textAlign: textAlign,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: baseStyle,
+      );
+    }
+    final spans = <TextSpan>[];
+    for (final word in words) {
+      final end = word.end ?? word.start;
+      final progress = end <= word.start
+          ? (position >= word.start ? 1.0 : 0.0)
+          : ((position - word.start).inMicroseconds /
+                  (end - word.start).inMicroseconds)
+              .clamp(0.0, 1.0);
+      spans.add(TextSpan(
+        text: word.text,
+        style: baseStyle.copyWith(
+          color: Color.lerp(Colors.white54, Colors.white, progress),
+        ),
+      ));
+    }
+    return Text.rich(
+      TextSpan(children: spans),
+      textAlign: textAlign,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
     );
   }
 }
