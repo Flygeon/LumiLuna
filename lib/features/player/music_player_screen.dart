@@ -49,9 +49,6 @@ class MusicPlayerScreen extends ConsumerWidget {
     final blurBackground = ref.watch(
       settingsProvider.select((settings) => settings.musicBackgroundBlur),
     );
-    final lyricsBlur = ref.watch(
-      settingsProvider.select((settings) => settings.lyricsBlur),
-    );
     final liquidBackground = ref.watch(
       settingsProvider.select((settings) => settings.liquidBackground),
     );
@@ -94,6 +91,7 @@ class MusicPlayerScreen extends ConsumerWidget {
                 children: [
                   Positioned.fill(
                       child: _LiquidBackground(
+                    key: ValueKey(state.current!.path),
                     item: state.current!,
                     scheme: scheme,
                     blur: blurBackground,
@@ -148,6 +146,7 @@ class _LiquidBackground extends StatefulWidget {
   final bool liquid;
 
   const _LiquidBackground({
+    super.key,
     required this.item,
     required this.scheme,
     required this.blur,
@@ -183,7 +182,7 @@ class _LiquidBackgroundState extends State<_LiquidBackground>
     final hasArtwork = artwork != null && File(artwork).existsSync();
     final base = hasArtwork
         ? Image.file(
-            File(artwork!),
+            File(artwork),
             fit: BoxFit.cover,
             color: Colors.black.withValues(alpha: 0.58),
             colorBlendMode: BlendMode.darken,
@@ -1235,29 +1234,38 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
   late final LyricController _controller;
   StreamSubscription<Duration>? _posSub;
 
-  /// Apple Music-inspired style: centered text, white highlight, smooth
-  /// fade at top/bottom, generous spacing, translation support.
-  static final _style = LyricStyles.default1.copyWith(
-    textStyle: const TextStyle(fontSize: 16, color: Colors.white54),
-    activeStyle: const TextStyle(
-      fontSize: 22,
-      fontWeight: FontWeight.w600,
-      color: Colors.white,
-    ),
-    translationStyle: TextStyle(
-      fontSize: 14,
-      color: Colors.white.withValues(alpha: 0.5),
-    ),
-    translationActiveColor: Colors.white.withValues(alpha: 0.85),
-    lineGap: 30,
-    translationLineGap: 8,
-    contentPadding:
-        const EdgeInsets.only(top: 200, left: 30, right: 30, bottom: 200),
-    fadeRange: FadeRange(top: 100, bottom: 100),
-    activeHighlightColor: Colors.white,
-    activeHighlightGradient: null,
-    enableSwitchAnimation: true,
-  );
+  static LyricStyle _style(bool blurEnabled) => LyricStyles.default1.copyWith(
+        textStyle: TextStyle(
+          fontSize: 16,
+          color: blurEnabled
+              ? Colors.white.withValues(alpha: 0.18)
+              : Colors.white.withValues(alpha: 0.6),
+        ),
+        activeStyle: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+        translationStyle: TextStyle(
+          fontSize: 14,
+          color: blurEnabled
+              ? Colors.white.withValues(alpha: 0.15)
+              : Colors.white.withValues(alpha: 0.5),
+        ),
+        translationActiveColor: Colors.white.withValues(alpha: 0.85),
+        lineGap: 30,
+        translationLineGap: 8,
+        contentPadding: const EdgeInsets.only(
+          top: 200,
+          left: 30,
+          right: 30,
+          bottom: 200,
+        ),
+        fadeRange: FadeRange(top: 100, bottom: 100),
+        activeHighlightColor: Colors.white,
+        activeHighlightGradient: null,
+        enableSwitchAnimation: true,
+      );
 
   @override
   void initState() {
@@ -1309,29 +1317,13 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
 
   @override
   Widget build(BuildContext context) {
-    final view = RepaintBoundary(
+    return RepaintBoundary(
       child: LyricView(
         controller: _controller,
-        style: _style,
+        style: _style(widget.blurEnabled),
         width: double.infinity,
         height: double.infinity,
       ),
-    );
-    if (!widget.blurEnabled) return view;
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        ImageFiltered(
-          imageFilter: ui.ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-          child: Opacity(opacity: 0.48, child: view),
-        ),
-        LyricView(
-          controller: _controller,
-          style: _style,
-          width: double.infinity,
-          height: double.infinity,
-        ),
-      ],
     );
   }
 }
