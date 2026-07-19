@@ -12,7 +12,9 @@ import '../providers/player_provider.dart';
 ///
 /// Animated: slides up / down + fades in / out when the playback state changes.
 class MiniPlayerCapsule extends ConsumerStatefulWidget {
-  const MiniPlayerCapsule({super.key});
+  const MiniPlayerCapsule({super.key, this.onOpen});
+
+  final VoidCallback? onOpen;
 
   @override
   ConsumerState<MiniPlayerCapsule> createState() => _MiniPlayerCapsuleState();
@@ -98,9 +100,12 @@ class _MiniPlayerCapsuleState extends ConsumerState<MiniPlayerCapsule>
         child: InkWell(
           borderRadius: BorderRadius.circular(28),
           onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const MusicPlayerScreen()),
-            );
+            widget.onOpen?.call();
+            if (widget.onOpen == null) {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const MusicPlayerScreen()),
+              );
+            }
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),

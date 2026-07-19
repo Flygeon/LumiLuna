@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'dart:io';
 
@@ -11,9 +12,11 @@ import '../../models/media_type.dart';
 import '../../models/media_item.dart';
 import '../../providers/filter_provider.dart';
 import '../../providers/media_provider.dart';
+import '../../providers/player_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/tab_provider.dart';
 import '../../widgets/mini_player_capsule.dart';
+import '../player/music_player_screen.dart';
 import '../folders/folders_screen.dart';
 import '../favorites/favorites_screen.dart';
 import '../history/play_history_screen.dart';
@@ -45,6 +48,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   late final PageController _pageController;
   final FocusNode _escFocusNode = FocusNode();
+  final PanelController _playerPanelController = PanelController();
 
   @override
   void initState() {
@@ -193,8 +197,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             // Mini player capsule (animated show/hide when music is playing).
-            const MiniPlayerCapsule(),
+            MiniPlayerCapsule(
+              onOpen: () => _playerPanelController.open(),
+            ),
           ],
+        ),
+        Consumer(
+          builder: (context, ref, child) {
+            final hasTrack = ref.watch(
+              playbackControllerProvider
+                  .select((state) => state.current != null),
+            );
+            if (!hasTrack) return const SizedBox.shrink();
+            return SlidingUpPanel(
+              controller: _playerPanelController,
+              minHeight: 0,
+              maxHeight: MediaQuery.sizeOf(context).height * 0.92,
+              snapPoint: 0.18,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
+              backdropEnabled: true,
+              backdropOpacity: 0.42,
+              parallaxEnabled: true,
+              parallaxOffset: 0.08,
+              color: Colors.transparent,
+              collapsed: const SizedBox.shrink(),
+              panelBuilder: (_) => const MusicPlayerScreen(),
+            );
+          },
         ),
         if (_dragging)
           Positioned.fill(

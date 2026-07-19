@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_lyric/core/lyric_model.dart' show LyricModel;
 import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 
 import '../../core/utils/format_utils.dart';
 import '../../core/theme/app_theme.dart';
@@ -700,33 +701,31 @@ class _SeekBar extends ConsumerWidget {
           )),
     );
     final controller = ref.read(playbackControllerProvider.notifier);
-    final duration = state.duration.inMilliseconds.toDouble();
-    final maxValue = duration <= 0 ? 1.0 : duration;
-    final position =
-        state.position.inMilliseconds.toDouble().clamp(0.0, maxValue);
+    final total = state.duration > Duration.zero
+        ? state.duration
+        : const Duration(milliseconds: 1);
+    final progress = state.position.compareTo(total) > 0
+        ? total
+        : state.position < Duration.zero
+            ? Duration.zero
+            : state.position;
 
     return SizedBox(
       width: 600,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SliderTheme(
-            data: const SliderThemeData(
-              trackHeight: 3,
-              thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6),
-              overlayShape: RoundSliderOverlayShape(overlayRadius: 14),
-              activeTrackColor: Colors.white,
-              inactiveTrackColor: Colors.white24,
-              thumbColor: Colors.white,
-              overlayColor: Colors.white12,
-            ),
-            child: Slider(
-              value: position,
-              max: maxValue,
-              onChanged: duration <= 0
-                  ? null
-                  : (v) => controller.seek(Duration(milliseconds: v.round())),
-            ),
+          ProgressBar(
+            progress: progress,
+            total: total,
+            onSeek: state.duration <= Duration.zero ? null : controller.seek,
+            barHeight: 4,
+            thumbRadius: 7,
+            baseBarColor: Colors.white24,
+            progressBarColor: Colors.white,
+            thumbColor: Colors.white,
+            thumbGlowColor: Colors.white24,
+            timeLabelLocation: TimeLabelLocation.none,
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
