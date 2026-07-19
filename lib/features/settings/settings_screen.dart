@@ -56,18 +56,6 @@ class SettingsScreen extends ConsumerWidget {
                   value: settings.musicBackgroundBlur,
                   onChanged: notifier.setMusicBackgroundBlur,
                 ),
-                SwitchListTile.adaptive(
-                  title: const Text('歌词模糊效果'),
-                  subtitle: const Text('突出当前歌词，弱化并模糊其他歌词'),
-                  value: settings.lyricsBlur,
-                  onChanged: notifier.setLyricsBlur,
-                ),
-                SwitchListTile.adaptive(
-                  title: const Text('液体流动背景'),
-                  subtitle: const Text('显示随音乐播放器缓慢流动的背景光晕'),
-                  value: settings.liquidBackground,
-                  onChanged: notifier.setLiquidBackground,
-                ),
               ]),
           _SettingsGroup(title: '通用', icon: Icons.tune_outlined, children: [
             _ThemeTile(settings: settings, notifier: notifier),

@@ -125,17 +125,4 @@ class SettingsService {
   Future<void> setMusicBackgroundBlur(bool enabled) async {
     await _prefs.setBool(AppConstants.prefMusicBackgroundBlur, enabled);
   }
-
-  bool getLyricsBlur() => _prefs.getBool(AppConstants.prefLyricsBlur) ?? true;
-
-  Future<void> setLyricsBlur(bool enabled) async {
-    await _prefs.setBool(AppConstants.prefLyricsBlur, enabled);
-  }
-
-  bool getLiquidBackground() =>
-      _prefs.getBool(AppConstants.prefLiquidBackground) ?? true;
-
-  Future<void> setLiquidBackground(bool enabled) async {
-    await _prefs.setBool(AppConstants.prefLiquidBackground, enabled);
-  }
 }

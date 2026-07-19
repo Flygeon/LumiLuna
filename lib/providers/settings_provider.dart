@@ -28,8 +28,6 @@ class AppSettings {
   final MediaLayoutDensity imageLayoutDensity;
   final MediaLayoutDensity videoLayoutDensity;
   final bool musicBackgroundBlur;
-  final bool lyricsBlur;
-  final bool liquidBackground;
 
   const AppSettings({
     required this.themeMode,
@@ -45,8 +43,6 @@ class AppSettings {
     this.imageLayoutDensity = MediaLayoutDensity.standard,
     this.videoLayoutDensity = MediaLayoutDensity.standard,
     this.musicBackgroundBlur = true,
-    this.lyricsBlur = true,
-    this.liquidBackground = true,
   });
 
   AppSettings copyWith({
@@ -63,8 +59,6 @@ class AppSettings {
     MediaLayoutDensity? imageLayoutDensity,
     MediaLayoutDensity? videoLayoutDensity,
     bool? musicBackgroundBlur,
-    bool? lyricsBlur,
-    bool? liquidBackground,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -80,8 +74,6 @@ class AppSettings {
       imageLayoutDensity: imageLayoutDensity ?? this.imageLayoutDensity,
       videoLayoutDensity: videoLayoutDensity ?? this.videoLayoutDensity,
       musicBackgroundBlur: musicBackgroundBlur ?? this.musicBackgroundBlur,
-      lyricsBlur: lyricsBlur ?? this.lyricsBlur,
-      liquidBackground: liquidBackground ?? this.liquidBackground,
     );
   }
 }
@@ -105,8 +97,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
           imageLayoutDensity: _layoutDensity(_service.getImageLayoutDensity()),
           videoLayoutDensity: _layoutDensity(_service.getVideoLayoutDensity()),
           musicBackgroundBlur: _service.getMusicBackgroundBlur(),
-          lyricsBlur: _service.getLyricsBlur(),
-          liquidBackground: _service.getLiquidBackground(),
         ));
 
   static MediaLayoutDensity _layoutDensity(String value) =>
@@ -201,16 +191,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> setMusicBackgroundBlur(bool enabled) async {
     state = state.copyWith(musicBackgroundBlur: enabled);
     await _service.setMusicBackgroundBlur(enabled);
-  }
-
-  Future<void> setLyricsBlur(bool enabled) async {
-    state = state.copyWith(lyricsBlur: enabled);
-    await _service.setLyricsBlur(enabled);
-  }
-
-  Future<void> setLiquidBackground(bool enabled) async {
-    state = state.copyWith(liquidBackground: enabled);
-    await _service.setLiquidBackground(enabled);
   }
 }
 

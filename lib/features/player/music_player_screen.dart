@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart'
@@ -49,9 +48,6 @@ class MusicPlayerScreen extends ConsumerWidget {
     final blurBackground = ref.watch(
       settingsProvider.select((settings) => settings.musicBackgroundBlur),
     );
-    final liquidBackground = ref.watch(
-      settingsProvider.select((settings) => settings.liquidBackground),
-    );
 
     final player = _PlayerKeyboardShortcuts(
       enabled: _isDesktop,
@@ -90,13 +86,8 @@ class MusicPlayerScreen extends ConsumerWidget {
             : Stack(
                 children: [
                   Positioned.fill(
-                      child: _LiquidBackground(
-                    key: ValueKey(state.current!.path),
-                    item: state.current!,
-                    scheme: scheme,
-                    blur: blurBackground,
-                    liquid: liquidBackground,
-                  )),
+                      child: _buildBackground(
+                          state.current!, scheme, blurBackground)),
                   SafeArea(
                     child: LayoutBuilder(
                       builder: (context, constraints) {
@@ -137,143 +128,31 @@ class MusicPlayerScreen extends ConsumerWidget {
         defaultTargetPlatform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.linux;
   }
-}
 
-class _LiquidBackground extends StatefulWidget {
-  final MediaItem item;
-  final ColorScheme scheme;
-  final bool blur;
-  final bool liquid;
-
-  const _LiquidBackground({
-    super.key,
-    required this.item,
-    required this.scheme,
-    required this.blur,
-    required this.liquid,
-  });
-
-  @override
-  State<_LiquidBackground> createState() => _LiquidBackgroundState();
-}
-
-class _LiquidBackgroundState extends State<_LiquidBackground>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _animationController;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 14),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final artwork = widget.item.artworkPath;
-    final hasArtwork = artwork != null && File(artwork).existsSync();
-    final base = hasArtwork
-        ? Image.file(
-            File(artwork),
-            fit: BoxFit.cover,
-            color: Colors.black.withValues(alpha: 0.58),
-            colorBlendMode: BlendMode.darken,
-          )
-        : DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  widget.scheme.surfaceContainerHighest,
-                  widget.scheme.surface,
-                ],
-              ),
-            ),
-          );
-
-    final background = widget.liquid
-        ? Stack(
-            fit: StackFit.expand,
-            children: [
-              base,
-              AnimatedBuilder(
-                animation: _animationController,
-                builder: (context, child) {
-                  final t = _animationController.value * math.pi * 2;
-                  return Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      _LiquidBlob(
-                        color: widget.scheme.primary.withValues(alpha: 0.42),
-                        alignment: Alignment(
-                          math.sin(t) * 0.65,
-                          math.cos(t * 0.8) * 0.7,
-                        ),
-                        scale: 1.3 + math.sin(t * 0.7) * 0.16,
-                      ),
-                      _LiquidBlob(
-                        color: widget.scheme.tertiary.withValues(alpha: 0.32),
-                        alignment: Alignment(
-                          math.cos(t * 0.9) * 0.75,
-                          math.sin(t * 0.65) * 0.72,
-                        ),
-                        scale: 1.1 + math.cos(t) * 0.18,
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          )
-        : base;
-
-    return ImageFiltered(
-      imageFilter: ui.ImageFilter.blur(
-        sigmaX: widget.blur || widget.liquid ? 24 : 0,
-        sigmaY: widget.blur || widget.liquid ? 24 : 0,
-      ),
-      child: background,
-    );
-  }
-}
-
-class _LiquidBlob extends StatelessWidget {
-  final Color color;
-  final Alignment alignment;
-  final double scale;
-
-  const _LiquidBlob({
-    required this.color,
-    required this.alignment,
-    required this.scale,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: alignment,
-      child: Transform.scale(
-        scale: scale,
-        child: FractionallySizedBox(
-          widthFactor: 0.72,
-          heightFactor: 0.62,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [color, color.withValues(alpha: 0)],
-              ),
-            ),
-          ),
+  Widget _buildBackground(
+      MediaItem item, ColorScheme scheme, bool blurBackground) {
+    if (item.artworkPath != null && File(item.artworkPath!).existsSync()) {
+      try {
+        final image = Image.file(
+          File(item.artworkPath!),
+          fit: BoxFit.cover,
+          color: Colors.black.withValues(alpha: 0.55),
+          colorBlendMode: BlendMode.darken,
+        );
+        return blurBackground
+            ? ImageFiltered(
+                imageFilter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: image,
+              )
+            : image;
+      } catch (_) {}
+    }
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [scheme.surfaceContainerHighest, scheme.surface],
         ),
       ),
     );
@@ -594,9 +473,6 @@ class _LyricsPanelState extends ConsumerState<_LyricsPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final lyricsBlur = ref.watch(
-      settingsProvider.select((settings) => settings.lyricsBlur),
-    );
     return widget.lyricsAsync.when(
       data: (rawLyrics) {
         if (rawLyrics == null || rawLyrics.trim().isEmpty) {
@@ -632,7 +508,6 @@ class _LyricsPanelState extends ConsumerState<_LyricsPanel> {
                 rawLyrics: rawLyrics,
                 translation: hasTranslation ? translation : null,
                 showTranslation: _showTranslation && hasTranslation,
-                blurEnabled: lyricsBlur,
                 onLyricLineTap: widget.onLyricLineTap,
               ),
             ),
@@ -1215,14 +1090,12 @@ class _LyricsView extends ConsumerStatefulWidget {
   final String rawLyrics;
   final String? translation;
   final bool showTranslation;
-  final bool blurEnabled;
   final VoidCallback? onLyricLineTap;
 
   const _LyricsView({
     required this.rawLyrics,
     this.translation,
     this.showTranslation = false,
-    this.blurEnabled = true,
     this.onLyricLineTap,
   });
 
@@ -1234,38 +1107,29 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
   late final LyricController _controller;
   StreamSubscription<Duration>? _posSub;
 
-  static LyricStyle _style(bool blurEnabled) => LyricStyles.default1.copyWith(
-        textStyle: TextStyle(
-          fontSize: 16,
-          color: blurEnabled
-              ? Colors.white.withValues(alpha: 0.18)
-              : Colors.white.withValues(alpha: 0.6),
-        ),
-        activeStyle: const TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-        translationStyle: TextStyle(
-          fontSize: 14,
-          color: blurEnabled
-              ? Colors.white.withValues(alpha: 0.15)
-              : Colors.white.withValues(alpha: 0.5),
-        ),
-        translationActiveColor: Colors.white.withValues(alpha: 0.85),
-        lineGap: 30,
-        translationLineGap: 8,
-        contentPadding: const EdgeInsets.only(
-          top: 200,
-          left: 30,
-          right: 30,
-          bottom: 200,
-        ),
-        fadeRange: FadeRange(top: 100, bottom: 100),
-        activeHighlightColor: Colors.white,
-        activeHighlightGradient: null,
-        enableSwitchAnimation: true,
-      );
+  /// Apple Music-inspired style: centered text, white highlight, smooth
+  /// fade at top/bottom, generous spacing, translation support.
+  static final _style = LyricStyles.default1.copyWith(
+    textStyle: const TextStyle(fontSize: 16, color: Colors.white54),
+    activeStyle: const TextStyle(
+      fontSize: 22,
+      fontWeight: FontWeight.w600,
+      color: Colors.white,
+    ),
+    translationStyle: TextStyle(
+      fontSize: 14,
+      color: Colors.white.withValues(alpha: 0.5),
+    ),
+    translationActiveColor: Colors.white.withValues(alpha: 0.85),
+    lineGap: 30,
+    translationLineGap: 8,
+    contentPadding:
+        const EdgeInsets.only(top: 200, left: 30, right: 30, bottom: 200),
+    fadeRange: FadeRange(top: 100, bottom: 100),
+    activeHighlightColor: Colors.white,
+    activeHighlightGradient: null,
+    enableSwitchAnimation: true,
+  );
 
   @override
   void initState() {
@@ -1320,7 +1184,7 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
     return RepaintBoundary(
       child: LyricView(
         controller: _controller,
-        style: _style(widget.blurEnabled),
+        style: _style,
         width: double.infinity,
         height: double.infinity,
       ),
