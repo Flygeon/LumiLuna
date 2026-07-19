@@ -90,6 +90,15 @@ class AppConstants {
   static const String prefImageLayoutDensity = 'pref_image_layout_density';
   static const String prefVideoLayoutDensity = 'pref_video_layout_density';
   static const String prefMusicBackgroundBlur = 'pref_music_background_blur';
+  static const String prefMusicDynamicBackground =
+      'pref_music_dynamic_background';
+  static const String prefMusicAnimationIntensity =
+      'pref_music_animation_intensity';
+  static const String prefMusicLyricsFontSize = 'pref_music_lyrics_font_size';
+  static const String prefMusicLyricsOffset = 'pref_music_lyrics_offset';
+  static const String prefMusicDefaultVolume = 'pref_music_default_volume';
+  static const String prefMusicDefaultRate = 'pref_music_default_rate';
+  static const String prefMusicAutoPlay = 'pref_music_auto_play';
 
   // Scan cache file name (stored in application support directory).
   static const String cacheFileName = 'lumiluna_cache.json';

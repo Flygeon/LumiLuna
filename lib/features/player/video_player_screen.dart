@@ -54,24 +54,51 @@ class VideoPlayerScreen extends ConsumerWidget {
                   normal: kDefaultMaterialVideoControlsThemeData.copyWith(
                     speedUpOnLongPress: true,
                     speedUpFactor: 2.0,
+                    primaryButtonBar: const [],
+                    bottomButtonBar: const [
+                      MaterialSkipPreviousButton(),
+                      SizedBox(width: 12),
+                      MaterialPlayOrPauseButton(iconSize: 32),
+                      SizedBox(width: 12),
+                      MaterialSkipNextButton(),
+                      Spacer(),
+                      MaterialPositionIndicator(),
+                      SizedBox(width: 12),
+                      MaterialFullscreenButton(),
+                    ],
+                    bottomButtonBarMargin:
+                        const EdgeInsets.symmetric(horizontal: 16),
                   ),
                   fullscreen:
                       kDefaultMaterialVideoControlsThemeDataFullscreen.copyWith(
                     speedUpOnLongPress: true,
                     speedUpFactor: 2.0,
+                    primaryButtonBar: const [],
+                    bottomButtonBar: const [
+                      MaterialSkipPreviousButton(),
+                      SizedBox(width: 12),
+                      MaterialPlayOrPauseButton(iconSize: 32),
+                      SizedBox(width: 12),
+                      MaterialSkipNextButton(),
+                      Spacer(),
+                      MaterialPositionIndicator(),
+                      SizedBox(width: 12),
+                      MaterialFullscreenButton(),
+                    ],
+                    bottomButtonBarMargin:
+                        const EdgeInsets.symmetric(horizontal: 16),
                   ),
                   child: MaterialVideoControls(state),
                 ),
               ),
             ),
             Positioned(
-              left: 16,
               right: 16,
-              bottom: 16,
+              top: 16,
               child: SafeArea(
-                top: false,
+                bottom: false,
                 child: Align(
-                  alignment: Alignment.bottomRight,
+                  alignment: Alignment.topRight,
                   child: _VideoSpeedButton(
                     rate: rate,
                     onSelected: controller.setRate,
@@ -109,7 +136,9 @@ class _VideoSpeedButton extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    value == rate ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                    value == rate
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
                     color: value == rate ? Colors.white : Colors.white54,
                     size: 18,
                   ),

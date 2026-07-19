@@ -125,4 +125,46 @@ class SettingsService {
   Future<void> setMusicBackgroundBlur(bool enabled) async {
     await _prefs.setBool(AppConstants.prefMusicBackgroundBlur, enabled);
   }
+
+  bool getMusicDynamicBackground() =>
+      _prefs.getBool(AppConstants.prefMusicDynamicBackground) ?? true;
+
+  Future<void> setMusicDynamicBackground(bool enabled) async =>
+      _prefs.setBool(AppConstants.prefMusicDynamicBackground, enabled);
+
+  double getMusicAnimationIntensity() =>
+      _prefs.getDouble(AppConstants.prefMusicAnimationIntensity) ?? 1;
+
+  Future<void> setMusicAnimationIntensity(double value) async =>
+      _prefs.setDouble(AppConstants.prefMusicAnimationIntensity, value);
+
+  double getMusicLyricsFontSize() =>
+      _prefs.getDouble(AppConstants.prefMusicLyricsFontSize) ?? 22;
+
+  Future<void> setMusicLyricsFontSize(double value) async =>
+      _prefs.setDouble(AppConstants.prefMusicLyricsFontSize, value);
+
+  int getMusicLyricsOffset() =>
+      _prefs.getInt(AppConstants.prefMusicLyricsOffset) ?? 0;
+
+  Future<void> setMusicLyricsOffset(int value) async =>
+      _prefs.setInt(AppConstants.prefMusicLyricsOffset, value);
+
+  double getMusicDefaultVolume() =>
+      _prefs.getDouble(AppConstants.prefMusicDefaultVolume) ?? 100;
+
+  Future<void> setMusicDefaultVolume(double value) async =>
+      _prefs.setDouble(AppConstants.prefMusicDefaultVolume, value);
+
+  double getMusicDefaultRate() =>
+      _prefs.getDouble(AppConstants.prefMusicDefaultRate) ?? 1;
+
+  Future<void> setMusicDefaultRate(double value) async =>
+      _prefs.setDouble(AppConstants.prefMusicDefaultRate, value);
+
+  bool getMusicAutoPlay() =>
+      _prefs.getBool(AppConstants.prefMusicAutoPlay) ?? true;
+
+  Future<void> setMusicAutoPlay(bool enabled) async =>
+      _prefs.setBool(AppConstants.prefMusicAutoPlay, enabled);
 }

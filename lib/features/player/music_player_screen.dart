@@ -48,6 +48,15 @@ class MusicPlayerScreen extends ConsumerWidget {
     final blurBackground = ref.watch(
       settingsProvider.select((settings) => settings.musicBackgroundBlur),
     );
+    final dynamicBackground = ref.watch(
+      settingsProvider.select((settings) => settings.musicDynamicBackground),
+    );
+    final animationIntensity = ref.watch(
+      settingsProvider.select((settings) => settings.musicAnimationIntensity),
+    );
+    final lyricsFontSize = ref.watch(
+      settingsProvider.select((settings) => settings.musicLyricsFontSize),
+    );
 
     final player = _PlayerKeyboardShortcuts(
       enabled: _isDesktop,
@@ -86,8 +95,13 @@ class MusicPlayerScreen extends ConsumerWidget {
             : Stack(
                 children: [
                   Positioned.fill(
-                      child: _buildBackground(
-                          state.current!, scheme, blurBackground)),
+                      child: _MusicBackground(
+                    item: state.current!,
+                    scheme: scheme,
+                    blur: blurBackground,
+                    dynamic: dynamicBackground,
+                    intensity: animationIntensity,
+                  )),
                   SafeArea(
                     child: LayoutBuilder(
                       builder: (context, constraints) {
@@ -99,6 +113,7 @@ class MusicPlayerScreen extends ConsumerWidget {
                                 controller: controller,
                                 playlist: state.playlist,
                                 playlistIndex: state.index,
+                                lyricsFontSize: lyricsFontSize,
                               )
                             : _NarrowLayout(
                                 current: state.current!,
@@ -106,6 +121,7 @@ class MusicPlayerScreen extends ConsumerWidget {
                                 controller: controller,
                                 playlist: state.playlist,
                                 playlistIndex: state.index,
+                                lyricsFontSize: lyricsFontSize,
                               );
                       },
                     ),
@@ -154,6 +170,89 @@ class MusicPlayerScreen extends ConsumerWidget {
           end: Alignment.bottomCenter,
           colors: [scheme.surfaceContainerHighest, scheme.surface],
         ),
+      ),
+    );
+  }
+}
+
+class _MusicBackground extends StatefulWidget {
+  final MediaItem item;
+  final ColorScheme scheme;
+  final bool blur;
+  final bool dynamic;
+  final double intensity;
+
+  const _MusicBackground({
+    required this.item,
+    required this.scheme,
+    required this.blur,
+    required this.dynamic,
+    required this.intensity,
+  });
+
+  @override
+  State<_MusicBackground> createState() => _MusicBackgroundState();
+}
+
+class _MusicBackgroundState extends State<_MusicBackground>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animation = AnimationController(
+    vsync: this,
+    duration: Duration(
+        milliseconds: (20000 / widget.intensity.clamp(0.1, 1.5)).round()),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _animation.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final path = widget.item.artworkPath;
+    final artwork = path != null && File(path).existsSync()
+        ? Image.file(File(path), fit: BoxFit.cover)
+        : null;
+    final base = Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            widget.scheme.primaryContainer,
+            widget.scheme.surface,
+            widget.scheme.secondaryContainer,
+          ],
+        ),
+      ),
+    );
+    if (!widget.dynamic) return artwork == null ? base : artwork;
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) => Stack(
+        fit: StackFit.expand,
+        children: [
+          base,
+          if (artwork != null)
+            Opacity(
+              opacity: 0.18 + widget.intensity.clamp(0, 1) * 0.12,
+              child: ImageFiltered(
+                imageFilter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                child: Transform.scale(
+                  scale: 1.35,
+                  child: Transform.rotate(
+                    angle: (_animation.value - 0.5) * 0.025,
+                    child: artwork,
+                  ),
+                ),
+              ),
+            ),
+          DecoratedBox(
+            decoration:
+                BoxDecoration(color: Colors.black.withValues(alpha: 0.45)),
+          ),
+        ],
       ),
     );
   }
@@ -211,6 +310,7 @@ class _NarrowLayout extends ConsumerStatefulWidget {
   final PlaybackController controller;
   final List<MediaItem> playlist;
   final int playlistIndex;
+  final double lyricsFontSize;
 
   const _NarrowLayout({
     required this.current,
@@ -218,6 +318,7 @@ class _NarrowLayout extends ConsumerStatefulWidget {
     required this.controller,
     required this.playlist,
     required this.playlistIndex,
+    required this.lyricsFontSize,
   });
 
   @override
@@ -290,6 +391,7 @@ class _NarrowLayoutState extends ConsumerState<_NarrowLayout> {
                           child: _LyricsPanel(
                             lyricsAsync: lyricsAsync,
                             translationAsync: translationAsync,
+                            fontSize: widget.lyricsFontSize,
                             onLyricLineTap: () => _lyricsOverlayKey.currentState
                                 ?.markLyricLineTap(),
                           ),
@@ -339,6 +441,7 @@ class _WideLayout extends StatelessWidget {
   final PlaybackController controller;
   final List<MediaItem> playlist;
   final int playlistIndex;
+  final double lyricsFontSize;
 
   const _WideLayout({
     required this.current,
@@ -346,6 +449,7 @@ class _WideLayout extends StatelessWidget {
     required this.controller,
     required this.playlist,
     required this.playlistIndex,
+    required this.lyricsFontSize,
   });
 
   @override
@@ -437,6 +541,7 @@ class _LyricsOrQueueState extends ConsumerState<_LyricsOrQueue> {
               ? _LyricsPanel(
                   lyricsAsync: lyricsAsync,
                   translationAsync: translationAsync,
+                  fontSize: widget.lyricsFontSize,
                 )
               : _Playlist(
                   playlist: widget.playlist,
@@ -457,11 +562,13 @@ class _LyricsPanel extends ConsumerStatefulWidget {
   final AsyncValue<String?> lyricsAsync;
   final AsyncValue<String?> translationAsync;
   final VoidCallback? onLyricLineTap;
+  final double fontSize;
 
   const _LyricsPanel({
     required this.lyricsAsync,
     required this.translationAsync,
     this.onLyricLineTap,
+    required this.fontSize,
   });
 
   @override
@@ -508,6 +615,7 @@ class _LyricsPanelState extends ConsumerState<_LyricsPanel> {
                 rawLyrics: rawLyrics,
                 translation: hasTranslation ? translation : null,
                 showTranslation: _showTranslation && hasTranslation,
+                fontSize: widget.fontSize,
                 onLyricLineTap: widget.onLyricLineTap,
               ),
             ),
@@ -1091,12 +1199,14 @@ class _LyricsView extends ConsumerStatefulWidget {
   final String? translation;
   final bool showTranslation;
   final VoidCallback? onLyricLineTap;
+  final double fontSize;
 
   const _LyricsView({
     required this.rawLyrics,
     this.translation,
     this.showTranslation = false,
     this.onLyricLineTap,
+    required this.fontSize,
   });
 
   @override
@@ -1109,27 +1219,27 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
 
   /// Apple Music-inspired style: centered text, white highlight, smooth
   /// fade at top/bottom, generous spacing, translation support.
-  static final _style = LyricStyles.default1.copyWith(
-    textStyle: const TextStyle(fontSize: 16, color: Colors.white54),
-    activeStyle: const TextStyle(
-      fontSize: 22,
-      fontWeight: FontWeight.w600,
-      color: Colors.white,
-    ),
-    translationStyle: TextStyle(
-      fontSize: 14,
-      color: Colors.white.withValues(alpha: 0.5),
-    ),
-    translationActiveColor: Colors.white.withValues(alpha: 0.85),
-    lineGap: 30,
-    translationLineGap: 8,
-    contentPadding:
-        const EdgeInsets.only(top: 200, left: 30, right: 30, bottom: 200),
-    fadeRange: FadeRange(top: 100, bottom: 100),
-    activeHighlightColor: Colors.white,
-    activeHighlightGradient: null,
-    enableSwitchAnimation: true,
-  );
+  LyricStyles get _style => LyricStyles.default1.copyWith(
+        textStyle: const TextStyle(fontSize: 16, color: Colors.white54),
+        activeStyle: TextStyle(
+          fontSize: widget.fontSize,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+        translationStyle: TextStyle(
+          fontSize: 14,
+          color: Colors.white.withValues(alpha: 0.5),
+        ),
+        translationActiveColor: Colors.white.withValues(alpha: 0.85),
+        lineGap: 30,
+        translationLineGap: 8,
+        contentPadding:
+            const EdgeInsets.only(top: 200, left: 30, right: 30, bottom: 200),
+        fadeRange: FadeRange(top: 100, bottom: 100),
+        activeHighlightColor: Colors.white,
+        activeHighlightGradient: null,
+        enableSwitchAnimation: true,
+      );
 
   @override
   void initState() {
