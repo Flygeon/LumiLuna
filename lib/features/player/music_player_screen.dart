@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lyric/core/lyric_model.dart' show LyricModel;
+import 'package:flutter_lyric/core/lyric_style.dart' show LyricStyle;
 import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -480,6 +481,7 @@ class _WideLayout extends StatelessWidget {
           child: _LyricsOrQueue(
             playlist: playlist,
             playlistIndex: playlistIndex,
+            lyricsFontSize: lyricsFontSize,
           ),
         ),
       ],
@@ -512,10 +514,12 @@ class _PlaybackRegion extends ConsumerWidget {
 class _LyricsOrQueue extends ConsumerStatefulWidget {
   final List<MediaItem> playlist;
   final int playlistIndex;
+  final double lyricsFontSize;
 
   const _LyricsOrQueue({
     required this.playlist,
     required this.playlistIndex,
+    required this.lyricsFontSize,
   });
 
   @override
@@ -1219,7 +1223,7 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
 
   /// Apple Music-inspired style: centered text, white highlight, smooth
   /// fade at top/bottom, generous spacing, translation support.
-  LyricStyles get _style => LyricStyles.default1.copyWith(
+  LyricStyle get _style => LyricStyles.default1.copyWith(
         textStyle: const TextStyle(fontSize: 16, color: Colors.white54),
         activeStyle: TextStyle(
           fontSize: widget.fontSize,
