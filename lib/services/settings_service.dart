@@ -125,4 +125,17 @@ class SettingsService {
   Future<void> setMusicBackgroundBlur(bool enabled) async {
     await _prefs.setBool(AppConstants.prefMusicBackgroundBlur, enabled);
   }
+
+  bool getLyricsBlur() => _prefs.getBool(AppConstants.prefLyricsBlur) ?? true;
+
+  Future<void> setLyricsBlur(bool enabled) async {
+    await _prefs.setBool(AppConstants.prefLyricsBlur, enabled);
+  }
+
+  double getLyricsFontSize() =>
+      _prefs.getDouble(AppConstants.prefLyricsFontSize) ?? 16.0;
+
+  Future<void> setLyricsFontSize(double size) async {
+    await _prefs.setDouble(AppConstants.prefLyricsFontSize, size);
+  }
 }

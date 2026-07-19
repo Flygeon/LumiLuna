@@ -90,6 +90,8 @@ class AppConstants {
   static const String prefImageLayoutDensity = 'pref_image_layout_density';
   static const String prefVideoLayoutDensity = 'pref_video_layout_density';
   static const String prefMusicBackgroundBlur = 'pref_music_background_blur';
+  static const String prefLyricsBlur = 'pref_lyrics_blur';
+  static const String prefLyricsFontSize = 'pref_lyrics_font_size';
 
   // Scan cache file name (stored in application support directory).
   static const String cacheFileName = 'lumiluna_cache.json';

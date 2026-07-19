@@ -28,6 +28,8 @@ class AppSettings {
   final MediaLayoutDensity imageLayoutDensity;
   final MediaLayoutDensity videoLayoutDensity;
   final bool musicBackgroundBlur;
+  final bool lyricsBlur;
+  final double lyricsFontSize;
 
   const AppSettings({
     required this.themeMode,
@@ -43,6 +45,8 @@ class AppSettings {
     this.imageLayoutDensity = MediaLayoutDensity.standard,
     this.videoLayoutDensity = MediaLayoutDensity.standard,
     this.musicBackgroundBlur = true,
+    this.lyricsBlur = true,
+    this.lyricsFontSize = 16.0,
   });
 
   AppSettings copyWith({
@@ -59,6 +63,8 @@ class AppSettings {
     MediaLayoutDensity? imageLayoutDensity,
     MediaLayoutDensity? videoLayoutDensity,
     bool? musicBackgroundBlur,
+    bool? lyricsBlur,
+    double? lyricsFontSize,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -74,6 +80,8 @@ class AppSettings {
       imageLayoutDensity: imageLayoutDensity ?? this.imageLayoutDensity,
       videoLayoutDensity: videoLayoutDensity ?? this.videoLayoutDensity,
       musicBackgroundBlur: musicBackgroundBlur ?? this.musicBackgroundBlur,
+      lyricsBlur: lyricsBlur ?? this.lyricsBlur,
+      lyricsFontSize: lyricsFontSize ?? this.lyricsFontSize,
     );
   }
 }
@@ -97,6 +105,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
           imageLayoutDensity: _layoutDensity(_service.getImageLayoutDensity()),
           videoLayoutDensity: _layoutDensity(_service.getVideoLayoutDensity()),
           musicBackgroundBlur: _service.getMusicBackgroundBlur(),
+          lyricsBlur: _service.getLyricsBlur(),
+          lyricsFontSize: _service.getLyricsFontSize(),
         ));
 
   static MediaLayoutDensity _layoutDensity(String value) =>
@@ -191,6 +201,16 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> setMusicBackgroundBlur(bool enabled) async {
     state = state.copyWith(musicBackgroundBlur: enabled);
     await _service.setMusicBackgroundBlur(enabled);
+  }
+
+  Future<void> setLyricsBlur(bool enabled) async {
+    state = state.copyWith(lyricsBlur: enabled);
+    await _service.setLyricsBlur(enabled);
+  }
+
+  Future<void> setLyricsFontSize(double size) async {
+    state = state.copyWith(lyricsFontSize: size);
+    await _service.setLyricsFontSize(size);
   }
 }
 
