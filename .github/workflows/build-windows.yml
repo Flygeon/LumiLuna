@@ -116,7 +116,6 @@ jobs:
   release:
     name: Create Release
     needs: [build-windows, build-android]
-    if: false
     runs-on: ubuntu-latest
     permissions:
       contents: write

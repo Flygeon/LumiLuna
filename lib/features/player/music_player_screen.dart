@@ -57,7 +57,6 @@ class MusicPlayerScreen extends ConsumerWidget {
       hasPrev: state.index > 0,
       hasNext: state.current != null && state.index < state.playlist.length - 1,
       child: Scaffold(
-        extendBodyBehindAppBar: true,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -1131,7 +1130,7 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
   Duration _position = Duration.zero;
   int _scrollRequest = 0;
 
-  static const double _lineExtent = 104;
+  static const double _lineExtent = 100;
 
   @override
   void initState() {
@@ -1341,7 +1340,7 @@ class _LyricLineTileState extends State<_LyricLineTile>
     final rendered = active || !widget.blurEnabled
         ? content
         : ImageFiltered(
-            imageFilter: ui.ImageFilter.blur(sigmaX: 1, sigmaY: 1),
+            imageFilter: ui.ImageFilter.blur(sigmaX: 1.2, sigmaY: 1.2),
             child: content,
           );
     return SizedBox(
