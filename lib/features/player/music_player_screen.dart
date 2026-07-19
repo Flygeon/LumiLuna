@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_lyric/core/lyric_model.dart' show LyricModel;
+import 'package:flutter_lyric/core/lyric_model.dart' show LyricModel, LyricLine;
 import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -1106,6 +1106,10 @@ class _LyricsView extends ConsumerStatefulWidget {
 class _LyricsViewState extends ConsumerState<_LyricsView> {
   late final LyricController _controller;
   StreamSubscription<Duration>? _posSub;
+  final ScrollController _scrollController = ScrollController();
+  final List<GlobalKey> _lineKeys = [];
+  LyricModel? _model;
+  int _activeIndex = -1;
 
   /// Apple Music-inspired style: centered text, white highlight, smooth
   /// fade at top/bottom, generous spacing, translation support.
@@ -1148,17 +1152,37 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
       widget.rawLyrics,
       translationLyric: widget.showTranslation ? widget.translation : null,
     );
+    _model = model;
+    _activeIndex = -1;
+    _lineKeys
+      ..clear()
+      ..addAll(model.lines.map((_) => GlobalKey()));
     _controller.loadLyricModel(model);
+    if (mounted) setState(() {});
   }
 
   void _startPositionListener() {
     final pc = ref.read(playbackControllerProvider.notifier);
-    // Push media_kit's position stream directly into flutter_lyric.
-    _posSub = pc.player.stream.position.listen(_controller.setProgress);
-    // Tap a lyric line → seek the player.
-    _controller.setOnTapLineCallback((position) {
-      widget.onLyricLineTap?.call();
-      pc.seek(position);
+    _posSub = pc.player.stream.position.listen((position) {
+      _controller.setProgress(position);
+      final lines = _model?.lines;
+      if (lines == null || lines.isEmpty) return;
+      var next = 0;
+      for (var i = 0; i < lines.length; i++) {
+        if (lines[i].start <= position) next = i;
+      }
+      if (next == _activeIndex) return;
+      _activeIndex = next;
+      if (mounted) setState(() {});
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || next >= _lineKeys.length) return;
+        Scrollable.ensureVisible(
+          _lineKeys[next].currentContext!,
+          alignment: 0.5,
+          duration: const Duration(milliseconds: 420),
+          curve: Curves.easeOutCubic,
+        );
+      });
     });
   }
 
@@ -1175,48 +1199,97 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
   @override
   void dispose() {
     _posSub?.cancel();
+    _scrollController.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final lyricsSettings = ref.watch(settingsProvider.select((settings) => (
+    final settings = ref.watch(settingsProvider.select((settings) => (
           settings.lyricsBlur,
           settings.lyricsFontSize,
         )));
-    final baseSize = lyricsSettings.$2;
-    final normalStyle = TextStyle(
-      fontSize: baseSize,
-      color: Colors.white54,
-      shadows: lyricsSettings.$1
-          ? [
-              Shadow(
-                color: Colors.white54.withValues(alpha: 0.42),
-                blurRadius: 3,
-              ),
-            ]
-          : null,
-    );
+    final model = _model;
+    if (model == null || model.lines.isEmpty) {
+      return const Center(child: Text('暂无歌词'));
+    }
     return RepaintBoundary(
-      child: LyricView(
-        controller: _controller,
-        style: _style.copyWith(
-          textStyle: normalStyle,
-          activeStyle: TextStyle(
-            fontSize: baseSize * 1.375,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-          translationStyle: TextStyle(
-            fontSize: baseSize * 0.875,
-            color: Colors.white.withValues(alpha: 0.5),
-          ),
+      child: ListView.builder(
+        controller: _scrollController,
+        padding: const EdgeInsets.symmetric(vertical: 200, horizontal: 30),
+        itemCount: model.lines.length,
+        itemBuilder: (context, index) => _LyricLineTile(
+          key: _lineKeys[index],
+          line: model.lines[index],
+          active: index == _activeIndex,
+          blurEnabled: settings.$1,
+          fontSize: settings.$2,
+          onTap: () {
+            widget.onLyricLineTap?.call();
+            ref.read(playbackControllerProvider.notifier).seek(
+                  model.lines[index].start,
+                );
+          },
         ),
-        width: double.infinity,
-        height: double.infinity,
       ),
     );
+  }
+}
+
+class _LyricLineTile extends StatelessWidget {
+  final LyricLine line;
+  final bool active;
+  final bool blurEnabled;
+  final double fontSize;
+  final VoidCallback onTap;
+
+  const _LyricLineTile({
+    super.key,
+    required this.line,
+    required this.active,
+    required this.blurEnabled,
+    required this.fontSize,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 15),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            line.text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: active ? fontSize * 1.375 : fontSize,
+              fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+              color: active ? Colors.white : Colors.white54,
+            ),
+          ),
+          if (line.translation?.isNotEmpty ?? false) ...[
+            const SizedBox(height: 8),
+            Text(
+              line.translation!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: fontSize * 0.875,
+                color: active ? Colors.white70 : Colors.white38,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+    final child = active || !blurEnabled
+        ? content
+        : ImageFiltered(
+            imageFilter: ui.ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+            child: content,
+          );
+    return GestureDetector(onTap: onTap, child: child);
   }
 }
 

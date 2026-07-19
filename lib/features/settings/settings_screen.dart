@@ -65,19 +65,15 @@ class SettingsScreen extends ConsumerWidget {
                 ListTile(
                   title: const Text('歌词字号'),
                   subtitle: Text('${settings.lyricsFontSize.toInt()} px'),
-                  trailing: DropdownButton<double>(
-                    value: settings.lyricsFontSize,
-                    underline: const SizedBox.shrink(),
-                    items: const [12, 14, 16, 18, 20, 22, 24]
-                        .map((size) => DropdownMenuItem<double>(
-                              value: size.toDouble(),
-                              child: Text('$size px'),
-                            ))
-                        .toList(),
-                    onChanged: (size) {
-                      if (size != null) notifier.setLyricsFontSize(size);
-                    },
-                  ),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                Slider(
+                  value: settings.lyricsFontSize,
+                  min: 12,
+                  max: 24,
+                  divisions: 6,
+                  label: '${settings.lyricsFontSize.toInt()} px',
+                  onChanged: notifier.setLyricsFontSize,
                 ),
               ]),
           _SettingsGroup(title: '通用', icon: Icons.tune_outlined, children: [
