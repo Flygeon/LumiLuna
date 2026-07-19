@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_lyric/core/lyric_model.dart' show LyricModel, LyricLine;
 import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -688,11 +689,18 @@ class _SongInfo extends StatelessWidget {
 // ---------------------------------------------------------------------------
 // Seek Bar — fine-grained position subscription
 // ---------------------------------------------------------------------------
-class _SeekBar extends ConsumerWidget {
+class _SeekBar extends ConsumerStatefulWidget {
   const _SeekBar();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_SeekBar> createState() => _SeekBarState();
+}
+
+class _SeekBarState extends ConsumerState<_SeekBar> {
+  double? _dragPosition;
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(
       playbackControllerProvider.select((s) => _SeekState(
             position: s.position,
@@ -702,8 +710,8 @@ class _SeekBar extends ConsumerWidget {
     final controller = ref.read(playbackControllerProvider.notifier);
     final duration = state.duration.inMilliseconds.toDouble();
     final maxValue = duration <= 0 ? 1.0 : duration;
-    final position =
-        state.position.inMilliseconds.toDouble().clamp(0.0, maxValue);
+    final position = (_dragPosition ?? state.position.inMilliseconds.toDouble())
+        .clamp(0.0, maxValue);
 
     return SizedBox(
       width: 600,
@@ -725,7 +733,15 @@ class _SeekBar extends ConsumerWidget {
               max: maxValue,
               onChanged: duration <= 0
                   ? null
-                  : (v) => controller.seek(Duration(milliseconds: v.round())),
+                  : (v) => setState(() => _dragPosition = v),
+              onChangeEnd: duration <= 0
+                  ? null
+                  : (v) async {
+                      setState(() => _dragPosition = null);
+                      await controller.seek(
+                        Duration(milliseconds: v.round()),
+                      );
+                    },
             ),
           ),
           Padding(
@@ -733,7 +749,10 @@ class _SeekBar extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(FormatUtils.duration(state.position),
+                Text(
+                    FormatUtils.duration(_dragPosition == null
+                        ? state.position
+                        : Duration(milliseconds: _dragPosition!.round())),
                     style:
                         const TextStyle(fontSize: 12, color: Colors.white60)),
                 Text(FormatUtils.duration(state.duration),
@@ -1111,30 +1130,6 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
   LyricModel? _model;
   int _activeIndex = -1;
 
-  /// Apple Music-inspired style: centered text, white highlight, smooth
-  /// fade at top/bottom, generous spacing, translation support.
-  static final _style = LyricStyles.default1.copyWith(
-    textStyle: const TextStyle(fontSize: 16, color: Colors.white54),
-    activeStyle: const TextStyle(
-      fontSize: 22,
-      fontWeight: FontWeight.w600,
-      color: Colors.white,
-    ),
-    translationStyle: TextStyle(
-      fontSize: 14,
-      color: Colors.white.withValues(alpha: 0.5),
-    ),
-    translationActiveColor: Colors.white.withValues(alpha: 0.85),
-    lineGap: 30,
-    translationLineGap: 8,
-    contentPadding:
-        const EdgeInsets.only(top: 200, left: 30, right: 30, bottom: 200),
-    fadeRange: FadeRange(top: 100, bottom: 100),
-    activeHighlightColor: Colors.white,
-    activeHighlightGradient: null,
-    enableSwitchAnimation: true,
-  );
-
   @override
   void initState() {
     super.initState();
@@ -1176,12 +1171,15 @@ class _LyricsViewState extends ConsumerState<_LyricsView> {
       if (mounted) setState(() {});
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || next >= _lineKeys.length) return;
-        Scrollable.ensureVisible(
-          _lineKeys[next].currentContext!,
-          alignment: 0.5,
-          duration: const Duration(milliseconds: 420),
-          curve: Curves.easeOutCubic,
-        );
+        final lineContext = _lineKeys[next].currentContext;
+        if (lineContext != null) {
+          Scrollable.ensureVisible(
+            lineContext,
+            alignment: 0.5,
+            duration: const Duration(milliseconds: 420),
+            curve: Curves.easeOutCubic,
+          );
+        }
       });
     });
   }
@@ -1264,7 +1262,7 @@ class _LyricLineTile extends StatelessWidget {
             line.text,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: active ? fontSize * 1.375 : fontSize,
+              fontSize: fontSize,
               fontWeight: active ? FontWeight.w600 : FontWeight.normal,
               color: active ? Colors.white : Colors.white54,
             ),
@@ -1283,13 +1281,32 @@ class _LyricLineTile extends StatelessWidget {
         ],
       ),
     );
-    final child = active || !blurEnabled
+    final rendered = active || !blurEnabled
         ? content
         : ImageFiltered(
-            imageFilter: ui.ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+            imageFilter: ui.ImageFilter.blur(sigmaX: 1, sigmaY: 1),
             child: content,
           );
-    return GestureDetector(onTap: onTap, child: child);
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedSlide(
+        offset: active ? const Offset(0, -0.035) : Offset.zero,
+        duration: 380.ms,
+        curve: Curves.easeOutBack,
+        child: AnimatedScale(
+          scale: active ? 1.06 : 1,
+          duration: 380.ms,
+          curve: Curves.easeOutBack,
+          alignment: Alignment.center,
+          child: AnimatedOpacity(
+            opacity: active ? 1 : 0.82,
+            duration: 380.ms,
+            curve: Curves.easeOut,
+            child: rendered,
+          ),
+        ),
+      ),
+    );
   }
 }
 

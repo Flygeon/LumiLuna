@@ -63,9 +63,9 @@ class SettingsScreen extends ConsumerWidget {
                   onChanged: notifier.setLyricsBlur,
                 ),
                 ListTile(
+                  leading: const Icon(Icons.text_fields_outlined),
                   title: const Text('歌词字号'),
                   subtitle: Text('${settings.lyricsFontSize.toInt()} px'),
-                  contentPadding: EdgeInsets.zero,
                 ),
                 Slider(
                   value: settings.lyricsFontSize,
@@ -73,6 +73,10 @@ class SettingsScreen extends ConsumerWidget {
                   max: 24,
                   divisions: 6,
                   label: '${settings.lyricsFontSize.toInt()} px',
+                  padding: const EdgeInsetsDirectional.only(
+                    start: 72,
+                    end: 16,
+                  ),
                   onChanged: notifier.setLyricsFontSize,
                 ),
               ]),
