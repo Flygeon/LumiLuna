@@ -40,7 +40,14 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
     if (dbItems.isNotEmpty) {
       unawaited(watcher.start(target));
       unawaited(_refreshIndex(db, target));
-      return dbItems;
+      return dbItems.map((item) {
+        if (item.type != MediaType.audio ||
+            item.artworkPath == null ||
+            File(item.artworkPath!).existsSync()) {
+          return item;
+        }
+        return item.copyWith(artworkPath: null);
+      }).toList();
     }
 
     // Database empty — perform a full scan and persist.

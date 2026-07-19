@@ -210,6 +210,17 @@ class _MusicBackgroundState extends State<_MusicBackground>
   }
 
   @override
+  void didUpdateWidget(covariant _MusicBackground oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.intensity != widget.intensity) {
+      _animation.duration = Duration(
+        milliseconds: (20000 / widget.intensity.clamp(0.1, 1.5)).round(),
+      );
+      if (widget.dynamic && !_animation.isAnimating) _animation.repeat();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final path = widget.item.artworkPath;
     final artwork = path != null && File(path).existsSync()
@@ -228,7 +239,19 @@ class _MusicBackgroundState extends State<_MusicBackground>
         ),
       ),
     );
-    if (!widget.dynamic) return artwork == null ? base : artwork;
+    if (!widget.dynamic) {
+      if (artwork == null) return base;
+      final image = widget.blur
+          ? ImageFiltered(
+              imageFilter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              child: artwork,
+            )
+          : artwork;
+      return Stack(
+        fit: StackFit.expand,
+        children: [image, DecoratedBox(decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.45)))],
+      );
+    }
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) => Stack(
@@ -238,15 +261,24 @@ class _MusicBackgroundState extends State<_MusicBackground>
           if (artwork != null)
             Opacity(
               opacity: 0.18 + widget.intensity.clamp(0, 1) * 0.12,
-              child: ImageFiltered(
-                imageFilter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                child: Transform.scale(
-                  scale: 1.35,
-                  child: Transform.rotate(
-                    angle: (_animation.value - 0.5) * 0.025,
-                    child: artwork,
-                  ),
-                ),
+              child: widget.blur
+                  ? ImageFiltered(
+                      imageFilter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                      child: Transform.scale(
+                        scale: 1.35,
+                        child: Transform.rotate(
+                          angle: (_animation.value - 0.5) * 0.025,
+                          child: artwork,
+                        ),
+                      ),
+                    )
+                  : Transform.scale(
+                      scale: 1.35,
+                      child: Transform.rotate(
+                        angle: (_animation.value - 0.5) * 0.025,
+                        child: artwork,
+                      ),
+                    ),
               ),
             ),
           DecoratedBox(

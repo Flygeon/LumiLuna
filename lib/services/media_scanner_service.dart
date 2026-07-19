@@ -132,7 +132,7 @@ class MediaScannerService {
     }
     if (audioItems.isEmpty) return items;
 
-    final cacheDir = await getTemporaryDirectory();
+    final cacheDir = await getApplicationSupportDirectory();
     final artDir = Directory('${cacheDir.path}/lumiluna_artwork');
     await artDir.create(recursive: true);
 
@@ -216,12 +216,11 @@ class MediaScannerService {
         String? artPath;
         if (meta.pictures.isNotEmpty) {
           final pic = meta.pictures.first;
-          final key = item.path.hashCode.abs().toString();
+          final key =
+              '${item.path.hashCode.abs()}_${item.size}_${item.modified.millisecondsSinceEpoch}';
           final dest = '$artworkDir/$key${_extForMime(pic.mimetype)}';
           final file = File(dest);
-          if (!file.existsSync()) {
-            file.writeAsBytesSync(pic.bytes);
-          }
+          file.writeAsBytesSync(pic.bytes);
           artPath = dest;
         }
         results.add(item
