@@ -177,7 +177,7 @@ fn gps_to_f64(
     let field = exif.get_field(tag, exif::In::PRIMARY)?;
     let ref_field = exif.get_field(ref_tag, exif::In::PRIMARY)?;
     let components: Vec<f64> = match field.value {
-        exif::Value::Rational(ref vals) => vals.iter().map(|v| v.to_num::<f64>()).collect(),
+        exif::Value::Rational(ref vals) => vals.iter().map(|r| r.0 as f64 / r.1 as f64).collect(),
         _ => return None,
     };
     if components.len() != 3 {
@@ -253,13 +253,13 @@ fn read_exif(
     let focal_length = exif
         .get_field(exif::Tag::FocalLength, exif::In::PRIMARY)
         .and_then(|f| match f.value {
-            exif::Value::Rational(ref vals) => vals.first().map(|v| v.to_num::<f64>()),
+            exif::Value::Rational(ref vals) => vals.first().map(|r| r.0 as f64 / r.1 as f64),
             _ => None,
         });
     let f_number = exif
         .get_field(exif::Tag::FNumber, exif::In::PRIMARY)
         .and_then(|f| match f.value {
-            exif::Value::Rational(ref vals) => vals.first().map(|v| v.to_num::<f64>()),
+            exif::Value::Rational(ref vals) => vals.first().map(|r| r.0 as f64 / r.1 as f64),
             _ => None,
         });
 
@@ -421,14 +421,19 @@ fn walk(
     }
 }
 
-fn ext_for_mime(mime: &lofty::MimeType) -> &str {
-    match mime {
-        lofty::MimeType::Png => "png",
-        lofty::MimeType::Jpeg => "jpg",
-        lofty::MimeType::Bmp => "bmp",
-        lofty::MimeType::Gif => "gif",
-        lofty::MimeType::Tiff => "tiff",
-        _ => "jpg",
+fn ext_for_mime(mime: &str) -> &str {
+    if mime.contains("png") {
+        "png"
+    } else if mime.contains("jpeg") || mime.contains("jpg") {
+        "jpg"
+    } else if mime.contains("bmp") {
+        "bmp"
+    } else if mime.contains("gif") {
+        "gif"
+    } else if mime.contains("tiff") {
+        "tiff"
+    } else {
+        "jpg"
     }
 }
 
@@ -441,7 +446,9 @@ fn read_audio_metadata(path: &Path, cache_dir: &str) -> (Option<String>, Option<
     let properties = tagged_file.properties();
     let artwork_path = tag.and_then(|t| {
         t.pictures().first().map(|pic| {
-            let ext = pic.mime_type().map(|m| ext_for_mime(m)).unwrap_or("jpg");
+            let ext = pic.mime_type()
+                .map(|m| ext_for_mime(&format!("{}", m)))
+                .unwrap_or("jpg");
             let hash = xxh3_64(path.to_string_lossy().as_bytes());
             let artwork_dir = format!("{}/artwork", cache_dir);
             std::fs::create_dir_all(&artwork_dir).ok();
