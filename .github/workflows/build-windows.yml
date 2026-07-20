@@ -126,9 +126,8 @@ jobs:
   # Release (on push to master/main or manual dispatch)
   # ---------------------------------------------------------------------------
   release:
-    name: Create Release
+    name: Create Beta Release
     needs: [build-windows, build-android]
-    if: false
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -142,7 +141,7 @@ jobs:
         run: |
           RAW=$(grep '^version: ' pubspec.yaml | sed 's/version: //')
           # Flutter pubspec version is "X.Y.Z+buildNumber"; strip the build number
-          # so the release shows "v1.0.0" instead of "v1.0.0+1".
+          # so the release shows "v1.0.2-beta.1" instead of "v1.0.2-beta.1+1".
           VERSION=${RAW%%+*}
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
         shell: bash
@@ -176,10 +175,11 @@ jobs:
         with:
           tag_name: v${{ steps.version.outputs.version }}+${{ github.run_id }}
           name: "LumiLuna v${{ steps.version.outputs.version }}"
+          prerelease: true
           body: |
-            ## LumiLuna v${{ steps.version.outputs.version }}
+            ## LumiLuna v${{ steps.version.outputs.version }} (Beta)
 
-            Automated release from commit `${{ github.sha }}`.
+            Automated beta release from commit `${{ github.sha }}`.
 
             ### Downloads
 
@@ -188,5 +188,5 @@ jobs:
           files: |
             release/**
           generate_release_notes: true
-          make_latest: true
+          make_latest: false
           token: ${{ secrets.GITHUB_TOKEN }}
