@@ -24,6 +24,7 @@ class MediaItems extends Table {
   TextColumn get type => text()();
   IntColumn get size => integer().withDefault(const Constant(0))();
   TextColumn get modified => text()();
+  IntColumn get fileHash => integer().nullable()();
   TextColumn? get title => text().nullable()();
   TextColumn? get artist => text().nullable()();
   TextColumn? get album => text().nullable()();
@@ -159,7 +160,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -175,6 +176,9 @@ class AppDatabase extends _$AppDatabase {
         if (from < 3) {
           await m.addColumn(tags, tags.parentId);
           await m.addColumn(tags, tags.isGroup);
+        }
+        if (from < 4) {
+          await m.addColumn(mediaItems, mediaItems.fileHash);
         }
       },
       beforeOpen: (details) async {
@@ -276,15 +280,20 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> upsertMediaItems(List<MediaItem> items) async {
     if (items.isEmpty) return;
-    final existingMap = <String, int>{};
+    final existingMap = <String, MediaItemRow>{};
     final paths = items.map((i) => i.path).toList();
-    final existingRows = await (select(mediaItems)..where((t) => t.path.isIn(paths))).get();
+    final existingRows =
+        await (select(mediaItems)..where((t) => t.path.isIn(paths))).get();
     for (final row in existingRows) {
-      existingMap[row.path] = row.isFavorite;
+      existingMap[row.path] = row;
     }
     final now = DateTime.now().toIso8601String();
     await batch((b) {
       for (final item in items) {
+        final existing = existingMap[item.path];
+        final unchanged = existing?.fileHash != null &&
+            item.fileHash != null &&
+            existing!.fileHash == item.fileHash;
         b.insert(
           mediaItems,
           MediaItemsCompanion(
@@ -293,12 +302,16 @@ class AppDatabase extends _$AppDatabase {
             type: Value(item.type.name),
             size: Value(item.size),
             modified: Value(item.modified.toIso8601String()),
-            title: Value(item.title),
-            artist: Value(item.artist),
-            album: Value(item.album),
-            durationMs: Value(item.durationMs),
-            artworkPath: Value(item.artworkPath),
-            isFavorite: Value(existingMap[item.path] ?? (item.isFavorite ? 1 : 0)),
+            fileHash: Value(item.fileHash),
+            title: Value(unchanged ? existing!.title : item.title),
+            artist: Value(unchanged ? existing!.artist : item.artist),
+            album: Value(unchanged ? existing!.album : item.album),
+            durationMs:
+                Value(unchanged ? existing!.durationMs : item.durationMs),
+            artworkPath:
+                Value(unchanged ? existing!.artworkPath : item.artworkPath),
+            isFavorite:
+                Value(existing?.isFavorite ?? (item.isFavorite ? 1 : 0)),
             folderPath: Value(item.folderPath),
             scannedAt: Value(now),
           ),
@@ -796,9 +809,8 @@ class AppDatabase extends _$AppDatabase {
     ])
       ..addColumns([latestPlayed])
       ..groupBy([playHistory.mediaPath])
-      ..orderBy([
-        OrderingTerm(expression: latestPlayed, mode: OrderingMode.desc)
-      ])
+      ..orderBy(
+          [OrderingTerm(expression: latestPlayed, mode: OrderingMode.desc)])
       ..limit(limit, offset: offset);
     final rows = await query.get();
     return rows.map((r) => _mediaItemFromRow(r.readTable(mediaItems))).toList();
@@ -818,6 +830,7 @@ class AppDatabase extends _$AppDatabase {
         type: MediaType.values.firstWhere((t) => t.name == row.type),
         size: row.size,
         modified: DateTime.parse(row.modified),
+        fileHash: row.fileHash,
         title: row.title,
         artist: row.artist,
         album: row.album,

@@ -40,7 +40,63 @@ class RustScannerService {
     }
   }
 
-  Future<List<MediaItem>> scanMedia(List<String> folders, {int maxDepth = 8}) async {
+  Future<int> stableFileHash(String path, int size, int modifiedMs) async {
+    try {
+      await _ensureInitialized();
+      final result = await rust_api.stableFileHash(
+        path: path,
+        size: size,
+        modifiedMs: modifiedMs,
+      );
+      return result.toInt();
+    } catch (_) {
+      _isRustAvailable = false;
+      rethrow;
+    }
+  }
+
+  Future<List<MediaItem>> scanMediaBatch(
+    List<String> folders, {
+    int maxDepth = 8,
+    int offset = 0,
+    int limit = 500,
+  }) async {
+    try {
+      await _ensureInitialized();
+      final rustItems = await rust_api.scanMediaBatch(
+        folders: folders,
+        maxDepth: maxDepth,
+        offset: offset,
+        limit: limit,
+      );
+      return rustItems.map(_toMediaItem).toList();
+    } catch (_) {
+      _isRustAvailable = false;
+      rethrow;
+    }
+  }
+
+  Future<List<MediaItem>> scanMediaBatches(
+    List<String> folders, {
+    int maxDepth = 8,
+    int batchSize = 500,
+  }) async {
+    try {
+      await _ensureInitialized();
+      final batches = await rust_api.scanMediaBatches(
+        folders: folders,
+        maxDepth: maxDepth,
+        batchSize: batchSize,
+      );
+      return [for (final batch in batches) ...batch.map(_toMediaItem)];
+    } catch (_) {
+      _isRustAvailable = false;
+      rethrow;
+    }
+  }
+
+  Future<List<MediaItem>> scanMedia(List<String> folders,
+      {int maxDepth = 8}) async {
     try {
       await _ensureInitialized();
       final rustItems = await rust_api.scanMedia(
@@ -75,6 +131,11 @@ class RustScannerService {
       type: type,
       size: rustItem.size,
       modified: DateTime.fromMillisecondsSinceEpoch(rustItem.modifiedMs),
+      fileHash: rustItem.fileHash.toInt(),
+      title: rustItem.title,
+      artist: rustItem.artist,
+      album: rustItem.album,
+      durationMs: rustItem.durationMs?.toInt(),
     );
   }
 

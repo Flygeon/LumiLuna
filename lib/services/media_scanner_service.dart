@@ -82,7 +82,10 @@ class MediaScannerService {
     List<MediaItem> items;
     if (_useRustScanning && RustScannerService.isRustAvailable) {
       try {
-        items = await _scanWithRust(folders);
+        items = await RustScannerService().scanMediaBatches(
+          folders,
+          maxDepth: AppConstants.maxScanDepth,
+        );
       } catch (_) {
         items = await _scanWithDart(folders);
       }
@@ -90,6 +93,9 @@ class MediaScannerService {
       items = await _scanWithDart(folders);
     }
 
+    if (_useRustScanning && RustScannerService.isRustAvailable) {
+      return items;
+    }
     return _enrichAudioMetadataParallel(items);
   }
 

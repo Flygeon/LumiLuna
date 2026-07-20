@@ -69,7 +69,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => 1996892631;
+  int get rustContentHash => 1634982936;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -87,6 +87,22 @@ abstract class RustLibApi extends BaseApi {
 
   Future<List<RustMediaItem>> crateApiMediaScanScanMedia(
       {required List<String> folders, required int maxDepth});
+
+  Future<List<RustMediaItem>> crateApiMediaScanScanMediaBatch(
+      {required List<String> folders,
+      required int maxDepth,
+      required int offset,
+      required int limit});
+
+  Future<List<List<RustMediaItem>>> crateApiMediaScanScanMediaBatches(
+      {required List<String> folders,
+      required int maxDepth,
+      required int batchSize});
+
+  Future<BigInt> crateApiMediaScanStableFileHash(
+      {required String path,
+      required PlatformInt64 size,
+      required PlatformInt64 modifiedMs});
 
   Future<BigInt> crateApiMediaScanStableHash({required String path});
 }
@@ -172,13 +188,105 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<List<RustMediaItem>> crateApiMediaScanScanMediaBatch(
+      {required List<String> folders,
+      required int maxDepth,
+      required int offset,
+      required int limit}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_list_String(folders, serializer);
+        sse_encode_u_32(maxDepth, serializer);
+        sse_encode_u_32(offset, serializer);
+        sse_encode_u_32(limit, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 4, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_rust_media_item,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiMediaScanScanMediaBatchConstMeta,
+      argValues: [folders, maxDepth, offset, limit],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiMediaScanScanMediaBatchConstMeta =>
+      const TaskConstMeta(
+        debugName: "scan_media_batch",
+        argNames: ["folders", "maxDepth", "offset", "limit"],
+      );
+
+  @override
+  Future<List<List<RustMediaItem>>> crateApiMediaScanScanMediaBatches(
+      {required List<String> folders,
+      required int maxDepth,
+      required int batchSize}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_list_String(folders, serializer);
+        sse_encode_u_32(maxDepth, serializer);
+        sse_encode_u_32(batchSize, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 5, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_list_rust_media_item,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiMediaScanScanMediaBatchesConstMeta,
+      argValues: [folders, maxDepth, batchSize],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiMediaScanScanMediaBatchesConstMeta =>
+      const TaskConstMeta(
+        debugName: "scan_media_batches",
+        argNames: ["folders", "maxDepth", "batchSize"],
+      );
+
+  @override
+  Future<BigInt> crateApiMediaScanStableFileHash(
+      {required String path,
+      required PlatformInt64 size,
+      required PlatformInt64 modifiedMs}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(path, serializer);
+        sse_encode_i_64(size, serializer);
+        sse_encode_i_64(modifiedMs, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 6, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_u_64,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiMediaScanStableFileHashConstMeta,
+      argValues: [path, size, modifiedMs],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiMediaScanStableFileHashConstMeta =>
+      const TaskConstMeta(
+        debugName: "stable_file_hash",
+        argNames: ["path", "size", "modifiedMs"],
+      );
+
+  @override
   Future<BigInt> crateApiMediaScanStableHash({required String path}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(path, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 4, port: port_);
+            funcId: 7, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_u_64,
@@ -203,6 +311,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PlatformInt64 dco_decode_box_autoadd_i_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_i_64(raw);
+  }
+
+  @protected
   PlatformInt64 dco_decode_i_64(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dcoDecodeI64(raw);
@@ -212,6 +326,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<String> dco_decode_list_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_String).toList();
+  }
+
+  @protected
+  List<List<RustMediaItem>> dco_decode_list_list_rust_media_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_list_rust_media_item).toList();
   }
 
   @protected
@@ -227,17 +347,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  String? dco_decode_opt_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_String(raw);
+  }
+
+  @protected
+  PlatformInt64? dco_decode_opt_box_autoadd_i_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_i_64(raw);
+  }
+
+  @protected
   RustMediaItem dco_decode_rust_media_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 5)
-      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
     return RustMediaItem(
       path: dco_decode_String(arr[0]),
       name: dco_decode_String(arr[1]),
       mediaType: dco_decode_String(arr[2]),
       size: dco_decode_i_64(arr[3]),
       modifiedMs: dco_decode_i_64(arr[4]),
+      fileHash: dco_decode_u_64(arr[5]),
+      title: dco_decode_opt_String(arr[6]),
+      artist: dco_decode_opt_String(arr[7]),
+      album: dco_decode_opt_String(arr[8]),
+      durationMs: dco_decode_opt_box_autoadd_i_64(arr[9]),
     );
   }
 
@@ -273,6 +410,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PlatformInt64 sse_decode_box_autoadd_i_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_i_64(deserializer));
+  }
+
+  @protected
   PlatformInt64 sse_decode_i_64(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getPlatformInt64();
@@ -286,6 +429,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final ans_ = <String>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_String(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<List<RustMediaItem>> sse_decode_list_list_rust_media_item(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <List<RustMediaItem>>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_list_rust_media_item(deserializer));
     }
     return ans_;
   }
@@ -311,6 +467,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  String? sse_decode_opt_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_String(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  PlatformInt64? sse_decode_opt_box_autoadd_i_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_i_64(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   RustMediaItem sse_decode_rust_media_item(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_path = sse_decode_String(deserializer);
@@ -318,12 +496,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_mediaType = sse_decode_String(deserializer);
     final var_size = sse_decode_i_64(deserializer);
     final var_modifiedMs = sse_decode_i_64(deserializer);
+    final var_fileHash = sse_decode_u_64(deserializer);
+    final var_title = sse_decode_opt_String(deserializer);
+    final var_artist = sse_decode_opt_String(deserializer);
+    final var_album = sse_decode_opt_String(deserializer);
+    final var_durationMs = sse_decode_opt_box_autoadd_i_64(deserializer);
     return RustMediaItem(
         path: var_path,
         name: var_name,
         mediaType: var_mediaType,
         size: var_size,
-        modifiedMs: var_modifiedMs);
+        modifiedMs: var_modifiedMs,
+        fileHash: var_fileHash,
+        title: var_title,
+        artist: var_artist,
+        album: var_album,
+        durationMs: var_durationMs);
   }
 
   @protected
@@ -368,6 +556,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_i_64(
+      PlatformInt64 self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_64(self, serializer);
+  }
+
+  @protected
   void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putPlatformInt64(self);
@@ -379,6 +574,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_String(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_list_rust_media_item(
+      List<List<RustMediaItem>> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_list_rust_media_item(item, serializer);
     }
   }
 
@@ -401,6 +606,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_String(String? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_String(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_i_64(
+      PlatformInt64? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_i_64(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_rust_media_item(
       RustMediaItem self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -409,6 +635,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.mediaType, serializer);
     sse_encode_i_64(self.size, serializer);
     sse_encode_i_64(self.modifiedMs, serializer);
+    sse_encode_u_64(self.fileHash, serializer);
+    sse_encode_opt_String(self.title, serializer);
+    sse_encode_opt_String(self.artist, serializer);
+    sse_encode_opt_String(self.album, serializer);
+    sse_encode_opt_box_autoadd_i_64(self.durationMs, serializer);
   }
 
   @protected

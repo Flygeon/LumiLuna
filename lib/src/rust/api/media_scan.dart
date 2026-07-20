@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `media_type`, `walk`
+// These functions are ignored because they are not marked as `pub`: `media_type`, `read_audio_metadata`, `walk`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`
 
 Future<String> ping() => RustLib.instance.api.crateApiMediaScanPing();
@@ -14,10 +14,32 @@ Future<String> ping() => RustLib.instance.api.crateApiMediaScanPing();
 Future<BigInt> stableHash({required String path}) =>
     RustLib.instance.api.crateApiMediaScanStableHash(path: path);
 
+Future<BigInt> stableFileHash(
+        {required String path,
+        required PlatformInt64 size,
+        required PlatformInt64 modifiedMs}) =>
+    RustLib.instance.api.crateApiMediaScanStableFileHash(
+        path: path, size: size, modifiedMs: modifiedMs);
+
 Future<List<RustMediaItem>> scanMedia(
         {required List<String> folders, required int maxDepth}) =>
     RustLib.instance.api
         .crateApiMediaScanScanMedia(folders: folders, maxDepth: maxDepth);
+
+Future<List<RustMediaItem>> scanMediaBatch(
+        {required List<String> folders,
+        required int maxDepth,
+        required int offset,
+        required int limit}) =>
+    RustLib.instance.api.crateApiMediaScanScanMediaBatch(
+        folders: folders, maxDepth: maxDepth, offset: offset, limit: limit);
+
+Future<List<List<RustMediaItem>>> scanMediaBatches(
+        {required List<String> folders,
+        required int maxDepth,
+        required int batchSize}) =>
+    RustLib.instance.api.crateApiMediaScanScanMediaBatches(
+        folders: folders, maxDepth: maxDepth, batchSize: batchSize);
 
 class RustMediaItem {
   final String path;
@@ -25,6 +47,11 @@ class RustMediaItem {
   final String mediaType;
   final PlatformInt64 size;
   final PlatformInt64 modifiedMs;
+  final BigInt fileHash;
+  final String? title;
+  final String? artist;
+  final String? album;
+  final PlatformInt64? durationMs;
 
   const RustMediaItem({
     required this.path,
@@ -32,6 +59,11 @@ class RustMediaItem {
     required this.mediaType,
     required this.size,
     required this.modifiedMs,
+    required this.fileHash,
+    this.title,
+    this.artist,
+    this.album,
+    this.durationMs,
   });
 
   @override
@@ -40,7 +72,12 @@ class RustMediaItem {
       name.hashCode ^
       mediaType.hashCode ^
       size.hashCode ^
-      modifiedMs.hashCode;
+      modifiedMs.hashCode ^
+      fileHash.hashCode ^
+      title.hashCode ^
+      artist.hashCode ^
+      album.hashCode ^
+      durationMs.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -51,5 +88,10 @@ class RustMediaItem {
           name == other.name &&
           mediaType == other.mediaType &&
           size == other.size &&
-          modifiedMs == other.modifiedMs;
+          modifiedMs == other.modifiedMs &&
+          fileHash == other.fileHash &&
+          title == other.title &&
+          artist == other.artist &&
+          album == other.album &&
+          durationMs == other.durationMs;
 }

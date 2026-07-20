@@ -9,6 +9,7 @@ class MediaItem {
   final MediaType type;
   final int size;
   final DateTime modified;
+  final int? fileHash;
 
   /// Audio metadata, filled in after scanning (null until then / for non-audio).
   final String? title;
@@ -28,6 +29,7 @@ class MediaItem {
     required this.type,
     required this.size,
     required this.modified,
+    this.fileHash,
     this.title,
     this.artist,
     this.album,
@@ -87,6 +89,7 @@ class MediaItem {
     String? artist,
     String? album,
     int? durationMs,
+    int? fileHash,
     String? artworkPath,
     bool? isFavorite,
     String? name,
@@ -98,6 +101,7 @@ class MediaItem {
       type: type,
       size: size,
       modified: modified,
+      fileHash: fileHash ?? this.fileHash,
       title: title ?? this.title,
       artist: artist ?? this.artist,
       album: album ?? this.album,
@@ -109,13 +113,43 @@ class MediaItem {
 
   static MediaType? _typeForExt(String ext) {
     const image = {
-      'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic', 'heif', 'tiff', 'tif', 'ico',
+      'jpg',
+      'jpeg',
+      'png',
+      'gif',
+      'bmp',
+      'webp',
+      'heic',
+      'heif',
+      'tiff',
+      'tif',
+      'ico',
     };
     const video = {
-      'mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv', 'webm', 'm4v', 'mpeg', 'mpg', 'ts', '3gp',
+      'mp4',
+      'mkv',
+      'avi',
+      'mov',
+      'wmv',
+      'flv',
+      'webm',
+      'm4v',
+      'mpeg',
+      'mpg',
+      'ts',
+      '3gp',
     };
     const audio = {
-      'mp3', 'flac', 'wav', 'aac', 'm4a', 'ogg', 'wma', 'opus', 'aiff', 'ape',
+      'mp3',
+      'flac',
+      'wav',
+      'aac',
+      'm4a',
+      'ogg',
+      'wma',
+      'opus',
+      'aiff',
+      'ape',
     };
     if (image.contains(ext)) return MediaType.image;
     if (video.contains(ext)) return MediaType.video;
@@ -130,6 +164,7 @@ class MediaItem {
         'type': type.name,
         'size': size,
         'modified': modified.toIso8601String(),
+        'fileHash': fileHash,
         'title': title,
         'artist': artist,
         'album': album,
@@ -145,6 +180,7 @@ class MediaItem {
         type: MediaType.values.byName(json['type'] as String),
         size: json['size'] as int,
         modified: DateTime.parse(json['modified'] as String),
+        fileHash: json['fileHash'] as int?,
         title: json['title'] as String?,
         artist: json['artist'] as String?,
         album: json['album'] as String?,
@@ -154,8 +190,7 @@ class MediaItem {
       );
 
   @override
-  bool operator ==(Object other) =>
-      other is MediaItem && other.path == path;
+  bool operator ==(Object other) => other is MediaItem && other.path == path;
 
   @override
   int get hashCode => path.hashCode;

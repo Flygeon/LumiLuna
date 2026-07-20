@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
 
 use flutter_rust_bridge::frb;
+use lofty::{prelude::*, probe::Probe};
 use xxhash_rust::xxh3::xxh3_64;
 
 #[frb]
@@ -13,6 +14,11 @@ pub struct RustMediaItem {
     pub media_type: String,
     pub size: i64,
     pub modified_ms: i64,
+    pub file_hash: u64,
+    pub title: Option<String>,
+    pub artist: Option<String>,
+    pub album: Option<String>,
+    pub duration_ms: Option<i64>,
 }
 
 #[frb]
@@ -26,6 +32,12 @@ pub fn stable_hash(path: String) -> u64 {
 }
 
 #[frb]
+pub fn stable_file_hash(path: String, size: i64, modified_ms: i64) -> u64 {
+    let value = format!("{}\0{}\0{}", path, size, modified_ms);
+    xxh3_64(value.as_bytes())
+}
+
+#[frb]
 pub fn scan_media(folders: Vec<String>, max_depth: u32) -> Vec<RustMediaItem> {
     let mut items = Vec::new();
     let mut seen = std::collections::HashSet::new();
@@ -34,6 +46,30 @@ pub fn scan_media(folders: Vec<String>, max_depth: u32) -> Vec<RustMediaItem> {
     }
     items.sort_by(|a, b| b.modified_ms.cmp(&a.modified_ms));
     items
+}
+
+#[frb]
+pub fn scan_media_batch(
+    folders: Vec<String>,
+    max_depth: u32,
+    offset: u32,
+    limit: u32,
+) -> Vec<RustMediaItem> {
+    let items = scan_media(folders, max_depth);
+    let start = (offset as usize).min(items.len());
+    let end = (start + limit as usize).min(items.len());
+    items[start..end].to_vec()
+}
+
+#[frb]
+pub fn scan_media_batches(
+    folders: Vec<String>,
+    max_depth: u32,
+    batch_size: u32,
+) -> Vec<Vec<RustMediaItem>> {
+    let items = scan_media(folders, max_depth);
+    let size = batch_size.max(1) as usize;
+    items.chunks(size).map(|batch| batch.to_vec()).collect()
 }
 
 fn walk(
@@ -86,14 +122,45 @@ fn walk(
             .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
             .map(|duration| duration.as_millis().min(i64::MAX as u128) as i64)
             .unwrap_or(0);
+        let size = metadata.len().min(i64::MAX as u64) as i64;
+        let file_hash = stable_file_hash(
+            path.to_string_lossy().into_owned(),
+            size,
+            modified_ms,
+        );
+        let (title, artist, album, duration_ms) = if media_type == "audio" {
+            read_audio_metadata(&path)
+        } else {
+            (None, None, None, None)
+        };
         output.push(RustMediaItem {
             path: path.to_string_lossy().into_owned(),
             name: name.to_owned(),
             media_type: media_type.to_owned(),
-            size: metadata.len().min(i64::MAX as u64) as i64,
+            size,
             modified_ms,
+            file_hash,
+            title,
+            artist,
+            album,
+            duration_ms,
         });
     }
+}
+
+fn read_audio_metadata(path: &Path) -> (Option<String>, Option<String>, Option<String>, Option<i64>) {
+    let tagged_file = match Probe::open(path).and_then(|probe| probe.read()) {
+        Ok(file) => file,
+        Err(_) => return (None, None, None, None),
+    };
+    let tag = tagged_file.primary_tag().or_else(|| tagged_file.first_tag());
+    let properties = tagged_file.properties();
+    (
+        tag.and_then(|tag| tag.title().map(|value| value.into_owned())),
+        tag.and_then(|tag| tag.artist().map(|value| value.into_owned())),
+        tag.and_then(|tag| tag.album().map(|value| value.into_owned())),
+        Some(properties.duration().as_millis().min(i64::MAX as u128) as i64),
+    )
 }
 
 fn media_type(path: &Path) -> Option<&'static str> {

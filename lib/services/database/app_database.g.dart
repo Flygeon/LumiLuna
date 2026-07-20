@@ -37,6 +37,12 @@ class $MediaItemsTable extends MediaItems
   late final GeneratedColumn<String> modified = GeneratedColumn<String>(
       'modified', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _fileHashMeta =
+      const VerificationMeta('fileHash');
+  @override
+  late final GeneratedColumn<int> fileHash = GeneratedColumn<int>(
+      'file_hash', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
@@ -93,6 +99,7 @@ class $MediaItemsTable extends MediaItems
         type,
         size,
         modified,
+        fileHash,
         title,
         artist,
         album,
@@ -139,6 +146,10 @@ class $MediaItemsTable extends MediaItems
           modified.isAcceptableOrUnknown(data['modified']!, _modifiedMeta));
     } else if (isInserting) {
       context.missing(_modifiedMeta);
+    }
+    if (data.containsKey('file_hash')) {
+      context.handle(_fileHashMeta,
+          fileHash.isAcceptableOrUnknown(data['file_hash']!, _fileHashMeta));
     }
     if (data.containsKey('title')) {
       context.handle(
@@ -201,6 +212,8 @@ class $MediaItemsTable extends MediaItems
           .read(DriftSqlType.int, data['${effectivePrefix}size'])!,
       modified: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}modified'])!,
+      fileHash: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}file_hash']),
       title: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}title']),
       artist: attachedDatabase.typeMapping
@@ -232,6 +245,7 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
   final String type;
   final int size;
   final String modified;
+  final int? fileHash;
   final String? title;
   final String? artist;
   final String? album;
@@ -246,6 +260,7 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
       required this.type,
       required this.size,
       required this.modified,
+      this.fileHash,
       this.title,
       this.artist,
       this.album,
@@ -262,6 +277,9 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
     map['type'] = Variable<String>(type);
     map['size'] = Variable<int>(size);
     map['modified'] = Variable<String>(modified);
+    if (!nullToAbsent || fileHash != null) {
+      map['file_hash'] = Variable<int>(fileHash);
+    }
     if (!nullToAbsent || title != null) {
       map['title'] = Variable<String>(title);
     }
@@ -290,6 +308,9 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
       type: Value(type),
       size: Value(size),
       modified: Value(modified),
+      fileHash: fileHash == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fileHash),
       title:
           title == null && nullToAbsent ? const Value.absent() : Value(title),
       artist:
@@ -317,6 +338,7 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
       type: serializer.fromJson<String>(json['type']),
       size: serializer.fromJson<int>(json['size']),
       modified: serializer.fromJson<String>(json['modified']),
+      fileHash: serializer.fromJson<int?>(json['fileHash']),
       title: serializer.fromJson<String?>(json['title']),
       artist: serializer.fromJson<String?>(json['artist']),
       album: serializer.fromJson<String?>(json['album']),
@@ -336,6 +358,7 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
       'type': serializer.toJson<String>(type),
       'size': serializer.toJson<int>(size),
       'modified': serializer.toJson<String>(modified),
+      'fileHash': serializer.toJson<int?>(fileHash),
       'title': serializer.toJson<String?>(title),
       'artist': serializer.toJson<String?>(artist),
       'album': serializer.toJson<String?>(album),
@@ -353,6 +376,7 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
           String? type,
           int? size,
           String? modified,
+          Value<int?> fileHash = const Value.absent(),
           Value<String?> title = const Value.absent(),
           Value<String?> artist = const Value.absent(),
           Value<String?> album = const Value.absent(),
@@ -367,6 +391,7 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
         type: type ?? this.type,
         size: size ?? this.size,
         modified: modified ?? this.modified,
+        fileHash: fileHash.present ? fileHash.value : this.fileHash,
         title: title.present ? title.value : this.title,
         artist: artist.present ? artist.value : this.artist,
         album: album.present ? album.value : this.album,
@@ -383,6 +408,7 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
       type: data.type.present ? data.type.value : this.type,
       size: data.size.present ? data.size.value : this.size,
       modified: data.modified.present ? data.modified.value : this.modified,
+      fileHash: data.fileHash.present ? data.fileHash.value : this.fileHash,
       title: data.title.present ? data.title.value : this.title,
       artist: data.artist.present ? data.artist.value : this.artist,
       album: data.album.present ? data.album.value : this.album,
@@ -406,6 +432,7 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
           ..write('type: $type, ')
           ..write('size: $size, ')
           ..write('modified: $modified, ')
+          ..write('fileHash: $fileHash, ')
           ..write('title: $title, ')
           ..write('artist: $artist, ')
           ..write('album: $album, ')
@@ -425,6 +452,7 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
       type,
       size,
       modified,
+      fileHash,
       title,
       artist,
       album,
@@ -442,6 +470,7 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
           other.type == this.type &&
           other.size == this.size &&
           other.modified == this.modified &&
+          other.fileHash == this.fileHash &&
           other.title == this.title &&
           other.artist == this.artist &&
           other.album == this.album &&
@@ -458,6 +487,7 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
   final Value<String> type;
   final Value<int> size;
   final Value<String> modified;
+  final Value<int?> fileHash;
   final Value<String?> title;
   final Value<String?> artist;
   final Value<String?> album;
@@ -473,6 +503,7 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
     this.type = const Value.absent(),
     this.size = const Value.absent(),
     this.modified = const Value.absent(),
+    this.fileHash = const Value.absent(),
     this.title = const Value.absent(),
     this.artist = const Value.absent(),
     this.album = const Value.absent(),
@@ -489,6 +520,7 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
     required String type,
     this.size = const Value.absent(),
     required String modified,
+    this.fileHash = const Value.absent(),
     this.title = const Value.absent(),
     this.artist = const Value.absent(),
     this.album = const Value.absent(),
@@ -509,6 +541,7 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
     Expression<String>? type,
     Expression<int>? size,
     Expression<String>? modified,
+    Expression<int>? fileHash,
     Expression<String>? title,
     Expression<String>? artist,
     Expression<String>? album,
@@ -525,6 +558,7 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
       if (type != null) 'type': type,
       if (size != null) 'size': size,
       if (modified != null) 'modified': modified,
+      if (fileHash != null) 'file_hash': fileHash,
       if (title != null) 'title': title,
       if (artist != null) 'artist': artist,
       if (album != null) 'album': album,
@@ -543,6 +577,7 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
       Value<String>? type,
       Value<int>? size,
       Value<String>? modified,
+      Value<int?>? fileHash,
       Value<String?>? title,
       Value<String?>? artist,
       Value<String?>? album,
@@ -558,6 +593,7 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
       type: type ?? this.type,
       size: size ?? this.size,
       modified: modified ?? this.modified,
+      fileHash: fileHash ?? this.fileHash,
       title: title ?? this.title,
       artist: artist ?? this.artist,
       album: album ?? this.album,
@@ -587,6 +623,9 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
     }
     if (modified.present) {
       map['modified'] = Variable<String>(modified.value);
+    }
+    if (fileHash.present) {
+      map['file_hash'] = Variable<int>(fileHash.value);
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
@@ -626,6 +665,7 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
           ..write('type: $type, ')
           ..write('size: $size, ')
           ..write('modified: $modified, ')
+          ..write('fileHash: $fileHash, ')
           ..write('title: $title, ')
           ..write('artist: $artist, ')
           ..write('album: $album, ')
@@ -2901,6 +2941,7 @@ typedef $$MediaItemsTableCreateCompanionBuilder = MediaItemsCompanion Function({
   required String type,
   Value<int> size,
   required String modified,
+  Value<int?> fileHash,
   Value<String?> title,
   Value<String?> artist,
   Value<String?> album,
@@ -2917,6 +2958,7 @@ typedef $$MediaItemsTableUpdateCompanionBuilder = MediaItemsCompanion Function({
   Value<String> type,
   Value<int> size,
   Value<String> modified,
+  Value<int?> fileHash,
   Value<String?> title,
   Value<String?> artist,
   Value<String?> album,
@@ -3016,6 +3058,9 @@ class $$MediaItemsTableFilterComposer
 
   ColumnFilters<String> get modified => $composableBuilder(
       column: $table.modified, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get fileHash => $composableBuilder(
+      column: $table.fileHash, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get title => $composableBuilder(
       column: $table.title, builder: (column) => ColumnFilters(column));
@@ -3150,6 +3195,9 @@ class $$MediaItemsTableOrderingComposer
   ColumnOrderings<String> get modified => $composableBuilder(
       column: $table.modified, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get fileHash => $composableBuilder(
+      column: $table.fileHash, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get title => $composableBuilder(
       column: $table.title, builder: (column) => ColumnOrderings(column));
 
@@ -3198,6 +3246,9 @@ class $$MediaItemsTableAnnotationComposer
 
   GeneratedColumn<String> get modified =>
       $composableBuilder(column: $table.modified, builder: (column) => column);
+
+  GeneratedColumn<int> get fileHash =>
+      $composableBuilder(column: $table.fileHash, builder: (column) => column);
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
@@ -3340,6 +3391,7 @@ class $$MediaItemsTableTableManager extends RootTableManager<
             Value<String> type = const Value.absent(),
             Value<int> size = const Value.absent(),
             Value<String> modified = const Value.absent(),
+            Value<int?> fileHash = const Value.absent(),
             Value<String?> title = const Value.absent(),
             Value<String?> artist = const Value.absent(),
             Value<String?> album = const Value.absent(),
@@ -3356,6 +3408,7 @@ class $$MediaItemsTableTableManager extends RootTableManager<
             type: type,
             size: size,
             modified: modified,
+            fileHash: fileHash,
             title: title,
             artist: artist,
             album: album,
@@ -3372,6 +3425,7 @@ class $$MediaItemsTableTableManager extends RootTableManager<
             required String type,
             Value<int> size = const Value.absent(),
             required String modified,
+            Value<int?> fileHash = const Value.absent(),
             Value<String?> title = const Value.absent(),
             Value<String?> artist = const Value.absent(),
             Value<String?> album = const Value.absent(),
@@ -3388,6 +3442,7 @@ class $$MediaItemsTableTableManager extends RootTableManager<
             type: type,
             size: size,
             modified: modified,
+            fileHash: fileHash,
             title: title,
             artist: artist,
             album: album,
