@@ -1,0 +1,1 @@
+C:\blog\media_library\rust\target\debug\lumiluna_rust.lib: C:\blog\media_library\rust\src\api\media_scan.rs C:\blog\media_library\rust\src\api\mod.rs C:\blog\media_library\rust\src\frb_generated.rs C:\blog\media_library\rust\src\lib.rs

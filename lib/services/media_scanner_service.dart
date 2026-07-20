@@ -7,9 +7,20 @@ import 'package:path_provider/path_provider.dart';
 import '../core/constants/app_constants.dart';
 import '../models/media_item.dart';
 import '../models/media_type.dart';
+import 'rust_scanner_service.dart';
 
 /// Scans local folders for media files on a background isolate.
+///
+/// Supports both Rust and Dart scanning implementations.
+/// Rust scanning is used by default for better performance,
+/// with automatic fallback to Dart if Rust is unavailable.
 class MediaScannerService {
+  static bool _useRustScanning = true;
+
+  static bool get useRustScanning => _useRustScanning;
+
+  static set useRustScanning(bool value) => _useRustScanning = value;
+
   /// Resolve the default media directories to scan (Pictures / Videos / Music).
   ///
   /// [path_provider] does not expose these on Windows directly, so we derive
@@ -61,12 +72,38 @@ class MediaScannerService {
   }
 
   /// Scan the given [folders] recursively and return all media items.
-  /// The filesystem walk runs on a background isolate; audio metadata is
-  /// enriched in parallel on worker isolates.
+  ///
+  /// Prefers Rust scanning for better performance. Falls back to Dart
+  /// if Rust is unavailable or encounters an error.
+  /// Audio metadata is enriched in parallel on worker isolates.
   static Future<List<MediaItem>> scan(List<String> folders) async {
     if (folders.isEmpty) return const [];
-    final items = await compute(_scanIsolate, folders);
+
+    List<MediaItem> items;
+    if (_useRustScanning && RustScannerService.isRustAvailable) {
+      try {
+        items = await _scanWithRust(folders);
+      } catch (_) {
+        items = await _scanWithDart(folders);
+      }
+    } else {
+      items = await _scanWithDart(folders);
+    }
+
     return _enrichAudioMetadataParallel(items);
+  }
+
+  /// Scan using Rust implementation.
+  static Future<List<MediaItem>> _scanWithRust(List<String> folders) async {
+    return await RustScannerService().scanMedia(
+      folders,
+      maxDepth: AppConstants.maxScanDepth,
+    );
+  }
+
+  /// Scan using Dart implementation (isolate-based).
+  static Future<List<MediaItem>> _scanWithDart(List<String> folders) async {
+    return await compute(_scanIsolate, folders);
   }
 
   static Future<List<MediaItem>> scanFiles(List<String> paths) async {

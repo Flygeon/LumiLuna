@@ -1,0 +1,94 @@
+cargo:rerun-if-env-changed=CC_FORCE_DISABLE
+CC_FORCE_DISABLE = None
+cargo:rerun-if-env-changed=VCINSTALLDIR
+VCINSTALLDIR = None
+cargo:rerun-if-env-changed=VSTEL_MSBuildProjectFullPath
+VSTEL_MSBuildProjectFullPath = None
+cargo:rerun-if-env-changed=VCToolsVersion
+VCToolsVersion = None
+cargo:rerun-if-env-changed=VCToolsVersion
+VCToolsVersion = None
+cargo:rerun-if-env-changed=CC_x86_64-pc-windows-msvc
+CC_x86_64-pc-windows-msvc = None
+cargo:rerun-if-env-changed=CC_x86_64_pc_windows_msvc
+CC_x86_64_pc_windows_msvc = None
+cargo:rerun-if-env-changed=HOST_CC
+HOST_CC = None
+cargo:rerun-if-env-changed=CC
+CC = None
+cargo:rerun-if-env-changed=CC_ENABLE_DEBUG_OUTPUT
+cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+CRATE_CC_NO_DEFAULTS = None
+cargo:rerun-if-env-changed=CFLAGS
+CFLAGS = None
+cargo:rerun-if-env-changed=HOST_CFLAGS
+HOST_CFLAGS = None
+cargo:rerun-if-env-changed=CFLAGS_x86_64_pc_windows_msvc
+CFLAGS_x86_64_pc_windows_msvc = None
+cargo:rerun-if-env-changed=CFLAGS_x86_64-pc-windows-msvc
+CFLAGS_x86_64-pc-windows-msvc = None
+dart_api_dl.c
+C:\Users\Admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dart-sys-4.1.5\dart-sdk\include\dart_api_dl.c(26): warning C4152: nonstandard extension, function/data pointer conversion in expression
+C:\Users\Admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dart-sys-4.1.5\dart-sdk\include\dart_api_dl.c(33): warning C4100: 'external_size': unreferenced formal parameter
+C:\Users\Admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dart-sys-4.1.5\dart-sdk\include\dart_api_dl.c(33): warning C4100: 'object': unreferenced formal parameter
+C:\Users\Admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dart-sys-4.1.5\dart-sdk\include\dart_api_dl.c(40): warning C4100: 'external_allocation_size': unreferenced formal parameter
+C:\Users\Admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dart-sys-4.1.5\dart-sdk\include\dart_api_dl.c(39): warning C4100: 'strong_ref_to_object': unreferenced formal parameter
+C:\Users\Admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dart-sys-4.1.5\dart-sdk\include\dart_api_dl.c(38): warning C4100: 'object': unreferenced formal parameter
+cargo:rerun-if-env-changed=AR_x86_64-pc-windows-msvc
+AR_x86_64-pc-windows-msvc = None
+cargo:rerun-if-env-changed=AR_x86_64_pc_windows_msvc
+AR_x86_64_pc_windows_msvc = None
+cargo:rerun-if-env-changed=HOST_AR
+HOST_AR = None
+cargo:rerun-if-env-changed=AR
+AR = None
+cargo:rerun-if-env-changed=VCINSTALLDIR
+VCINSTALLDIR = None
+cargo:rerun-if-env-changed=VSTEL_MSBuildProjectFullPath
+VSTEL_MSBuildProjectFullPath = None
+cargo:rerun-if-env-changed=VCToolsVersion
+VCToolsVersion = None
+cargo:rerun-if-env-changed=VCToolsVersion
+VCToolsVersion = None
+cargo:rerun-if-env-changed=CC_x86_64-pc-windows-msvc
+CC_x86_64-pc-windows-msvc = None
+cargo:rerun-if-env-changed=CC_x86_64_pc_windows_msvc
+CC_x86_64_pc_windows_msvc = None
+cargo:rerun-if-env-changed=HOST_CC
+HOST_CC = None
+cargo:rerun-if-env-changed=CC
+CC = None
+cargo:rerun-if-env-changed=VCINSTALLDIR
+VCINSTALLDIR = None
+cargo:rerun-if-env-changed=VSTEL_MSBuildProjectFullPath
+VSTEL_MSBuildProjectFullPath = None
+cargo:rerun-if-env-changed=VCToolsVersion
+VCToolsVersion = None
+cargo:rerun-if-env-changed=VCToolsVersion
+VCToolsVersion = None
+cargo:rerun-if-env-changed=ARFLAGS
+ARFLAGS = None
+cargo:rerun-if-env-changed=HOST_ARFLAGS
+HOST_ARFLAGS = None
+cargo:rerun-if-env-changed=ARFLAGS_x86_64_pc_windows_msvc
+ARFLAGS_x86_64_pc_windows_msvc = None
+cargo:rerun-if-env-changed=ARFLAGS_x86_64-pc-windows-msvc
+ARFLAGS_x86_64-pc-windows-msvc = None
+cargo:rerun-if-env-changed=VCINSTALLDIR
+VCINSTALLDIR = None
+cargo:rerun-if-env-changed=VSTEL_MSBuildProjectFullPath
+VSTEL_MSBuildProjectFullPath = None
+cargo:rerun-if-env-changed=VCToolsVersion
+VCToolsVersion = None
+cargo:rerun-if-env-changed=VCToolsVersion
+VCToolsVersion = None
+cargo:rerun-if-env-changed=CC_x86_64-pc-windows-msvc
+CC_x86_64-pc-windows-msvc = None
+cargo:rerun-if-env-changed=CC_x86_64_pc_windows_msvc
+CC_x86_64_pc_windows_msvc = None
+cargo:rerun-if-env-changed=HOST_CC
+HOST_CC = None
+cargo:rerun-if-env-changed=CC
+CC = None
+cargo:rustc-link-lib=static=dart_api_dl
+cargo:rustc-link-search=native=C:\blog\media_library\rust\target\debug\build\dart-sys-2dde16f1ff880bfc\out

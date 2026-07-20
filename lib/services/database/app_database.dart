@@ -275,28 +275,37 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> upsertMediaItems(List<MediaItem> items) async {
-    for (final item in items) {
-      final existing = await (select(mediaItems)
-            ..where((table) => table.path.equals(item.path)))
-          .getSingleOrNull();
-      await into(mediaItems).insertOnConflictUpdate(
-        MediaItemsCompanion(
-          path: Value(item.path),
-          name: Value(item.name),
-          type: Value(item.type.name),
-          size: Value(item.size),
-          modified: Value(item.modified.toIso8601String()),
-          title: Value(item.title),
-          artist: Value(item.artist),
-          album: Value(item.album),
-          durationMs: Value(item.durationMs),
-          artworkPath: Value(item.artworkPath),
-          isFavorite: Value(existing?.isFavorite ?? (item.isFavorite ? 1 : 0)),
-          folderPath: Value(item.folderPath),
-          scannedAt: Value(DateTime.now().toIso8601String()),
-        ),
-      );
+    if (items.isEmpty) return;
+    final existingMap = <String, int>{};
+    final paths = items.map((i) => i.path).toList();
+    final existingRows = await (select(mediaItems)..where((t) => t.path.isIn(paths))).get();
+    for (final row in existingRows) {
+      existingMap[row.path] = row.isFavorite;
     }
+    final now = DateTime.now().toIso8601String();
+    await batch((b) {
+      for (final item in items) {
+        b.insert(
+          mediaItems,
+          MediaItemsCompanion(
+            path: Value(item.path),
+            name: Value(item.name),
+            type: Value(item.type.name),
+            size: Value(item.size),
+            modified: Value(item.modified.toIso8601String()),
+            title: Value(item.title),
+            artist: Value(item.artist),
+            album: Value(item.album),
+            durationMs: Value(item.durationMs),
+            artworkPath: Value(item.artworkPath),
+            isFavorite: Value(existingMap[item.path] ?? (item.isFavorite ? 1 : 0)),
+            folderPath: Value(item.folderPath),
+            scannedAt: Value(now),
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+    });
   }
 
   Future<void> syncMediaItems(
@@ -318,7 +327,11 @@ class AppDatabase extends _$AppDatabase {
         .map((row) => row.path)
         .toList();
     await transaction(() async {
-      await upsertMediaItems(items);
+      const batchSize = 500;
+      for (var offset = 0; offset < items.length; offset += batchSize) {
+        final end = (offset + batchSize).clamp(0, items.length);
+        await upsertMediaItems(items.sublist(offset, end));
+      }
       if (stale.isNotEmpty) await removeMediaItems(stale);
     });
   }
