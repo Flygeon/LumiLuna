@@ -397,12 +397,25 @@ class AppDatabase extends _$AppDatabase {
       value.replaceAll('\\', '/').replaceAll(RegExp(r'/+'), '/').toLowerCase();
 
   Future<void> clearMediaItems() async {
-    await delete(mediaItems).go();
+    await transaction(() async {
+      await delete(playHistory).go();
+      await delete(collectionItems).go();
+      await delete(playlistItems).go();
+      await delete(mediaTags).go();
+      await delete(mediaItems).go();
+    });
   }
 
   Future<void> removeMediaItems(List<String> paths) async {
     for (final path in paths) {
-      await (delete(mediaItems)..where((t) => t.path.equals(path))).go();
+      await transaction(() async {
+        await (delete(collectionItems)..where((t) => t.mediaPath.equals(path))).go();
+        await (delete(playlistItems)..where((t) => t.mediaPath.equals(path))).go();
+        await (delete(playHistory)..where((t) => t.mediaPath.equals(path))).go();
+        // MediaTags has ON DELETE CASCADE, but explicit delete is safer
+        await (delete(mediaTags)..where((t) => t.mediaPath.equals(path))).go();
+        await (delete(mediaItems)..where((t) => t.path.equals(path))).go();
+      });
     }
   }
 
