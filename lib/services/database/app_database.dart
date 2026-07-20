@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../models/collection.dart';
 import '../../models/media_item.dart';
+import '../../models/media_metadata.dart';
 import '../../models/media_type.dart';
 import '../../models/playlist.dart';
 import '../../models/tag.dart';
@@ -345,20 +346,6 @@ class AppDatabase extends _$AppDatabase {
             folderPath: Value(item.folderPath),
             scannedAt: Value(now),
             thumbnailPath: Value(item.thumbnailPath),
-            imageWidth: Value(item.imageWidth),
-            imageHeight: Value(item.imageHeight),
-            imageDateTaken: Value(item.imageDateTaken),
-            imageCameraMake: Value(item.imageCameraMake),
-            imageCameraModel: Value(item.imageCameraModel),
-            imageGpsLat: Value(item.imageGpsLat),
-            imageGpsLng: Value(item.imageGpsLng),
-            imageIso: Value(item.imageIso),
-            imageFocalLength: Value(item.imageFocalLength),
-            imageFNumber: Value(item.imageFNumber),
-            videoWidth: Value(item.videoWidth),
-            videoHeight: Value(item.videoHeight),
-            videoCodec: Value(item.videoCodec),
-            videoFps: Value(item.videoFps),
           ),
           mode: InsertMode.insertOrReplace,
         );
@@ -900,19 +887,58 @@ class AppDatabase extends _$AppDatabase {
         artworkPath: row.artworkPath,
         isFavorite: row.isFavorite == 1,
         thumbnailPath: row.thumbnailPath,
-        imageWidth: row.imageWidth,
-        imageHeight: row.imageHeight,
-        imageDateTaken: row.imageDateTaken,
-        imageCameraMake: row.imageCameraMake,
-        imageCameraModel: row.imageCameraModel,
-        imageGpsLat: row.imageGpsLat,
-        imageGpsLng: row.imageGpsLng,
-        imageIso: row.imageIso,
-        imageFocalLength: row.imageFocalLength,
-        imageFNumber: row.imageFNumber,
-        videoWidth: row.videoWidth,
-        videoHeight: row.videoHeight,
-        videoCodec: row.videoCodec,
-        videoFps: row.videoFps,
       );
+
+  /// Load metadata for a single media item lazily.
+  Future<MediaMetadata?> getMediaMetadata(String path) async {
+    final row = await (select(mediaItems)..where((t) => t.path.equals(path)))
+        .getSingleOrNull();
+    if (row == null) return null;
+    return MediaMetadata(
+      mediaPath: row.path,
+      imageWidth: row.imageWidth,
+      imageHeight: row.imageHeight,
+      imageDateTaken: row.imageDateTaken,
+      imageCameraMake: row.imageCameraMake,
+      imageCameraModel: row.imageCameraModel,
+      imageGpsLat: row.imageGpsLat,
+      imageGpsLng: row.imageGpsLng,
+      imageIso: row.imageIso,
+      imageFocalLength: row.imageFocalLength,
+      imageFNumber: row.imageFNumber,
+      videoWidth: row.videoWidth,
+      videoHeight: row.videoHeight,
+      videoCodec: row.videoCodec,
+      videoFps: row.videoFps,
+    );
+  }
+
+  /// Update the metadata columns for an existing media item.
+  Future<void> upsertMediaMetadata(MediaMetadata metadata) async {
+    await (update(mediaItems)..where((t) => t.path.equals(metadata.mediaPath))).write(
+      MediaItemsCompanion(
+        imageWidth: Value(metadata.imageWidth),
+        imageHeight: Value(metadata.imageHeight),
+        imageDateTaken: Value(metadata.imageDateTaken),
+        imageCameraMake: Value(metadata.imageCameraMake),
+        imageCameraModel: Value(metadata.imageCameraModel),
+        imageGpsLat: Value(metadata.imageGpsLat),
+        imageGpsLng: Value(metadata.imageGpsLng),
+        imageIso: Value(metadata.imageIso),
+        imageFocalLength: Value(metadata.imageFocalLength),
+        imageFNumber: Value(metadata.imageFNumber),
+        videoWidth: Value(metadata.videoWidth),
+        videoHeight: Value(metadata.videoHeight),
+        videoCodec: Value(metadata.videoCodec),
+        videoFps: Value(metadata.videoFps),
+      ),
+    );
+  }
+
+  /// Batch update metadata for multiple items.
+  Future<void> upsertMediaMetadataBatch(List<MediaMetadata> metadataList) async {
+    for (final metadata in metadataList) {
+      await upsertMediaMetadata(metadata);
+    }
+  }
 }

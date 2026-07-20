@@ -1,11 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/media_item.dart';
+import '../providers/media_metadata_provider.dart';
 
 /// Shows detailed information about an image file, including EXIF metadata.
-class ImageDetailDialog extends StatelessWidget {
+class ImageDetailDialog extends ConsumerWidget {
   final MediaItem item;
 
   const ImageDetailDialog({super.key, required this.item});
@@ -18,9 +20,10 @@ class ImageDetailDialog extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final metadataAsync = ref.watch(mediaMetadataProvider(item.path));
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
@@ -59,50 +62,95 @@ class ImageDetailDialog extends StatelessWidget {
               _InfoRow(label: '大小', value: _formatSize(item.size)),
               _InfoRow(label: '修改时间', value: _formatDate(item.modified)),
 
-              if (item.imageWidth != null || item.imageHeight != null)
-                _InfoRow(
-                  label: '分辨率',
-                  value: '${item.imageWidth ?? '?'} × ${item.imageHeight ?? '?'}',
-                ),
+              // Resolution and EXIF metadata (lazily loaded)
+              metadataAsync.when(
+                data: (metadata) {
+                  final exifRows = <Widget>[];
+                  if (metadata?.imageWidth != null ||
+                      metadata?.imageHeight != null) {
+                    exifRows.add(_InfoRow(
+                      label: '分辨率',
+                      value:
+                          '${metadata?.imageWidth ?? '?'} × ${metadata?.imageHeight ?? '?'}',
+                    ));
+                  }
+                  if (metadata?.imageDateTaken != null) {
+                    exifRows.add(_InfoRow(
+                        label: '拍摄日期', value: metadata!.imageDateTaken!));
+                  }
+                  if (metadata?.imageCameraMake != null ||
+                      metadata?.imageCameraModel != null) {
+                    exifRows.add(_InfoRow(
+                      label: '相机型号',
+                      value:
+                          '${metadata?.imageCameraMake ?? ''} ${metadata?.imageCameraModel ?? ''}'
+                              .trim(),
+                    ));
+                  }
+                  if (metadata?.imageIso != null) {
+                    exifRows.add(
+                        _InfoRow(label: 'ISO', value: '${metadata!.imageIso}'));
+                  }
+                  if (metadata?.imageFocalLength != null) {
+                    exifRows.add(_InfoRow(
+                      label: '焦距',
+                      value:
+                          '${metadata!.imageFocalLength!.toStringAsFixed(1)} mm',
+                    ));
+                  }
+                  if (metadata?.imageFNumber != null) {
+                    exifRows.add(_InfoRow(
+                      label: '光圈',
+                      value:
+                          'f/${metadata!.imageFNumber!.toStringAsFixed(1)}',
+                    ));
+                  }
+                  if (metadata?.imageGpsLat != null &&
+                      metadata?.imageGpsLng != null) {
+                    exifRows.add(_InfoRow(
+                      label: 'GPS 坐标',
+                      value:
+                          '${metadata!.imageGpsLat!.toStringAsFixed(4)}, ${metadata.imageGpsLng!.toStringAsFixed(4)}',
+                    ));
+                  }
 
-              const Divider(height: 24),
+                  if (exifRows.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        '无可用 EXIF 数据',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    );
+                  }
 
-              // EXIF Information section
-              _SectionHeader(title: 'EXIF 元数据', icon: Icons.camera_alt_outlined),
-              if (item.imageDateTaken != null)
-                _InfoRow(label: '拍摄日期', value: item.imageDateTaken!),
-              if (item.imageCameraMake != null || item.imageCameraModel != null)
-                _InfoRow(
-                  label: '相机型号',
-                  value: '${item.imageCameraMake ?? ''} ${item.imageCameraModel ?? ''}'.trim(),
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Divider(height: 24),
+                      _SectionHeader(
+                          title: 'EXIF 元数据',
+                          icon: Icons.camera_alt_outlined),
+                      ...exifRows,
+                    ],
+                  );
+                },
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Center(child: CircularProgressIndicator()),
                 ),
-              if (item.imageIso != null)
-                _InfoRow(label: 'ISO', value: '${item.imageIso}'),
-              if (item.imageFocalLength != null)
-                _InfoRow(label: '焦距', value: '${item.imageFocalLength!.toStringAsFixed(1)} mm'),
-              if (item.imageFNumber != null)
-                _InfoRow(label: '光圈', value: 'f/${item.imageFNumber!.toStringAsFixed(1)}'),
-              if (item.imageGpsLat != null && item.imageGpsLng != null)
-                _InfoRow(
-                  label: 'GPS 坐标',
-                  value: '${item.imageGpsLat!.toStringAsFixed(4)}, ${item.imageGpsLng!.toStringAsFixed(4)}',
-                ),
-
-              // Show when no EXIF data available
-              if (item.imageDateTaken == null &&
-                  item.imageCameraMake == null &&
-                  item.imageCameraModel == null &&
-                  item.imageIso == null &&
-                  item.imageGpsLat == null)
-                Padding(
+                error: (_, __) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
-                    '无可用 EXIF 数据',
+                    '加载 EXIF 数据失败',
                     style: textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
                   ),
                 ),
+              ),
 
               const SizedBox(height: 16),
               Align(

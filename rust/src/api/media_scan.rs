@@ -162,10 +162,26 @@ fn parse_fps(fps_str: &str) -> Option<f64> {
 
 /// Generate a 300px-wide JPEG thumbnail for the given image file.
 /// Returns the output file path on success, None on failure.
-/// Currently a no-op; thumbnail generation is deferred to the Dart side
-/// for broader format support and to avoid additional crate dependencies.
-fn generate_thumbnail(_path: &Path, _cache_dir: &str, _size: i64, _modified_ms: i64) -> Option<String> {
-    None
+fn generate_thumbnail(path: &Path, cache_dir: &str, size: i64, modified_ms: i64) -> Option<String> {
+    let img = image::open(path).ok()?;
+    let thumb_dir = format!("{}/thumbnails", cache_dir);
+    std::fs::create_dir_all(&thumb_dir).ok()?;
+    let hash = xxh3_64(
+        format!("{}\0{}\0{}", path.to_string_lossy(), size, modified_ms).as_bytes(),
+    );
+    let output_path = format!("{}/{:016x}.jpg", thumb_dir, hash);
+
+    let (w, h) = (img.width(), img.height());
+    let max_width = 300u32;
+    let thumb = if w > max_width {
+        let ratio = max_width as f64 / w as f64;
+        let new_h = (h as f64 * ratio).round() as u32;
+        img.resize(max_width, new_h.max(1), image::imageops::FilterType::Lanczos3)
+    } else {
+        img
+    };
+    thumb.save(&output_path).ok()?;
+    Some(output_path)
 }
 
 fn gps_to_f64(

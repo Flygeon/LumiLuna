@@ -2,6 +2,7 @@ import '../src/rust/api.dart' as rust_core_api;
 import '../src/rust/api/media_scan.dart' as rust_api;
 import '../src/rust/frb_generated.dart';
 import '../models/media_item.dart';
+import '../models/media_metadata.dart';
 import '../models/media_type.dart';
 
 class RustScannerService {
@@ -141,6 +142,25 @@ class RustScannerService {
     }
   }
 
+  Future<ScanResult> scanMediaWithMetadata(List<String> folders,
+      {int maxDepth = 8, required String cacheDir}) async {
+    try {
+      await _ensureInitialized();
+      final rustItems = await rust_api.scanMedia(
+        folders: folders,
+        maxDepth: maxDepth,
+        cacheDir: cacheDir,
+      );
+      return ScanResult(
+        rustItems.map(_toMediaItem).toList(),
+        rustItems.map(_toMetadata).toList(),
+      );
+    } catch (_) {
+      _isRustAvailable = false;
+      rethrow;
+    }
+  }
+
   Future<void> _ensureInitialized() {
     final task = _initTask;
     if (task != null) return task;
@@ -169,6 +189,12 @@ class RustScannerService {
       durationMs: rustItem.durationMs?.toInt(),
       artworkPath: rustItem.artworkPath,
       thumbnailPath: rustItem.thumbnailPath,
+    );
+  }
+
+  MediaMetadata _toMetadata(rust_api.RustMediaItem rustItem) {
+    return MediaMetadata(
+      mediaPath: rustItem.path,
       imageWidth: rustItem.imageWidth,
       imageHeight: rustItem.imageHeight,
       imageDateTaken: rustItem.imageDateTaken,
@@ -192,4 +218,10 @@ class RustScannerService {
     _instance = null;
     _isRustAvailable = true;
   }
+}
+
+class ScanResult {
+  final List<MediaItem> items;
+  final List<MediaMetadata> metadata;
+  const ScanResult(this.items, this.metadata);
 }

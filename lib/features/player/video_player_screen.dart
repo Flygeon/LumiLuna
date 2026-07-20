@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../../l10n/l10n.dart';
+import '../../providers/media_metadata_provider.dart';
 import '../../providers/player_provider.dart';
 
 /// Video playback screen backed by the shared media_kit player.
@@ -21,6 +22,9 @@ class VideoPlayerScreen extends ConsumerWidget {
     );
     final rate = ref.watch(
       playbackControllerProvider.select((s) => s.rate),
+    );
+    final metadataAsync = ref.watch(
+      mediaMetadataProvider(current?.path ?? ''),
     );
 
     return PopScope(
@@ -112,12 +116,16 @@ class VideoPlayerScreen extends ConsumerWidget {
               bottom: 80,
               child: SafeArea(
                 top: false,
-                child: _VideoInfoBadge(
-                  width: current?.videoWidth,
-                  height: current?.videoHeight,
-                  codec: current?.videoCodec,
-                  fps: current?.videoFps,
-                  fileSize: current?.size,
+                child: metadataAsync.when(
+                  data: (metadata) => _VideoInfoBadge(
+                    width: metadata?.videoWidth,
+                    height: metadata?.videoHeight,
+                    codec: metadata?.videoCodec,
+                    fps: metadata?.videoFps,
+                    fileSize: current?.size,
+                  ),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
                 ),
               ),
             ),
