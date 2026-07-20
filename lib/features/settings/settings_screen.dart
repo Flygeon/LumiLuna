@@ -56,6 +56,29 @@ class SettingsScreen extends ConsumerWidget {
                   value: settings.musicBackgroundBlur,
                   onChanged: notifier.setMusicBackgroundBlur,
                 ),
+                SwitchListTile.adaptive(
+                  title: const Text('歌词模糊效果'),
+                  subtitle: const Text('弱化非当前播放歌词，突出当前歌词'),
+                  value: settings.lyricsBlur,
+                  onChanged: notifier.setLyricsBlur,
+                ),
+                ListTile(
+                  leading: const Icon(Icons.text_fields_outlined),
+                  title: const Text('歌词字号'),
+                  subtitle: Text('${settings.lyricsFontSize.toInt()} px'),
+                ),
+                Slider(
+                  value: settings.lyricsFontSize,
+                  min: 12,
+                  max: 24,
+                  divisions: 6,
+                  label: '${settings.lyricsFontSize.toInt()} px',
+                  padding: const EdgeInsetsDirectional.only(
+                    start: 72,
+                    end: 16,
+                  ),
+                  onChanged: notifier.setLyricsFontSize,
+                ),
               ]),
           _SettingsGroup(title: '通用', icon: Icons.tune_outlined, children: [
             _ThemeTile(settings: settings, notifier: notifier),
