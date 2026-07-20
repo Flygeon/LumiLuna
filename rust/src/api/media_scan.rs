@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::time::UNIX_EPOCH;
 
 use flutter_rust_bridge::frb;
@@ -35,6 +36,41 @@ pub fn stable_hash(path: String) -> u64 {
 pub fn stable_file_hash(path: String, size: i64, modified_ms: i64) -> u64 {
     let value = format!("{}\0{}\0{}", path, size, modified_ms);
     xxh3_64(value.as_bytes())
+}
+
+#[frb]
+pub fn extract_audio_cover(path: String, output_path: String) -> bool {
+    let tagged_file = match Probe::open(Path::new(&path)).and_then(|probe| probe.read()) {
+        Ok(file) => file,
+        Err(_) => return false,
+    };
+    let tag = tagged_file.primary_tag().or_else(|| tagged_file.first_tag());
+    let picture = match tag.and_then(|value| value.pictures().first()) {
+        Some(picture) => picture,
+        None => return false,
+    };
+    fs::write(output_path, picture.data()).is_ok()
+}
+
+#[frb]
+pub fn extract_video_cover(path: String, output_path: String, time_ms: u32) -> bool {
+    let seek = format!("{}ms", time_ms);
+    Command::new("ffmpeg")
+        .args([
+            "-y",
+            "-ss",
+            &seek,
+            "-i",
+            &path,
+            "-frames:v",
+            "1",
+            "-vf",
+            "scale='min(1280,iw)':-2",
+            &output_path,
+        ])
+        .output()
+        .map(|result| result.status.success() && Path::new(&output_path).is_file())
+        .unwrap_or(false)
 }
 
 #[frb]

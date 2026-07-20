@@ -93,9 +93,6 @@ class MediaScannerService {
       items = await _scanWithDart(folders);
     }
 
-    if (_useRustScanning && RustScannerService.isRustAvailable) {
-      return items;
-    }
     return _enrichAudioMetadataParallel(items);
   }
 

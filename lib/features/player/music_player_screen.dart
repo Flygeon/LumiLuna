@@ -56,63 +56,78 @@ class MusicPlayerScreen extends ConsumerWidget {
       onNext: controller.next,
       hasPrev: state.index > 0,
       hasNext: state.current != null && state.index < state.playlist.length - 1,
-      child: Scaffold(
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.chevron_left),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          title: Text(
-            l10n.nowPlaying,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-          centerTitle: true,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          systemNavigationBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarIconBrightness: Brightness.light,
         ),
-        body: state.current == null
-            ? Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+        child: Scaffold(
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            surfaceTintColor: Colors.transparent,
+            systemOverlayStyle: const SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness: Brightness.light,
+              systemNavigationBarColor: Colors.transparent,
+              systemNavigationBarIconBrightness: Brightness.light,
+            ),
+            leading: IconButton(
+              icon: const Icon(Icons.chevron_left),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            title: Text(
+              l10n.nowPlaying,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            centerTitle: true,
+          ),
+          body: state.current == null
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.music_note_outlined,
+                          size: 80, color: scheme.onSurfaceVariant),
+                      const SizedBox(height: 16),
+                      Text(l10n.notPlaying,
+                          style: Theme.of(context).textTheme.titleMedium),
+                    ],
+                  ),
+                )
+              : Stack(
                   children: [
-                    Icon(Icons.music_note_outlined,
-                        size: 80, color: scheme.onSurfaceVariant),
-                    const SizedBox(height: 16),
-                    Text(l10n.notPlaying,
-                        style: Theme.of(context).textTheme.titleMedium),
+                    Positioned.fill(
+                        child: _buildBackground(
+                            state.current!, scheme, blurBackground)),
+                    SafeArea(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isWide = constraints.maxWidth > 900;
+                          return isWide
+                              ? _WideLayout(
+                                  current: state.current!,
+                                  scheme: scheme,
+                                  controller: controller,
+                                  playlist: state.playlist,
+                                  playlistIndex: state.index,
+                                )
+                              : _NarrowLayout(
+                                  current: state.current!,
+                                  scheme: scheme,
+                                  controller: controller,
+                                  playlist: state.playlist,
+                                  playlistIndex: state.index,
+                                );
+                        },
+                      ),
+                    ),
                   ],
                 ),
-              )
-            : Stack(
-                children: [
-                  Positioned.fill(
-                      child: _buildBackground(
-                          state.current!, scheme, blurBackground)),
-                  SafeArea(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isWide = constraints.maxWidth > 900;
-                        return isWide
-                            ? _WideLayout(
-                                current: state.current!,
-                                scheme: scheme,
-                                controller: controller,
-                                playlist: state.playlist,
-                                playlistIndex: state.index,
-                              )
-                            : _NarrowLayout(
-                                current: state.current!,
-                                scheme: scheme,
-                                controller: controller,
-                                playlist: state.playlist,
-                                playlistIndex: state.index,
-                              );
-                      },
-                    ),
-                  ),
-                ],
-              ),
+        ),
       ),
     );
 

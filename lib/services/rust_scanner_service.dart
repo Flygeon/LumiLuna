@@ -55,6 +55,32 @@ class RustScannerService {
     }
   }
 
+  Future<bool> extractAudioCover(String path, String outputPath) async {
+    try {
+      await _ensureInitialized();
+      return await rust_api.extractAudioCover(
+          path: path, outputPath: outputPath);
+    } catch (_) {
+      _isRustAvailable = false;
+      return false;
+    }
+  }
+
+  Future<bool> extractVideoCover(String path, String outputPath,
+      {int timeMs = 0}) async {
+    try {
+      await _ensureInitialized();
+      return await rust_api.extractVideoCover(
+        path: path,
+        outputPath: outputPath,
+        timeMs: timeMs,
+      );
+    } catch (_) {
+      _isRustAvailable = false;
+      return false;
+    }
+  }
+
   Future<List<MediaItem>> scanMediaBatch(
     List<String> folders, {
     int maxDepth = 8,

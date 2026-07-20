@@ -10,6 +10,7 @@ import '../core/constants/app_constants.dart';
 import '../models/media_item.dart';
 import '../models/media_type.dart';
 import '../providers/tab_provider.dart';
+import '../services/rust_scanner_service.dart';
 import 'lazy_load_widget.dart';
 
 /// Displays a thumbnail for a [MediaItem].
@@ -177,7 +178,8 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
           .whenComplete(() => _pending.remove(key)));
       if (mounted && path != null) setState(() => _thumbPath = path);
     } catch (e, st) {
-      debugPrint('_VideoThumbnail._generate failed for ${widget.item.path}: $e\n$st');
+      debugPrint(
+          '_VideoThumbnail._generate failed for ${widget.item.path}: $e\n$st');
     }
   }
 
@@ -191,14 +193,20 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
 
       if (await File(dest).exists()) return dest;
 
-      final ok = await _plugin.getVideoThumbnail(
-        srcFile: item.path,
-        destFile: dest,
-        width: AppConstants.thumbnailCacheWidth,
-        height: AppConstants.thumbnailCacheWidth,
-        format: 'jpeg',
-        quality: 80,
-      );
+      var ok = false;
+      if (RustScannerService.isRustAvailable) {
+        ok = await RustScannerService().extractVideoCover(item.path, dest);
+      }
+      if (!ok) {
+        ok = await _plugin.getVideoThumbnail(
+          srcFile: item.path,
+          destFile: dest,
+          width: AppConstants.thumbnailCacheWidth,
+          height: AppConstants.thumbnailCacheWidth,
+          format: 'jpeg',
+          quality: 80,
+        );
+      }
       return ok ? dest : null;
     } catch (e, st) {
       debugPrint('_generateThumbnail failed for ${item.path}: $e\n$st');

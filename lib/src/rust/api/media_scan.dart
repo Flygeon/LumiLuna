@@ -21,6 +21,18 @@ Future<BigInt> stableFileHash(
     RustLib.instance.api.crateApiMediaScanStableFileHash(
         path: path, size: size, modifiedMs: modifiedMs);
 
+Future<bool> extractAudioCover(
+        {required String path, required String outputPath}) =>
+    RustLib.instance.api
+        .crateApiMediaScanExtractAudioCover(path: path, outputPath: outputPath);
+
+Future<bool> extractVideoCover(
+        {required String path,
+        required String outputPath,
+        required int timeMs}) =>
+    RustLib.instance.api.crateApiMediaScanExtractVideoCover(
+        path: path, outputPath: outputPath, timeMs: timeMs);
+
 Future<List<RustMediaItem>> scanMedia(
         {required List<String> folders, required int maxDepth}) =>
     RustLib.instance.api
