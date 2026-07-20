@@ -177,7 +177,7 @@ fn gps_to_f64(
     let field = exif.get_field(tag, exif::In::PRIMARY)?;
     let ref_field = exif.get_field(ref_tag, exif::In::PRIMARY)?;
     let components: Vec<f64> = match field.value {
-        exif::Value::Rational(ref vals) => vals.iter().map(|r| r.0 as f64 / r.1 as f64).collect(),
+        exif::Value::Rational(ref vals) => vals.iter().map(|r| r.num as f64 / r.denom as f64).collect(),
         _ => return None,
     };
     if components.len() != 3 {
@@ -253,13 +253,13 @@ fn read_exif(
     let focal_length = exif
         .get_field(exif::Tag::FocalLength, exif::In::PRIMARY)
         .and_then(|f| match f.value {
-            exif::Value::Rational(ref vals) => vals.first().map(|r| r.0 as f64 / r.1 as f64),
+            exif::Value::Rational(ref vals) => vals.first().map(|r| r.num as f64 / r.denom as f64),
             _ => None,
         });
     let f_number = exif
         .get_field(exif::Tag::FNumber, exif::In::PRIMARY)
         .and_then(|f| match f.value {
-            exif::Value::Rational(ref vals) => vals.first().map(|r| r.0 as f64 / r.1 as f64),
+            exif::Value::Rational(ref vals) => vals.first().map(|r| r.num as f64 / r.denom as f64),
             _ => None,
         });
 
@@ -421,7 +421,7 @@ fn walk(
     }
 }
 
-fn ext_for_mime(mime: &str) -> &str {
+fn ext_for_mime(mime: &str) -> &'static str {
     if mime.contains("png") {
         "png"
     } else if mime.contains("jpeg") || mime.contains("jpg") {
