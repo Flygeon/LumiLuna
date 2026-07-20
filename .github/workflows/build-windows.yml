@@ -41,6 +41,10 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
         continue-on-error: true
 
+      - name: Build Rust (verbose)
+        run: cargo check
+        working-directory: rust
+
       - name: Build Windows (release)
         run: flutter build windows --release
 
