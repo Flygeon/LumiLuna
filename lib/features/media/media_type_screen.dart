@@ -61,7 +61,7 @@ class _MediaTypeScreenState extends ConsumerState<MediaTypeScreen> {
 
     return AsyncView<List<MediaItem>>(
       value: async,
-      onRetry: () => ref.read(mediaProvider.notifier).rescan(),
+      onRetry: () => ref.read(mediaProvider.notifier).retry(),
       builder: (items) {
         if (items.isEmpty) {
           final typeLabel = mediaTypeName(context, widget.type);

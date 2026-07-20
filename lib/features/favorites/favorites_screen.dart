@@ -30,7 +30,7 @@ class FavoritesScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(l10n.favorite)),
       body: AsyncView<List<MediaItem>>(
         value: async,
-        onRetry: () => ref.read(mediaProvider.notifier).rescan(),
+        onRetry: () => ref.read(mediaProvider.notifier).retry(),
         builder: (all) {
           final items = all.where((i) => i.isFavorite).toList();
 

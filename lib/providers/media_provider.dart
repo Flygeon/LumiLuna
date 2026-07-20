@@ -82,7 +82,23 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
   }
 
   /// Force a rescan of the current folders.
+  ///
+  /// Unlike [retry], this preserves the currently-displayed data and runs the
+  /// scan in the background so the UI remains interactive immediately.
   Future<void> rescan() async {
+    final folders = ref.read(settingsProvider).scanFolders;
+    final target = folders.isNotEmpty
+        ? folders
+        : await MediaScannerService.defaultFolders();
+    if (target.isEmpty) return;
+
+    final db = ref.read(appDatabaseProvider);
+    unawaited(_refreshIndex(db, target));
+  }
+
+  /// Retry loading from scratch (shows loading spinner).
+  /// Used when the previous attempt resulted in an error.
+  Future<void> retry() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final folders = ref.read(settingsProvider).scanFolders;

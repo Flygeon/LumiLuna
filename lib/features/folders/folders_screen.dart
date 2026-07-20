@@ -27,7 +27,7 @@ class FoldersScreen extends ConsumerWidget {
         Expanded(
           child: AsyncView<List<MediaFolder>>(
             value: grouped,
-            onRetry: () => ref.read(mediaProvider.notifier).rescan(),
+            onRetry: () => ref.read(mediaProvider.notifier).retry(),
             builder: (folders) {
               if (folders.isEmpty) {
                 return EmptyState(
