@@ -92,12 +92,13 @@ abstract class RustLibApi extends BaseApi {
   Future<String> crateApiMediaScanPing();
 
   Future<List<RustMediaItem>> crateApiMediaScanScanMedia(
-      {required List<String> folders, required int maxDepth, required String cacheDir});
+      {required List<String> folders, required int maxDepth, required String cacheDir, required String existingHashesJson});
 
   Future<List<RustMediaItem>> crateApiMediaScanScanMediaBatch(
       {required List<String> folders,
       required int maxDepth,
       required String cacheDir,
+      required String existingHashesJson,
       required int offset,
       required int limit});
 
@@ -105,6 +106,7 @@ abstract class RustLibApi extends BaseApi {
       {required List<String> folders,
       required int maxDepth,
       required String cacheDir,
+      required String existingHashesJson,
       required int batchSize});
 
   Future<BigInt> crateApiMediaScanStableFileHash(
@@ -226,13 +228,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   Future<List<RustMediaItem>> crateApiMediaScanScanMedia(
-      {required List<String> folders, required int maxDepth, required String cacheDir}) {
+      {required List<String> folders, required int maxDepth, required String cacheDir, required String existingHashesJson}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_list_String(folders, serializer);
         sse_encode_u_32(maxDepth, serializer);
         sse_encode_String(cacheDir, serializer);
+        sse_encode_String(existingHashesJson, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 5, port: port_);
       },
@@ -241,14 +244,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeErrorData: null,
       ),
       constMeta: kCrateApiMediaScanScanMediaConstMeta,
-      argValues: [folders, maxDepth, cacheDir],
+      argValues: [folders, maxDepth, cacheDir, existingHashesJson],
       apiImpl: this,
     ));
   }
 
   TaskConstMeta get kCrateApiMediaScanScanMediaConstMeta => const TaskConstMeta(
         debugName: "scan_media",
-        argNames: ["folders", "maxDepth", "cacheDir"],
+        argNames: ["folders", "maxDepth", "cacheDir", "existingHashesJson"],
       );
 
   @override
@@ -256,6 +259,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       {required List<String> folders,
       required int maxDepth,
       required String cacheDir,
+      required String existingHashesJson,
       required int offset,
       required int limit}) {
     return handler.executeNormal(NormalTask(
@@ -264,6 +268,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_list_String(folders, serializer);
         sse_encode_u_32(maxDepth, serializer);
         sse_encode_String(cacheDir, serializer);
+        sse_encode_String(existingHashesJson, serializer);
         sse_encode_u_32(offset, serializer);
         sse_encode_u_32(limit, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
@@ -274,7 +279,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeErrorData: null,
       ),
       constMeta: kCrateApiMediaScanScanMediaBatchConstMeta,
-      argValues: [folders, maxDepth, cacheDir, offset, limit],
+      argValues: [folders, maxDepth, cacheDir, existingHashesJson, offset, limit],
       apiImpl: this,
     ));
   }
@@ -282,7 +287,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiMediaScanScanMediaBatchConstMeta =>
       const TaskConstMeta(
         debugName: "scan_media_batch",
-        argNames: ["folders", "maxDepth", "cacheDir", "offset", "limit"],
+        argNames: ["folders", "maxDepth", "cacheDir", "existingHashesJson", "offset", "limit"],
       );
 
   @override
@@ -290,6 +295,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       {required List<String> folders,
       required int maxDepth,
       required String cacheDir,
+      required String existingHashesJson,
       required int batchSize}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -297,6 +303,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_list_String(folders, serializer);
         sse_encode_u_32(maxDepth, serializer);
         sse_encode_String(cacheDir, serializer);
+        sse_encode_String(existingHashesJson, serializer);
         sse_encode_u_32(batchSize, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 7, port: port_);
@@ -306,7 +313,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeErrorData: null,
       ),
       constMeta: kCrateApiMediaScanScanMediaBatchesConstMeta,
-      argValues: [folders, maxDepth, cacheDir, batchSize],
+      argValues: [folders, maxDepth, cacheDir, existingHashesJson, batchSize],
       apiImpl: this,
     ));
   }
@@ -314,7 +321,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiMediaScanScanMediaBatchesConstMeta =>
       const TaskConstMeta(
         debugName: "scan_media_batches",
-        argNames: ["folders", "maxDepth", "cacheDir", "batchSize"],
+        argNames: ["folders", "maxDepth", "cacheDir", "existingHashesJson", "batchSize"],
       );
 
   @override

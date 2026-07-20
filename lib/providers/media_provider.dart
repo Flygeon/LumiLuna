@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/media_item.dart';
@@ -66,7 +68,9 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
 
   Future<void> _performRefresh(AppDatabase db, List<String> folders) async {
     try {
-      final result = await MediaScannerService.scan(folders);
+      final hashes = await db.getAllFileHashes();
+      final hashesJson = jsonEncode(hashes);
+      final result = await MediaScannerService.scan(folders, existingHashesJson: hashesJson);
       await db.syncMediaItems(result.items, folders, metadata: result.metadata);
       state = AsyncValue.data(await db.getAllMediaItems());
     } catch (_) {}
@@ -87,7 +91,9 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
           : await MediaScannerService.defaultFolders();
       if (target.isEmpty) return const <MediaItem>[];
       final db = ref.read(appDatabaseProvider);
-      final result = await MediaScannerService.scan(target);
+      final hashes = await db.getAllFileHashes();
+      final hashesJson = jsonEncode(hashes);
+      final result = await MediaScannerService.scan(target, existingHashesJson: hashesJson);
       await db.syncMediaItems(result.items, target, metadata: result.metadata);
       await ref.read(folderWatcherProvider).start(target);
       return result.items;

@@ -36,9 +36,10 @@ Future<bool> extractVideoCover(
 Future<List<RustMediaItem>> scanMedia(
         {required List<String> folders,
         required int maxDepth,
-        required String cacheDir}) =>
+        required String cacheDir,
+        required String existingHashesJson}) =>
     RustLib.instance.api.crateApiMediaScanScanMedia(
-        folders: folders, maxDepth: maxDepth, cacheDir: cacheDir);
+        folders: folders, maxDepth: maxDepth, cacheDir: cacheDir, existingHashesJson: existingHashesJson);
 
 Future<List<RustMediaItem>> scanMediaBatch(
         {required List<String> folders,
@@ -57,9 +58,10 @@ Future<List<List<RustMediaItem>>> scanMediaBatches(
         {required List<String> folders,
         required int maxDepth,
         required String cacheDir,
+        required String existingHashesJson,
         required int batchSize}) =>
     RustLib.instance.api.crateApiMediaScanScanMediaBatches(
-        folders: folders, maxDepth: maxDepth, cacheDir: cacheDir, batchSize: batchSize);
+        folders: folders, maxDepth: maxDepth, cacheDir: cacheDir, existingHashesJson: existingHashesJson, batchSize: batchSize);
 
 class RustMediaItem {
   final String path;

@@ -213,6 +213,7 @@ fn wire__crate__api__media_scan__scan_media_impl(
             let api_folders = <Vec<String>>::sse_decode(&mut deserializer);
             let api_max_depth = <u32>::sse_decode(&mut deserializer);
             let api_cache_dir = <String>::sse_decode(&mut deserializer);
+            let api_existing_hashes_json = <String>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, ()>((move || {
@@ -220,6 +221,7 @@ fn wire__crate__api__media_scan__scan_media_impl(
                         api_folders,
                         api_max_depth,
                         api_cache_dir,
+                        api_existing_hashes_json,
                     ))?;
                     Ok(output_ok)
                 })())
@@ -252,6 +254,7 @@ fn wire__crate__api__media_scan__scan_media_batch_impl(
             let api_folders = <Vec<String>>::sse_decode(&mut deserializer);
             let api_max_depth = <u32>::sse_decode(&mut deserializer);
             let api_cache_dir = <String>::sse_decode(&mut deserializer);
+            let api_existing_hashes_json = <String>::sse_decode(&mut deserializer);
             let api_offset = <u32>::sse_decode(&mut deserializer);
             let api_limit = <u32>::sse_decode(&mut deserializer);
             deserializer.end();
@@ -261,6 +264,7 @@ fn wire__crate__api__media_scan__scan_media_batch_impl(
                         api_folders,
                         api_max_depth,
                         api_cache_dir,
+                        api_existing_hashes_json,
                         api_offset,
                         api_limit,
                     ))?;
@@ -295,6 +299,7 @@ fn wire__crate__api__media_scan__scan_media_batches_impl(
             let api_folders = <Vec<String>>::sse_decode(&mut deserializer);
             let api_max_depth = <u32>::sse_decode(&mut deserializer);
             let api_cache_dir = <String>::sse_decode(&mut deserializer);
+            let api_existing_hashes_json = <String>::sse_decode(&mut deserializer);
             let api_batch_size = <u32>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
@@ -304,6 +309,7 @@ fn wire__crate__api__media_scan__scan_media_batches_impl(
                             api_folders,
                             api_max_depth,
                             api_cache_dir,
+                            api_existing_hashes_json,
                             api_batch_size,
                         ))?;
                     Ok(output_ok)

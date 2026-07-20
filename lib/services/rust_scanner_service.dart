@@ -143,13 +143,14 @@ class RustScannerService {
   }
 
   Future<ScanResult> scanMediaWithMetadata(List<String> folders,
-      {int maxDepth = 8, required String cacheDir}) async {
+      {int maxDepth = 8, required String cacheDir, String existingHashesJson = '{}'}) async {
     try {
       await _ensureInitialized();
       final rustItems = await rust_api.scanMedia(
         folders: folders,
         maxDepth: maxDepth,
         cacheDir: cacheDir,
+        existingHashesJson: existingHashesJson,
       );
       return ScanResult(
         rustItems.map(_toMediaItem).toList(),

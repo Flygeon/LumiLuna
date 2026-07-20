@@ -277,6 +277,19 @@ class AppDatabase extends _$AppDatabase {
     return row != null ? _mediaItemFromRow(row) : null;
   }
 
+  /// Return a map of normalized path → fileHash for all media items.
+  /// Used by the incremental scanner to skip unchanged files.
+  Future<Map<String, int>> getAllFileHashes() async {
+    final rows = await select(mediaItems).get();
+    final result = <String, int>{};
+    for (final row in rows) {
+      if (row.fileHash != null) {
+        result[row.path.replaceAll('\\', '/').toLowerCase()] = row.fileHash!;
+      }
+    }
+    return result;
+  }
+
   Future<int> getMediaCount({MediaType? type}) async {
     final count = mediaItems.path.count();
     final query = selectOnly(mediaItems)..addColumns([count]);

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -294,11 +295,13 @@ fn read_exif(
 }
 
 #[frb]
-pub fn scan_media(folders: Vec<String>, max_depth: u32, cache_dir: String) -> Vec<RustMediaItem> {
+pub fn scan_media(folders: Vec<String>, max_depth: u32, cache_dir: String, existing_hashes_json: String) -> Vec<RustMediaItem> {
     let mut items = Vec::new();
     let mut seen = std::collections::HashSet::new();
+    let existing: HashMap<String, u64> =
+        serde_json::from_str(&existing_hashes_json).unwrap_or_default();
     for folder in folders {
-        walk(Path::new(&folder), 0, max_depth, &mut seen, &mut items, &cache_dir);
+        walk(Path::new(&folder), 0, max_depth, &mut seen, &mut items, &cache_dir, &existing);
     }
     items.sort_by(|a, b| b.modified_ms.cmp(&a.modified_ms));
     items
@@ -309,10 +312,11 @@ pub fn scan_media_batch(
     folders: Vec<String>,
     max_depth: u32,
     cache_dir: String,
+    existing_hashes_json: String,
     offset: u32,
     limit: u32,
 ) -> Vec<RustMediaItem> {
-    let items = scan_media(folders, max_depth, cache_dir);
+    let items = scan_media(folders, max_depth, cache_dir, existing_hashes_json);
     let start = (offset as usize).min(items.len());
     let end = (start + limit as usize).min(items.len());
     items[start..end].to_vec()
@@ -323,9 +327,10 @@ pub fn scan_media_batches(
     folders: Vec<String>,
     max_depth: u32,
     cache_dir: String,
+    existing_hashes_json: String,
     batch_size: u32,
 ) -> Vec<Vec<RustMediaItem>> {
-    let items = scan_media(folders, max_depth, cache_dir);
+    let items = scan_media(folders, max_depth, cache_dir, existing_hashes_json);
     let size = batch_size.max(1) as usize;
     items.chunks(size).map(|batch| batch.to_vec()).collect()
 }
@@ -337,6 +342,7 @@ fn walk(
     seen: &mut std::collections::HashSet<PathBuf>,
     output: &mut Vec<RustMediaItem>,
     cache_dir: &str,
+    existing: &HashMap<String, u64>,
 ) {
     if depth > max_depth {
         return;
@@ -353,7 +359,7 @@ fn walk(
         };
         if path.is_dir() {
             if !name.starts_with('.') {
-                walk(&path, depth + 1, max_depth, seen, output, cache_dir);
+                walk(&path, depth + 1, max_depth, seen, output, cache_dir, existing);
             }
             continue;
         }
@@ -387,21 +393,28 @@ fn walk(
             size,
             modified_ms,
         );
-        let (title, artist, album, duration_ms, artwork_path) = if media_type == "audio" {
+
+        // Fast path: skip metadata extraction for files whose hash matches
+        // the previous scan — content hasn't changed.
+        let is_unchanged = existing
+            .get(&path.to_string_lossy().to_lowercase())
+            .is_some_and(|&h| h == file_hash);
+
+        let (title, artist, album, duration_ms, artwork_path) = if !is_unchanged && media_type == "audio" {
             read_audio_metadata(&path, cache_dir)
         } else {
             (None, None, None, None, None)
         };
         let (thumbnail_path, image_width, image_height, image_date_taken,
              image_camera_make, image_camera_model, image_gps_lat, image_gps_lng,
-             image_iso, image_focal_length, image_f_number) = if media_type == "image" {
+             image_iso, image_focal_length, image_f_number) = if !is_unchanged && media_type == "image" {
             let thumb = generate_thumbnail(&path, cache_dir, size, modified_ms);
             let exif = read_exif(&path);
             (thumb, exif.0, exif.1, exif.2, exif.3, exif.4, exif.5, exif.6, exif.7, exif.8, exif.9)
         } else {
             (None, None, None, None, None, None, None, None, None, None, None)
         };
-        let (video_width, video_height, video_codec, video_fps) = if media_type == "video" {
+        let (video_width, video_height, video_codec, video_fps) = if !is_unchanged && media_type == "video" {
             read_video_metadata(&path)
         } else {
             (None, None, None, None)
@@ -521,7 +534,7 @@ mod tests {
         write(nested.join("song.mp3"), b"audio").unwrap();
         write(nested.join("notes.txt"), b"text").unwrap();
 
-        let items = scan_media(vec![root.to_string_lossy().into_owned()], 8, String::new());
+        let items = scan_media(vec![root.to_string_lossy().into_owned()], 8, String::new(), String::new());
         assert_eq!(items.len(), 2);
         assert!(items.iter().any(|item| item.media_type == "image"));
         assert!(items.iter().any(|item| item.media_type == "audio"));
