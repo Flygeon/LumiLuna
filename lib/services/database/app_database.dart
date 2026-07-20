@@ -355,8 +355,9 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> syncMediaItems(
     List<MediaItem> items,
-    List<String> folders,
-  ) async {
+    List<String> folders, {
+    List<MediaMetadata>? metadata,
+  }) async {
     final normalizedFolders = folders
         .map((folder) => _normalizePath(folder))
         .where((folder) => folder.isNotEmpty)
@@ -372,11 +373,68 @@ class AppDatabase extends _$AppDatabase {
         .map((row) => row.path)
         .toList();
     await transaction(() async {
-      const batchSize = 500;
-      for (var offset = 0; offset < items.length; offset += batchSize) {
-        final end = (offset + batchSize).clamp(0, items.length);
-        await upsertMediaItems(items.sublist(offset, end));
+      final existingMap = <String, MediaItemRow>{};
+      final paths = items.map((i) => i.path).toList();
+      final existingRows =
+          await (select(mediaItems)..where((t) => t.path.isIn(paths))).get();
+      for (final row in existingRows) {
+        existingMap[row.path] = row;
       }
+      final metaMap =
+          {if (metadata != null) for (final m in metadata) m.mediaPath: m};
+      final now = DateTime.now().toIso8601String();
+      await batch((b) {
+        for (final item in items) {
+          final existing2 = existingMap[item.path];
+          final unchanged = existing2?.fileHash != null &&
+              item.fileHash != null &&
+              existing2!.fileHash == item.fileHash;
+          if (unchanged) continue; // skip unmodified files
+
+          final meta = metaMap[item.path];
+          b.insert(
+            mediaItems,
+            MediaItemsCompanion(
+              path: Value(item.path),
+              name: Value(item.name),
+              type: Value(item.type.name),
+              size: Value(item.size),
+              modified: Value(item.modified.toIso8601String()),
+              fileHash: Value(item.fileHash),
+              title: Value(item.title ?? existing2?.title),
+              artist: Value(item.artist ?? existing2?.artist),
+              album: Value(item.album ?? existing2?.album),
+              durationMs: Value(item.durationMs ?? existing2?.durationMs),
+              artworkPath: Value(item.artworkPath ?? existing2?.artworkPath),
+              isFavorite:
+                  Value(existing2?.isFavorite ?? (item.isFavorite ? 1 : 0)),
+              folderPath: Value(item.folderPath),
+              scannedAt: Value(now),
+              thumbnailPath: Value(item.thumbnailPath),
+              imageWidth: Value(meta?.imageWidth ?? existing2?.imageWidth),
+              imageHeight: Value(meta?.imageHeight ?? existing2?.imageHeight),
+              imageDateTaken:
+                  Value(meta?.imageDateTaken ?? existing2?.imageDateTaken),
+              imageCameraMake:
+                  Value(meta?.imageCameraMake ?? existing2?.imageCameraMake),
+              imageCameraModel:
+                  Value(meta?.imageCameraModel ?? existing2?.imageCameraModel),
+              imageGpsLat: Value(meta?.imageGpsLat ?? existing2?.imageGpsLat),
+              imageGpsLng: Value(meta?.imageGpsLng ?? existing2?.imageGpsLng),
+              imageIso: Value(meta?.imageIso ?? existing2?.imageIso),
+              imageFocalLength:
+                  Value(meta?.imageFocalLength ?? existing2?.imageFocalLength),
+              imageFNumber:
+                  Value(meta?.imageFNumber ?? existing2?.imageFNumber),
+              videoWidth: Value(meta?.videoWidth ?? existing2?.videoWidth),
+              videoHeight: Value(meta?.videoHeight ?? existing2?.videoHeight),
+              videoCodec: Value(meta?.videoCodec ?? existing2?.videoCodec),
+              videoFps: Value(meta?.videoFps ?? existing2?.videoFps),
+            ),
+            mode: InsertMode.insertOrReplace,
+          );
+        }
+      });
       if (stale.isNotEmpty) await removeMediaItems(stale);
     });
   }
@@ -950,8 +1008,30 @@ class AppDatabase extends _$AppDatabase {
 
   /// Batch update metadata for multiple items.
   Future<void> upsertMediaMetadataBatch(List<MediaMetadata> metadataList) async {
-    for (final metadata in metadataList) {
-      await upsertMediaMetadata(metadata);
-    }
+    if (metadataList.isEmpty) return;
+    await batch((b) {
+      for (final m in metadataList) {
+        b.update(
+          mediaItems,
+          MediaItemsCompanion(
+            imageWidth: Value(m.imageWidth),
+            imageHeight: Value(m.imageHeight),
+            imageDateTaken: Value(m.imageDateTaken),
+            imageCameraMake: Value(m.imageCameraMake),
+            imageCameraModel: Value(m.imageCameraModel),
+            imageGpsLat: Value(m.imageGpsLat),
+            imageGpsLng: Value(m.imageGpsLng),
+            imageIso: Value(m.imageIso),
+            imageFocalLength: Value(m.imageFocalLength),
+            imageFNumber: Value(m.imageFNumber),
+            videoWidth: Value(m.videoWidth),
+            videoHeight: Value(m.videoHeight),
+            videoCodec: Value(m.videoCodec),
+            videoFps: Value(m.videoFps),
+          ),
+          where: (t) => t.path.equals(m.mediaPath),
+        );
+      }
+    });
   }
 }

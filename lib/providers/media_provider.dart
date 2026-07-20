@@ -44,10 +44,10 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
     }
 
     // Database empty — perform a full scan and persist.
-    final items = await MediaScannerService.scan(target, db: db);
-    await db.syncMediaItems(items, target);
+    final result = await MediaScannerService.scan(target);
+    await db.syncMediaItems(result.items, target, metadata: result.metadata);
     await watcher.start(target);
-    return items;
+    return result.items;
   }
 
   Future<void> _refreshIndex(AppDatabase db, List<String> folders) {
@@ -66,8 +66,8 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
 
   Future<void> _performRefresh(AppDatabase db, List<String> folders) async {
     try {
-      final items = await MediaScannerService.scan(folders, db: db);
-      await db.syncMediaItems(items, folders);
+      final result = await MediaScannerService.scan(folders);
+      await db.syncMediaItems(result.items, folders, metadata: result.metadata);
       state = AsyncValue.data(await db.getAllMediaItems());
     } catch (_) {}
   }
@@ -87,10 +87,10 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
           : await MediaScannerService.defaultFolders();
       if (target.isEmpty) return const <MediaItem>[];
       final db = ref.read(appDatabaseProvider);
-      final items = await MediaScannerService.scan(target, db: db);
-      await db.syncMediaItems(items, target);
+      final result = await MediaScannerService.scan(target);
+      await db.syncMediaItems(result.items, target, metadata: result.metadata);
       await ref.read(folderWatcherProvider).start(target);
-      return items;
+      return result.items;
     });
   }
 

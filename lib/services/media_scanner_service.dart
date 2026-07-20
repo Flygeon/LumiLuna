@@ -7,9 +7,16 @@ import 'package:path_provider/path_provider.dart';
 
 import '../core/constants/app_constants.dart';
 import '../models/media_item.dart';
+import '../models/media_metadata.dart';
 import '../models/media_type.dart';
-import 'database/app_database.dart';
 import 'rust_scanner_service.dart';
+
+/// The result of a scan — slim [MediaItem]s plus their [MediaMetadata].
+class ScanResult {
+  final List<MediaItem> items;
+  final List<MediaMetadata> metadata;
+  const ScanResult(this.items, this.metadata);
+}
 
 /// Scans local folders for media files on a background isolate.
 ///
@@ -78,31 +85,26 @@ class MediaScannerService {
   /// Prefers Rust scanning for better performance. Falls back to Dart
   /// if Rust is unavailable or encounters an error.
   /// Audio metadata is enriched in parallel on worker isolates.
-  static Future<List<MediaItem>> scan(List<String> folders, {AppDatabase? db}) async {
-    if (folders.isEmpty) return const [];
+  static Future<ScanResult> scan(List<String> folders) async {
+    if (folders.isEmpty) return const ScanResult([], []);
 
     final cacheDir = await getTemporaryDirectory();
     final cacheRoot = '${cacheDir.path}/lumiluna_cache';
 
-    List<MediaItem> items;
     if (_useRustScanning && RustScannerService.isRustAvailable) {
       try {
-        final result = await RustScannerService().scanMediaWithMetadata(
+        return await RustScannerService().scanMediaWithMetadata(
           folders,
           maxDepth: AppConstants.maxScanDepth,
           cacheDir: cacheRoot,
         );
-        // Write metadata to database if available
-        if (db != null && result.metadata.isNotEmpty) {
-          await db.upsertMediaMetadataBatch(result.metadata);
-        }
-        return result.items;
       } catch (_) {
         // Fall through to Dart scan
       }
     }
-    items = await _scanWithDart(folders);
-    return _enrichAudioMetadataParallel(items);
+    final items = await _scanWithDart(folders);
+    final enriched = await _enrichAudioMetadataParallel(items);
+    return ScanResult(enriched, const []);
   }
 
   /// Scan using Rust implementation.
