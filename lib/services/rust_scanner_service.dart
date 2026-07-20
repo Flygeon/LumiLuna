@@ -95,6 +95,7 @@ class RustScannerService {
         folders: folders,
         maxDepth: maxDepth,
         cacheDir: cacheDir,
+        existingHashesJson: '{}',
         offset: offset,
         limit: limit,
       );
@@ -117,6 +118,7 @@ class RustScannerService {
         folders: folders,
         maxDepth: maxDepth,
         cacheDir: cacheDir,
+        existingHashesJson: '{}',
         batchSize: batchSize,
       );
       return [for (final batch in batches) ...batch.map(_toMediaItem)];
@@ -134,6 +136,7 @@ class RustScannerService {
         folders: folders,
         maxDepth: maxDepth,
         cacheDir: cacheDir,
+        existingHashesJson: '{}',
       );
       return rustItems.map(_toMediaItem).toList();
     } catch (_) {

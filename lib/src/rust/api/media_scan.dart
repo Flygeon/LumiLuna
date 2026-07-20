@@ -45,12 +45,14 @@ Future<List<RustMediaItem>> scanMediaBatch(
         {required List<String> folders,
         required int maxDepth,
         required String cacheDir,
+        required String existingHashesJson,
         required int offset,
         required int limit}) =>
     RustLib.instance.api.crateApiMediaScanScanMediaBatch(
         folders: folders,
         maxDepth: maxDepth,
         cacheDir: cacheDir,
+        existingHashesJson: existingHashesJson,
         offset: offset,
         limit: limit);
 
