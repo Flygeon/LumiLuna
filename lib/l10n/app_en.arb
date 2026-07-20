@@ -125,5 +125,18 @@
   "sortDuration": "Duration",
   "sortAscending": "Ascending",
   "sortDescending": "Descending",
-  "playbackSpeed": "Playback speed"
+  "playbackSpeed": "Playback speed",
+
+  "imageDetails": "Image Details",
+  "fileInfo": "File Info",
+  "exifMetadata": "EXIF Metadata",
+  "noExifData": "No EXIF data available",
+  "resolution": "Resolution",
+  "cameraModel": "Camera",
+  "focalLength": "Focal Length",
+  "aperture": "Aperture",
+  "gpsCoordinates": "GPS Coordinates",
+  "close": "Close",
+  "details": "Details",
+  "detailsHint": "View file info and EXIF metadata"
 }

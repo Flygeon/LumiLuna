@@ -34,24 +34,32 @@ Future<bool> extractVideoCover(
         path: path, outputPath: outputPath, timeMs: timeMs);
 
 Future<List<RustMediaItem>> scanMedia(
-        {required List<String> folders, required int maxDepth}) =>
-    RustLib.instance.api
-        .crateApiMediaScanScanMedia(folders: folders, maxDepth: maxDepth);
+        {required List<String> folders,
+        required int maxDepth,
+        required String cacheDir}) =>
+    RustLib.instance.api.crateApiMediaScanScanMedia(
+        folders: folders, maxDepth: maxDepth, cacheDir: cacheDir);
 
 Future<List<RustMediaItem>> scanMediaBatch(
         {required List<String> folders,
         required int maxDepth,
+        required String cacheDir,
         required int offset,
         required int limit}) =>
     RustLib.instance.api.crateApiMediaScanScanMediaBatch(
-        folders: folders, maxDepth: maxDepth, offset: offset, limit: limit);
+        folders: folders,
+        maxDepth: maxDepth,
+        cacheDir: cacheDir,
+        offset: offset,
+        limit: limit);
 
 Future<List<List<RustMediaItem>>> scanMediaBatches(
         {required List<String> folders,
         required int maxDepth,
+        required String cacheDir,
         required int batchSize}) =>
     RustLib.instance.api.crateApiMediaScanScanMediaBatches(
-        folders: folders, maxDepth: maxDepth, batchSize: batchSize);
+        folders: folders, maxDepth: maxDepth, cacheDir: cacheDir, batchSize: batchSize);
 
 class RustMediaItem {
   final String path;
@@ -64,6 +72,22 @@ class RustMediaItem {
   final String? artist;
   final String? album;
   final PlatformInt64? durationMs;
+  final String? artworkPath;
+  final String? thumbnailPath;
+  final int? imageWidth;
+  final int? imageHeight;
+  final String? imageDateTaken;
+  final String? imageCameraMake;
+  final String? imageCameraModel;
+  final double? imageGpsLat;
+  final double? imageGpsLng;
+  final int? imageIso;
+  final double? imageFocalLength;
+  final double? imageFNumber;
+  final int? videoWidth;
+  final int? videoHeight;
+  final String? videoCodec;
+  final double? videoFps;
 
   const RustMediaItem({
     required this.path,
@@ -76,6 +100,22 @@ class RustMediaItem {
     this.artist,
     this.album,
     this.durationMs,
+    this.artworkPath,
+    this.thumbnailPath,
+    this.imageWidth,
+    this.imageHeight,
+    this.imageDateTaken,
+    this.imageCameraMake,
+    this.imageCameraModel,
+    this.imageGpsLat,
+    this.imageGpsLng,
+    this.imageIso,
+    this.imageFocalLength,
+    this.imageFNumber,
+    this.videoWidth,
+    this.videoHeight,
+    this.videoCodec,
+    this.videoFps,
   });
 
   @override
@@ -89,7 +129,23 @@ class RustMediaItem {
       title.hashCode ^
       artist.hashCode ^
       album.hashCode ^
-      durationMs.hashCode;
+      durationMs.hashCode ^
+      artworkPath.hashCode ^
+      thumbnailPath.hashCode ^
+      imageWidth.hashCode ^
+      imageHeight.hashCode ^
+      imageDateTaken.hashCode ^
+      imageCameraMake.hashCode ^
+      imageCameraModel.hashCode ^
+      imageGpsLat.hashCode ^
+      imageGpsLng.hashCode ^
+      imageIso.hashCode ^
+      imageFocalLength.hashCode ^
+      imageFNumber.hashCode ^
+      videoWidth.hashCode ^
+      videoHeight.hashCode ^
+      videoCodec.hashCode ^
+      videoFps.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -105,5 +161,21 @@ class RustMediaItem {
           title == other.title &&
           artist == other.artist &&
           album == other.album &&
-          durationMs == other.durationMs;
+          durationMs == other.durationMs &&
+          artworkPath == other.artworkPath &&
+          thumbnailPath == other.thumbnailPath &&
+          imageWidth == other.imageWidth &&
+          imageHeight == other.imageHeight &&
+          imageDateTaken == other.imageDateTaken &&
+          imageCameraMake == other.imageCameraMake &&
+          imageCameraModel == other.imageCameraModel &&
+          imageGpsLat == other.imageGpsLat &&
+          imageGpsLng == other.imageGpsLng &&
+          imageIso == other.imageIso &&
+          imageFocalLength == other.imageFocalLength &&
+          imageFNumber == other.imageFNumber &&
+          videoWidth == other.videoWidth &&
+          videoHeight == other.videoHeight &&
+          videoCodec == other.videoCodec &&
+          videoFps == other.videoFps;
 }

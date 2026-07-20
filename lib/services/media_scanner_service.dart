@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:audio_metadata_reader/audio_metadata_reader.dart';
@@ -79,15 +80,30 @@ class MediaScannerService {
   static Future<List<MediaItem>> scan(List<String> folders) async {
     if (folders.isEmpty) return const [];
 
-    final items = await _scanWithDart(folders);
+    final cacheDir = await getTemporaryDirectory();
+    final cacheRoot = '${cacheDir.path}/lumiluna_cache';
+
+    List<MediaItem> items;
+    if (_useRustScanning && RustScannerService.isRustAvailable) {
+      try {
+        items = await _scanWithRust(folders, cacheRoot);
+        // Rust already extracts cover art, no need for audio enrichment
+        return items;
+      } catch (_) {
+        // Fall through to Dart scan
+      }
+    }
+    items = await _scanWithDart(folders);
     return _enrichAudioMetadataParallel(items);
   }
 
   /// Scan using Rust implementation.
-  static Future<List<MediaItem>> _scanWithRust(List<String> folders) async {
+  static Future<List<MediaItem>> _scanWithRust(
+      List<String> folders, String cacheDir) async {
     return await RustScannerService().scanMedia(
       folders,
       maxDepth: AppConstants.maxScanDepth,
+      cacheDir: cacheDir,
     );
   }
 
@@ -243,7 +259,15 @@ class MediaScannerService {
         String? artPath;
         if (meta.pictures.isNotEmpty) {
           final pic = meta.pictures.first;
-          final key = item.path.hashCode.abs().toString();
+          // Use FNV-1a hash for stable artwork filename (avoids hashCode collision)
+          final input =
+              '${item.path}|${item.size}|${item.modified.millisecondsSinceEpoch}';
+          var hash = 0xcbf29ce484222325;
+          for (final unit in utf8.encode(input)) {
+            hash ^= unit;
+            hash = (hash * 0x100000001b3) & 0x7fffffffffffffff;
+          }
+          final key = hash.toRadixString(16);
           final dest = '$artworkDir/$key${_extForMime(pic.mimetype)}';
           final file = File(dest);
           if (!file.existsSync()) {

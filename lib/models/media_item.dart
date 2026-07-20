@@ -23,6 +23,39 @@ class MediaItem {
   /// Whether the user has marked this item as a favourite.
   final bool isFavorite;
 
+  /// Thumbnail / preview image path (image/video).
+  final String? thumbnailPath;
+
+  /// Image dimensions (image types).
+  final int? imageWidth;
+  final int? imageHeight;
+
+  /// Image EXIF date taken.
+  final String? imageDateTaken;
+
+  /// Image camera make/model (EXIF).
+  final String? imageCameraMake;
+  final String? imageCameraModel;
+
+  /// Image GPS coordinates (EXIF).
+  final double? imageGpsLat;
+  final double? imageGpsLng;
+
+  /// Image EXIF metadata.
+  final int? imageIso;
+  final double? imageFocalLength;
+  final double? imageFNumber;
+
+  /// Video resolution (video types).
+  final int? videoWidth;
+  final int? videoHeight;
+
+  /// Video codec string (e.g. "h264").
+  final String? videoCodec;
+
+  /// Video framerate in frames-per-second.
+  final double? videoFps;
+
   const MediaItem({
     required this.path,
     required this.name,
@@ -36,6 +69,21 @@ class MediaItem {
     this.durationMs,
     this.artworkPath,
     this.isFavorite = false,
+    this.thumbnailPath,
+    this.imageWidth,
+    this.imageHeight,
+    this.imageDateTaken,
+    this.imageCameraMake,
+    this.imageCameraModel,
+    this.imageGpsLat,
+    this.imageGpsLng,
+    this.imageIso,
+    this.imageFocalLength,
+    this.imageFNumber,
+    this.videoWidth,
+    this.videoHeight,
+    this.videoCodec,
+    this.videoFps,
   });
 
   /// The immediate parent directory path.
@@ -83,7 +131,7 @@ class MediaItem {
     );
   }
 
-  /// Returns a copy with audio metadata filled in (used by the scanner).
+  /// Returns a copy with metadata filled in (used by the scanner).
   MediaItem copyWith({
     String? title,
     String? artist,
@@ -94,6 +142,21 @@ class MediaItem {
     bool? isFavorite,
     String? name,
     String? path,
+    String? thumbnailPath,
+    int? imageWidth,
+    int? imageHeight,
+    String? imageDateTaken,
+    String? imageCameraMake,
+    String? imageCameraModel,
+    double? imageGpsLat,
+    double? imageGpsLng,
+    int? imageIso,
+    double? imageFocalLength,
+    double? imageFNumber,
+    int? videoWidth,
+    int? videoHeight,
+    String? videoCodec,
+    double? videoFps,
   }) {
     return MediaItem(
       path: path ?? this.path,
@@ -108,6 +171,21 @@ class MediaItem {
       durationMs: durationMs ?? this.durationMs,
       artworkPath: artworkPath ?? this.artworkPath,
       isFavorite: isFavorite ?? this.isFavorite,
+      thumbnailPath: thumbnailPath ?? this.thumbnailPath,
+      imageWidth: imageWidth ?? this.imageWidth,
+      imageHeight: imageHeight ?? this.imageHeight,
+      imageDateTaken: imageDateTaken ?? this.imageDateTaken,
+      imageCameraMake: imageCameraMake ?? this.imageCameraMake,
+      imageCameraModel: imageCameraModel ?? this.imageCameraModel,
+      imageGpsLat: imageGpsLat ?? this.imageGpsLat,
+      imageGpsLng: imageGpsLng ?? this.imageGpsLng,
+      imageIso: imageIso ?? this.imageIso,
+      imageFocalLength: imageFocalLength ?? this.imageFocalLength,
+      imageFNumber: imageFNumber ?? this.imageFNumber,
+      videoWidth: videoWidth ?? this.videoWidth,
+      videoHeight: videoHeight ?? this.videoHeight,
+      videoCodec: videoCodec ?? this.videoCodec,
+      videoFps: videoFps ?? this.videoFps,
     );
   }
 
@@ -171,6 +249,21 @@ class MediaItem {
         'durationMs': durationMs,
         'artworkPath': artworkPath,
         'isFavorite': isFavorite,
+        'thumbnailPath': thumbnailPath,
+        'imageWidth': imageWidth,
+        'imageHeight': imageHeight,
+        'imageDateTaken': imageDateTaken,
+        'imageCameraMake': imageCameraMake,
+        'imageCameraModel': imageCameraModel,
+        'imageGpsLat': imageGpsLat,
+        'imageGpsLng': imageGpsLng,
+        'imageIso': imageIso,
+        'imageFocalLength': imageFocalLength,
+        'imageFNumber': imageFNumber,
+        'videoWidth': videoWidth,
+        'videoHeight': videoHeight,
+        'videoCodec': videoCodec,
+        'videoFps': videoFps,
       };
 
   /// Deserialize from a JSON map produced by [toJson].
@@ -187,6 +280,21 @@ class MediaItem {
         durationMs: json['durationMs'] as int?,
         artworkPath: json['artworkPath'] as String?,
         isFavorite: (json['isFavorite'] as bool?) ?? false,
+        thumbnailPath: json['thumbnailPath'] as String?,
+        imageWidth: json['imageWidth'] as int?,
+        imageHeight: json['imageHeight'] as int?,
+        imageDateTaken: json['imageDateTaken'] as String?,
+        imageCameraMake: json['imageCameraMake'] as String?,
+        imageCameraModel: json['imageCameraModel'] as String?,
+        imageGpsLat: (json['imageGpsLat'] as num?)?.toDouble(),
+        imageGpsLng: (json['imageGpsLng'] as num?)?.toDouble(),
+        imageIso: json['imageIso'] as int?,
+        imageFocalLength: (json['imageFocalLength'] as num?)?.toDouble(),
+        imageFNumber: (json['imageFNumber'] as num?)?.toDouble(),
+        videoWidth: json['videoWidth'] as int?,
+        videoHeight: json['videoHeight'] as int?,
+        videoCodec: json['videoCodec'] as String?,
+        videoFps: (json['videoFps'] as num?)?.toDouble(),
       );
 
   @override

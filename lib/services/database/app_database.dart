@@ -33,6 +33,21 @@ class MediaItems extends Table {
   IntColumn get isFavorite => integer().withDefault(const Constant(0))();
   TextColumn get folderPath => text()();
   TextColumn get scannedAt => text().withDefault(Constant(''))();
+  TextColumn? get thumbnailPath => text().nullable()();
+  IntColumn? get imageWidth => integer().nullable()();
+  IntColumn? get imageHeight => integer().nullable()();
+  TextColumn? get imageDateTaken => text().nullable()();
+  TextColumn? get imageCameraMake => text().nullable()();
+  TextColumn? get imageCameraModel => text().nullable()();
+  RealColumn? get imageGpsLat => real().nullable()();
+  RealColumn? get imageGpsLng => real().nullable()();
+  IntColumn? get imageIso => integer().nullable()();
+  RealColumn? get imageFocalLength => real().nullable()();
+  RealColumn? get imageFNumber => real().nullable()();
+  IntColumn? get videoWidth => integer().nullable()();
+  IntColumn? get videoHeight => integer().nullable()();
+  TextColumn? get videoCodec => text().nullable()();
+  RealColumn? get videoFps => real().nullable()();
 
   @override
   Set<Column> get primaryKey => {path};
@@ -160,7 +175,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration {
@@ -179,6 +194,23 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 4) {
           await m.addColumn(mediaItems, mediaItems.fileHash);
+        }
+        if (from < 5) {
+          await m.addColumn(mediaItems, mediaItems.thumbnailPath);
+          await m.addColumn(mediaItems, mediaItems.imageWidth);
+          await m.addColumn(mediaItems, mediaItems.imageHeight);
+          await m.addColumn(mediaItems, mediaItems.imageDateTaken);
+          await m.addColumn(mediaItems, mediaItems.imageCameraMake);
+          await m.addColumn(mediaItems, mediaItems.imageCameraModel);
+          await m.addColumn(mediaItems, mediaItems.imageGpsLat);
+          await m.addColumn(mediaItems, mediaItems.imageGpsLng);
+          await m.addColumn(mediaItems, mediaItems.imageIso);
+          await m.addColumn(mediaItems, mediaItems.imageFocalLength);
+          await m.addColumn(mediaItems, mediaItems.imageFNumber);
+          await m.addColumn(mediaItems, mediaItems.videoWidth);
+          await m.addColumn(mediaItems, mediaItems.videoHeight);
+          await m.addColumn(mediaItems, mediaItems.videoCodec);
+          await m.addColumn(mediaItems, mediaItems.videoFps);
         }
       },
       beforeOpen: (details) async {
@@ -312,6 +344,21 @@ class AppDatabase extends _$AppDatabase {
                 Value(existing?.isFavorite ?? (item.isFavorite ? 1 : 0)),
             folderPath: Value(item.folderPath),
             scannedAt: Value(now),
+            thumbnailPath: Value(item.thumbnailPath),
+            imageWidth: Value(item.imageWidth),
+            imageHeight: Value(item.imageHeight),
+            imageDateTaken: Value(item.imageDateTaken),
+            imageCameraMake: Value(item.imageCameraMake),
+            imageCameraModel: Value(item.imageCameraModel),
+            imageGpsLat: Value(item.imageGpsLat),
+            imageGpsLng: Value(item.imageGpsLng),
+            imageIso: Value(item.imageIso),
+            imageFocalLength: Value(item.imageFocalLength),
+            imageFNumber: Value(item.imageFNumber),
+            videoWidth: Value(item.videoWidth),
+            videoHeight: Value(item.videoHeight),
+            videoCodec: Value(item.videoCodec),
+            videoFps: Value(item.videoFps),
           ),
           mode: InsertMode.insertOrReplace,
         );
@@ -774,6 +821,23 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  /// Return cache key filenames for all media items (used by CacheManager).
+  Future<Set<String>> getAllCacheFilenames() async {
+    final rows = await select(mediaItems).get();
+    return rows.map((row) {
+      // Build the same hash as CacheManager.cacheFilename would
+      final path = row.path.replaceAll('\\', '/').toLowerCase();
+      final input =
+          '$path|${row.size}|${DateTime.parse(row.modified).millisecondsSinceEpoch}';
+      var hash = 0xcbf29ce484222325;
+      for (final unit in input.codeUnits) {
+        hash ^= unit;
+        hash = (hash * 0x100000001b3) & 0x7fffffffffffffff;
+      }
+      return hash.toRadixString(16);
+    }).toSet();
+  }
+
   // ---------------------------------------------------------------------------
   // Play history DAO
   // ---------------------------------------------------------------------------
@@ -835,5 +899,20 @@ class AppDatabase extends _$AppDatabase {
         durationMs: row.durationMs,
         artworkPath: row.artworkPath,
         isFavorite: row.isFavorite == 1,
+        thumbnailPath: row.thumbnailPath,
+        imageWidth: row.imageWidth,
+        imageHeight: row.imageHeight,
+        imageDateTaken: row.imageDateTaken,
+        imageCameraMake: row.imageCameraMake,
+        imageCameraModel: row.imageCameraModel,
+        imageGpsLat: row.imageGpsLat,
+        imageGpsLng: row.imageGpsLng,
+        imageIso: row.imageIso,
+        imageFocalLength: row.imageFocalLength,
+        imageFNumber: row.imageFNumber,
+        videoWidth: row.videoWidth,
+        videoHeight: row.videoHeight,
+        videoCodec: row.videoCodec,
+        videoFps: row.videoFps,
       );
 }

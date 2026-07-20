@@ -125,5 +125,18 @@
   "sortDuration": "按播放时长",
   "sortAscending": "升序",
   "sortDescending": "降序",
-  "playbackSpeed": "播放速度"
+  "playbackSpeed": "播放速度",
+
+  "imageDetails": "图片详情",
+  "fileInfo": "文件信息",
+  "exifMetadata": "EXIF 元数据",
+  "noExifData": "无可用 EXIF 数据",
+  "resolution": "分辨率",
+  "cameraModel": "相机型号",
+  "focalLength": "焦距",
+  "aperture": "光圈",
+  "gpsCoordinates": "GPS 坐标",
+  "close": "关闭",
+  "details": "详情",
+  "detailsHint": "查看文件信息和 EXIF 元数据"
 }

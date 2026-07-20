@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/utils/format_utils.dart';
 import '../../l10n/l10n.dart';
+import '../../services/cache_manager.dart';
 import '../../models/media_folder.dart';
 import '../../providers/media_provider.dart';
 import '../../providers/settings_provider.dart';
@@ -116,10 +117,7 @@ class SettingsScreen extends ConsumerWidget {
                 subtitle: Text('${settings.scanFolders.length} 个文件夹'),
                 onTap: () =>
                     _showFolders(context, ref, notifier, settings.scanFolders)),
-            ListTile(
-                leading: const Icon(Icons.cleaning_services_outlined),
-                title: Text(l10n.clearCache),
-                onTap: () => _clearCache(context)),
+            _CacheSizeTile(onClear: () => _clearCache(context)),
             ListTile(
                 leading: const Icon(Icons.info_outline),
                 title: Text(l10n.version),
@@ -180,32 +178,61 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  /// Delete the cached video thumbnails and audio cover-art directories and
-  /// report how much disk space was freed.
   Future<void> _clearCache(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final cacheDir = await getTemporaryDirectory();
-      var freed = 0;
-      for (final name in const ['lumiluna_thumbs', 'lumiluna_artwork']) {
-        final dir = Directory('${cacheDir.path}/$name');
-        if (await dir.exists()) {
-          await for (final entity in dir.list(recursive: true)) {
-            if (entity is File) freed += await entity.length();
-          }
-          await dir.delete(recursive: true);
-        }
-      }
+      final freed = await CacheManager.clearAll();
       if (context.mounted) {
         messenger.showSnackBar(
           SnackBar(
-              content:
-                  Text(context.l10n.cacheCleared(FormatUtils.fileSize(freed)))),
+            content: Text(context.l10n.cacheCleared(FormatUtils.fileSize(freed))),
+          ),
         );
       }
     } catch (_) {
       // Best-effort cleanup; ignore individual failures.
     }
+  }
+}
+
+class _CacheSizeTile extends StatefulWidget {
+  final VoidCallback onClear;
+  const _CacheSizeTile({required this.onClear});
+
+  @override
+  State<_CacheSizeTile> createState() => _CacheSizeTileState();
+}
+
+class _CacheSizeTileState extends State<_CacheSizeTile> {
+  int? _cacheSize;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSize();
+  }
+
+  Future<void> _loadSize() async {
+    final size = await CacheManager.getCacheSize();
+    if (mounted) setState(() => _cacheSize = size);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.cleaning_services_outlined),
+      title: Text(context.l10n.clearCache),
+      subtitle: Text(
+        _cacheSize != null
+            ? '当前缓存: ${FormatUtils.fileSize(_cacheSize!)}'
+            : '计算中…',
+      ),
+      onTap: () async {
+        widget.onClear();
+        final size = await CacheManager.getCacheSize();
+        if (mounted) setState(() => _cacheSize = size);
+      },
+    );
   }
 }
 

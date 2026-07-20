@@ -5,6 +5,10 @@ use std::time::UNIX_EPOCH;
 
 use flutter_rust_bridge::frb;
 use lofty::{prelude::*, probe::Probe};
+use image::DynamicImage;
+use image::imageops::FilterType;
+use image::ImageOutputFormat;
+use std::io::BufReader;
 use xxhash_rust::xxh3::xxh3_64;
 
 #[frb]
@@ -20,6 +24,22 @@ pub struct RustMediaItem {
     pub artist: Option<String>,
     pub album: Option<String>,
     pub duration_ms: Option<i64>,
+    pub artwork_path: Option<String>,
+    pub thumbnail_path: Option<String>,
+    pub image_width: Option<i32>,
+    pub image_height: Option<i32>,
+    pub image_date_taken: Option<String>,
+    pub image_camera_make: Option<String>,
+    pub image_camera_model: Option<String>,
+    pub image_gps_lat: Option<f64>,
+    pub image_gps_lng: Option<f64>,
+    pub image_iso: Option<i32>,
+    pub image_focal_length: Option<f64>,
+    pub image_f_number: Option<f64>,
+    pub video_width: Option<i32>,
+    pub video_height: Option<i32>,
+    pub video_codec: Option<String>,
+    pub video_fps: Option<f64>,
 }
 
 #[frb]
@@ -73,12 +93,225 @@ pub fn extract_video_cover(path: String, output_path: String, time_ms: u32) -> b
         .unwrap_or(false)
 }
 
+fn read_video_metadata(path: &Path) -> (Option<i32>, Option<i32>, Option<String>, Option<f64>) {
+    let output = match Command::new("ffprobe")
+        .args([
+            "-v",
+            "quiet",
+            "-print_format",
+            "json",
+            "-show_streams",
+            &path.to_string_lossy(),
+        ])
+        .output()
+    {
+        Ok(o) if o.status.success() => o.stdout,
+        _ => return (None, None, None, None),
+    };
+
+    let json_str = String::from_utf8_lossy(&output);
+
+    // Find the video stream entry by locating "codec_type": "video"
+    let video_pos = match json_str.find("\"codec_type\": \"video\"") {
+        Some(pos) => pos,
+        None => return (None, None, None, None),
+    };
+
+    // Walk backward to find the opening '{' of this stream object
+    let obj_start = match json_str[..video_pos].rfind('{') {
+        Some(pos) => pos,
+        None => return (None, None, None, None),
+    };
+
+    // Search within this stream object only
+    let relevant = &json_str[obj_start..];
+
+    let width = extract_json_int(relevant, "\"width\"").filter(|&n| n > 0);
+    let height = extract_json_int(relevant, "\"height\"").filter(|&n| n > 0);
+    let codec = extract_json_string(relevant, "\"codec_name\"");
+    let fps = extract_json_string(relevant, "\"r_frame_rate\"").and_then(|s| parse_fps(&s));
+
+    (width, height, codec, fps)
+}
+
+/// Extract an integer value for a JSON key from a JSON object string.
+/// Assumes the format `"key": <number>` (no nesting for the target key).
+fn extract_json_int(json: &str, key: &str) -> Option<i32> {
+    let key_pos = json.find(key)?;
+    let after_key = &json[key_pos + key.len()..];
+    let after_colon = after_key.trim_start().strip_prefix(':')?;
+    let after_colon = after_colon.trim_start();
+    let num_str: String = after_colon.chars().take_while(|c| c.is_ascii_digit()).collect();
+    if num_str.is_empty() {
+        None
+    } else {
+        num_str.parse().ok()
+    }
+}
+
+/// Extract a string value for a JSON key from a JSON object string.
+/// Assumes the format `"key": "value"`.
+fn extract_json_string(json: &str, key: &str) -> Option<String> {
+    let key_pos = json.find(key)?;
+    let after_key = &json[key_pos + key.len()..];
+    let after_colon = after_key.trim_start().strip_prefix(':')?;
+    let after_colon = after_colon.trim_start();
+    let after_quote = after_colon.strip_prefix('"')?;
+    let value: String = after_quote.chars().take_while(|c| *c != '"').collect();
+    if value.is_empty() {
+        None
+    } else {
+        Some(value)
+    }
+}
+
+fn parse_fps(fps_str: &str) -> Option<f64> {
+    let parts: Vec<&str> = fps_str.split('/').collect();
+    if parts.len() == 2 {
+        let num: f64 = parts[0].parse().ok()?;
+        let den: f64 = parts[1].parse().ok()?;
+        if den > 0.0 {
+            Some(num / den)
+        } else {
+            None
+        }
+    } else {
+        parts[0].parse::<f64>().ok()
+    }
+}
+/// Generate a 300px-wide JPEG thumbnail for the given image file.
+/// Returns the output file path on success, None on failure.
+fn generate_thumbnail(path: &Path, cache_dir: &str, size: i64, modified_ms: i64) -> Option<String> {
+    let img = image::io::Reader::open(path).ok()?.decode().ok()?;
+    let thumb_dir = format!("{}/thumbnails", cache_dir);
+    std::fs::create_dir_all(&thumb_dir).ok()?;
+    let hash = xxh3_64(
+        format!("{}\0{}\0{}", path.to_string_lossy(), size, modified_ms).as_bytes(),
+    );
+    let output_path = format!("{}/{:016x}.jpg", thumb_dir, hash);
+
+    let (w, h) = (img.width(), img.height());
+    let max_width = 300u32;
+    let thumb = if w > max_width {
+        let ratio = max_width as f64 / w as f64;
+        let new_h = (h as f64 * ratio).round() as u32;
+        img.resize(max_width, new_h.max(1), FilterType::Lanczos3)
+    } else {
+        img
+    };
+    let mut file = std::fs::File::create(&output_path).ok()?;
+    thumb.write_to(&mut file, ImageOutputFormat::Jpeg(80)).ok()?;
+    Some(output_path)
+}
+
+fn gps_to_f64(
+    exif: &exif::Exif,
+    tag: exif::Tag,
+    ref_tag: exif::Tag,
+    negative_ref_char: char,
+) -> Option<f64> {
+    let field = exif.get_field(tag, exif::In::PRIMARY)?;
+    let ref_field = exif.get_field(ref_tag, exif::In::PRIMARY)?;
+    let components: Vec<f64> = field.value.iter().map(|v| v.to_num::<f64>()).collect();
+    if components.len() != 3 {
+        return None;
+    }
+    let mut coord = components[0] + components[1] / 60.0 + components[2] / 3600.0;
+    let ref_display = ref_field.display_value().to_string();
+    if ref_display.contains(negative_ref_char) {
+        coord = -coord;
+    }
+    Some(coord)
+}
+
+/// Read EXIF metadata from an image file.
+/// Returns (width, height, date_taken, camera_make, camera_model,
+///          gps_lat, gps_lng, iso, focal_length, f_number).
+fn read_exif(
+    path: &Path,
+) -> (
+    Option<i32>,
+    Option<i32>,
+    Option<String>,
+    Option<String>,
+    Option<String>,
+    Option<f64>,
+    Option<f64>,
+    Option<i32>,
+    Option<f64>,
+    Option<f64>,
+) {
+    let file = match std::fs::File::open(path) {
+        Ok(f) => f,
+        Err(_) => {
+            return (None, None, None, None, None, None, None, None, None, None);
+        }
+    };
+    let mut bufreader = BufReader::new(file);
+    let exif = match exif::Reader::new().read_from_container(&mut bufreader) {
+        Ok(e) => e,
+        Err(_) => {
+            return (None, None, None, None, None, None, None, None, None, None);
+        }
+    };
+
+    let width = exif
+        .get_field(exif::Tag::PixelXDimension, exif::In::PRIMARY)
+        .and_then(|f| f.value.get_uint(0))
+        .map(|v| v as i32);
+    let height = exif
+        .get_field(exif::Tag::PixelYDimension, exif::In::PRIMARY)
+        .and_then(|f| f.value.get_uint(0))
+        .map(|v| v as i32);
+    let date_taken = exif
+        .get_field(exif::Tag::DateTimeOriginal, exif::In::PRIMARY)
+        .map(|f| f.display_value().to_string());
+    let camera_make = exif
+        .get_field(exif::Tag::Make, exif::In::PRIMARY)
+        .map(|f| f.display_value().to_string());
+    let camera_model = exif
+        .get_field(exif::Tag::Model, exif::In::PRIMARY)
+        .map(|f| f.display_value().to_string());
+    let gps_lat = gps_to_f64(&exif, exif::Tag::GPSLatitude, exif::Tag::GPSLatitudeRef, 'S');
+    let gps_lng = gps_to_f64(
+        &exif,
+        exif::Tag::GPSLongitude,
+        exif::Tag::GPSLongitudeRef,
+        'W',
+    );
+    let iso = exif
+        .get_field(exif::Tag::PhotographicSensitivity, exif::In::PRIMARY)
+        .and_then(|f| f.value.get_uint(0))
+        .map(|v| v as i32);
+    let focal_length = exif
+        .get_field(exif::Tag::FocalLength, exif::In::PRIMARY)
+        .and_then(|f| f.value.iter().next())
+        .map(|v| v.to_num::<f64>());
+    let f_number = exif
+        .get_field(exif::Tag::FNumber, exif::In::PRIMARY)
+        .and_then(|f| f.value.iter().next())
+        .map(|v| v.to_num::<f64>());
+
+    (
+        width,
+        height,
+        date_taken,
+        camera_make,
+        camera_model,
+        gps_lat,
+        gps_lng,
+        iso,
+        focal_length,
+        f_number,
+    )
+}
+
 #[frb]
-pub fn scan_media(folders: Vec<String>, max_depth: u32) -> Vec<RustMediaItem> {
+pub fn scan_media(folders: Vec<String>, max_depth: u32, cache_dir: String) -> Vec<RustMediaItem> {
     let mut items = Vec::new();
     let mut seen = std::collections::HashSet::new();
     for folder in folders {
-        walk(Path::new(&folder), 0, max_depth, &mut seen, &mut items);
+        walk(Path::new(&folder), 0, max_depth, &mut seen, &mut items, &cache_dir);
     }
     items.sort_by(|a, b| b.modified_ms.cmp(&a.modified_ms));
     items
@@ -88,10 +321,11 @@ pub fn scan_media(folders: Vec<String>, max_depth: u32) -> Vec<RustMediaItem> {
 pub fn scan_media_batch(
     folders: Vec<String>,
     max_depth: u32,
+    cache_dir: String,
     offset: u32,
     limit: u32,
 ) -> Vec<RustMediaItem> {
-    let items = scan_media(folders, max_depth);
+    let items = scan_media(folders, max_depth, cache_dir);
     let start = (offset as usize).min(items.len());
     let end = (start + limit as usize).min(items.len());
     items[start..end].to_vec()
@@ -101,9 +335,10 @@ pub fn scan_media_batch(
 pub fn scan_media_batches(
     folders: Vec<String>,
     max_depth: u32,
+    cache_dir: String,
     batch_size: u32,
 ) -> Vec<Vec<RustMediaItem>> {
-    let items = scan_media(folders, max_depth);
+    let items = scan_media(folders, max_depth, cache_dir);
     let size = batch_size.max(1) as usize;
     items.chunks(size).map(|batch| batch.to_vec()).collect()
 }
@@ -114,6 +349,7 @@ fn walk(
     max_depth: u32,
     seen: &mut std::collections::HashSet<PathBuf>,
     output: &mut Vec<RustMediaItem>,
+    cache_dir: &str,
 ) {
     if depth > max_depth {
         return;
@@ -130,7 +366,7 @@ fn walk(
         };
         if path.is_dir() {
             if !name.starts_with('.') {
-                walk(&path, depth + 1, max_depth, seen, output);
+                walk(&path, depth + 1, max_depth, seen, output, cache_dir);
             }
             continue;
         }
@@ -164,8 +400,22 @@ fn walk(
             size,
             modified_ms,
         );
-        let (title, artist, album, duration_ms) = if media_type == "audio" {
-            read_audio_metadata(&path)
+        let (title, artist, album, duration_ms, artwork_path) = if media_type == "audio" {
+            read_audio_metadata(&path, cache_dir)
+        } else {
+            (None, None, None, None, None)
+        };
+        let (thumbnail_path, image_width, image_height, image_date_taken,
+             image_camera_make, image_camera_model, image_gps_lat, image_gps_lng,
+             image_iso, image_focal_length, image_f_number) = if media_type == "image" {
+            let thumb = generate_thumbnail(&path, cache_dir, size, modified_ms);
+            let exif = read_exif(&path);
+            (thumb, exif.0, exif.1, exif.2, exif.3, exif.4, exif.5, exif.6, exif.7, exif.8, exif.9)
+        } else {
+            (None, None, None, None, None, None, None, None, None, None, None)
+        };
+        let (video_width, video_height, video_codec, video_fps) = if media_type == "video" {
+            read_video_metadata(&path)
         } else {
             (None, None, None, None)
         };
@@ -180,22 +430,62 @@ fn walk(
             artist,
             album,
             duration_ms,
+            artwork_path,
+            thumbnail_path,
+            image_width,
+            image_height,
+            image_date_taken,
+            image_camera_make,
+            image_camera_model,
+            image_gps_lat,
+            image_gps_lng,
+            image_iso,
+            image_focal_length,
+            image_f_number,
+            video_width,
+            video_height,
+            video_codec,
+            video_fps,
         });
     }
 }
 
-fn read_audio_metadata(path: &Path) -> (Option<String>, Option<String>, Option<String>, Option<i64>) {
+fn ext_for_mime(mime: &str) -> &str {
+    if mime.contains("png") {
+        "png"
+    } else if mime.contains("webp") {
+        "webp"
+    } else if mime.contains("bmp") {
+        "bmp"
+    } else {
+        "jpg"
+    }
+}
+
+fn read_audio_metadata(path: &Path, cache_dir: &str) -> (Option<String>, Option<String>, Option<String>, Option<i64>, Option<String>) {
     let tagged_file = match Probe::open(path).and_then(|probe| probe.read()) {
         Ok(file) => file,
-        Err(_) => return (None, None, None, None),
+        Err(_) => return (None, None, None, None, None),
     };
     let tag = tagged_file.primary_tag().or_else(|| tagged_file.first_tag());
     let properties = tagged_file.properties();
+    let artwork_path = tag.and_then(|t| {
+        t.pictures().first().map(|pic| {
+            let ext = ext_for_mime(pic.mime_type().unwrap_or("image/jpeg"));
+            let hash = xxh3_64(path.to_string_lossy().as_bytes());
+            let artwork_dir = format!("{}/artwork", cache_dir);
+            std::fs::create_dir_all(&artwork_dir).ok();
+            let dest = format!("{}/{:016x}.{}", artwork_dir, hash, ext);
+            std::fs::write(&dest, pic.data()).ok();
+            dest
+        })
+    });
     (
         tag.and_then(|tag| tag.title().map(|value| value.into_owned())),
         tag.and_then(|tag| tag.artist().map(|value| value.into_owned())),
         tag.and_then(|tag| tag.album().map(|value| value.into_owned())),
         Some(properties.duration().as_millis().min(i64::MAX as u128) as i64),
+        artwork_path,
     )
 }
 
@@ -238,7 +528,7 @@ mod tests {
         write(nested.join("song.mp3"), b"audio").unwrap();
         write(nested.join("notes.txt"), b"text").unwrap();
 
-        let items = scan_media(vec![root.to_string_lossy().into_owned()], 8);
+        let items = scan_media(vec![root.to_string_lossy().into_owned()], 8, String::new());
         assert_eq!(items.len(), 2);
         assert!(items.iter().any(|item| item.media_type == "image"));
         assert!(items.iter().any(|item| item.media_type == "audio"));

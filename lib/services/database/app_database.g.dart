@@ -92,6 +92,96 @@ class $MediaItemsTable extends MediaItems
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: Constant(''));
+  static const VerificationMeta _thumbnailPathMeta =
+      const VerificationMeta('thumbnailPath');
+  @override
+  late final GeneratedColumn<String> thumbnailPath = GeneratedColumn<String>(
+      'thumbnail_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _imageWidthMeta =
+      const VerificationMeta('imageWidth');
+  @override
+  late final GeneratedColumn<int> imageWidth = GeneratedColumn<int>(
+      'image_width', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _imageHeightMeta =
+      const VerificationMeta('imageHeight');
+  @override
+  late final GeneratedColumn<int> imageHeight = GeneratedColumn<int>(
+      'image_height', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _imageDateTakenMeta =
+      const VerificationMeta('imageDateTaken');
+  @override
+  late final GeneratedColumn<String> imageDateTaken = GeneratedColumn<String>(
+      'image_date_taken', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _imageCameraMakeMeta =
+      const VerificationMeta('imageCameraMake');
+  @override
+  late final GeneratedColumn<String> imageCameraMake = GeneratedColumn<String>(
+      'image_camera_make', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _imageCameraModelMeta =
+      const VerificationMeta('imageCameraModel');
+  @override
+  late final GeneratedColumn<String> imageCameraModel = GeneratedColumn<String>(
+      'image_camera_model', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _imageGpsLatMeta =
+      const VerificationMeta('imageGpsLat');
+  @override
+  late final GeneratedColumn<double> imageGpsLat = GeneratedColumn<double>(
+      'image_gps_lat', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _imageGpsLngMeta =
+      const VerificationMeta('imageGpsLng');
+  @override
+  late final GeneratedColumn<double> imageGpsLng = GeneratedColumn<double>(
+      'image_gps_lng', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _imageIsoMeta =
+      const VerificationMeta('imageIso');
+  @override
+  late final GeneratedColumn<int> imageIso = GeneratedColumn<int>(
+      'image_iso', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _imageFocalLengthMeta =
+      const VerificationMeta('imageFocalLength');
+  @override
+  late final GeneratedColumn<double> imageFocalLength = GeneratedColumn<double>(
+      'image_focal_length', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _imageFNumberMeta =
+      const VerificationMeta('imageFNumber');
+  @override
+  late final GeneratedColumn<double> imageFNumber = GeneratedColumn<double>(
+      'image_f_number', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _videoWidthMeta =
+      const VerificationMeta('videoWidth');
+  @override
+  late final GeneratedColumn<int> videoWidth = GeneratedColumn<int>(
+      'video_width', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _videoHeightMeta =
+      const VerificationMeta('videoHeight');
+  @override
+  late final GeneratedColumn<int> videoHeight = GeneratedColumn<int>(
+      'video_height', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _videoCodecMeta =
+      const VerificationMeta('videoCodec');
+  @override
+  late final GeneratedColumn<String> videoCodec = GeneratedColumn<String>(
+      'video_codec', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _videoFpsMeta =
+      const VerificationMeta('videoFps');
+  @override
+  late final GeneratedColumn<double> videoFps = GeneratedColumn<double>(
+      'video_fps', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         path,
@@ -107,7 +197,22 @@ class $MediaItemsTable extends MediaItems
         artworkPath,
         isFavorite,
         folderPath,
-        scannedAt
+        scannedAt,
+        thumbnailPath,
+        imageWidth,
+        imageHeight,
+        imageDateTaken,
+        imageCameraMake,
+        imageCameraModel,
+        imageGpsLat,
+        imageGpsLng,
+        imageIso,
+        imageFocalLength,
+        imageFNumber,
+        videoWidth,
+        videoHeight,
+        videoCodec,
+        videoFps
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -193,6 +298,92 @@ class $MediaItemsTable extends MediaItems
       context.handle(_scannedAtMeta,
           scannedAt.isAcceptableOrUnknown(data['scanned_at']!, _scannedAtMeta));
     }
+    if (data.containsKey('thumbnail_path')) {
+      context.handle(
+          _thumbnailPathMeta,
+          thumbnailPath.isAcceptableOrUnknown(
+              data['thumbnail_path']!, _thumbnailPathMeta));
+    }
+    if (data.containsKey('image_width')) {
+      context.handle(
+          _imageWidthMeta,
+          imageWidth.isAcceptableOrUnknown(
+              data['image_width']!, _imageWidthMeta));
+    }
+    if (data.containsKey('image_height')) {
+      context.handle(
+          _imageHeightMeta,
+          imageHeight.isAcceptableOrUnknown(
+              data['image_height']!, _imageHeightMeta));
+    }
+    if (data.containsKey('image_date_taken')) {
+      context.handle(
+          _imageDateTakenMeta,
+          imageDateTaken.isAcceptableOrUnknown(
+              data['image_date_taken']!, _imageDateTakenMeta));
+    }
+    if (data.containsKey('image_camera_make')) {
+      context.handle(
+          _imageCameraMakeMeta,
+          imageCameraMake.isAcceptableOrUnknown(
+              data['image_camera_make']!, _imageCameraMakeMeta));
+    }
+    if (data.containsKey('image_camera_model')) {
+      context.handle(
+          _imageCameraModelMeta,
+          imageCameraModel.isAcceptableOrUnknown(
+              data['image_camera_model']!, _imageCameraModelMeta));
+    }
+    if (data.containsKey('image_gps_lat')) {
+      context.handle(
+          _imageGpsLatMeta,
+          imageGpsLat.isAcceptableOrUnknown(
+              data['image_gps_lat']!, _imageGpsLatMeta));
+    }
+    if (data.containsKey('image_gps_lng')) {
+      context.handle(
+          _imageGpsLngMeta,
+          imageGpsLng.isAcceptableOrUnknown(
+              data['image_gps_lng']!, _imageGpsLngMeta));
+    }
+    if (data.containsKey('image_iso')) {
+      context.handle(_imageIsoMeta,
+          imageIso.isAcceptableOrUnknown(data['image_iso']!, _imageIsoMeta));
+    }
+    if (data.containsKey('image_focal_length')) {
+      context.handle(
+          _imageFocalLengthMeta,
+          imageFocalLength.isAcceptableOrUnknown(
+              data['image_focal_length']!, _imageFocalLengthMeta));
+    }
+    if (data.containsKey('image_f_number')) {
+      context.handle(
+          _imageFNumberMeta,
+          imageFNumber.isAcceptableOrUnknown(
+              data['image_f_number']!, _imageFNumberMeta));
+    }
+    if (data.containsKey('video_width')) {
+      context.handle(
+          _videoWidthMeta,
+          videoWidth.isAcceptableOrUnknown(
+              data['video_width']!, _videoWidthMeta));
+    }
+    if (data.containsKey('video_height')) {
+      context.handle(
+          _videoHeightMeta,
+          videoHeight.isAcceptableOrUnknown(
+              data['video_height']!, _videoHeightMeta));
+    }
+    if (data.containsKey('video_codec')) {
+      context.handle(
+          _videoCodecMeta,
+          videoCodec.isAcceptableOrUnknown(
+              data['video_codec']!, _videoCodecMeta));
+    }
+    if (data.containsKey('video_fps')) {
+      context.handle(_videoFpsMeta,
+          videoFps.isAcceptableOrUnknown(data['video_fps']!, _videoFpsMeta));
+    }
     return context;
   }
 
@@ -230,6 +421,36 @@ class $MediaItemsTable extends MediaItems
           .read(DriftSqlType.string, data['${effectivePrefix}folder_path'])!,
       scannedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}scanned_at'])!,
+      thumbnailPath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}thumbnail_path']),
+      imageWidth: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}image_width']),
+      imageHeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}image_height']),
+      imageDateTaken: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}image_date_taken']),
+      imageCameraMake: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}image_camera_make']),
+      imageCameraModel: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}image_camera_model']),
+      imageGpsLat: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}image_gps_lat']),
+      imageGpsLng: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}image_gps_lng']),
+      imageIso: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}image_iso']),
+      imageFocalLength: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}image_focal_length']),
+      imageFNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}image_f_number']),
+      videoWidth: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}video_width']),
+      videoHeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}video_height']),
+      videoCodec: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}video_codec']),
+      videoFps: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}video_fps']),
     );
   }
 
@@ -254,6 +475,21 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
   final int isFavorite;
   final String folderPath;
   final String scannedAt;
+  final String? thumbnailPath;
+  final int? imageWidth;
+  final int? imageHeight;
+  final String? imageDateTaken;
+  final String? imageCameraMake;
+  final String? imageCameraModel;
+  final double? imageGpsLat;
+  final double? imageGpsLng;
+  final int? imageIso;
+  final double? imageFocalLength;
+  final double? imageFNumber;
+  final int? videoWidth;
+  final int? videoHeight;
+  final String? videoCodec;
+  final double? videoFps;
   const MediaItemRow(
       {required this.path,
       required this.name,
@@ -268,7 +504,22 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
       this.artworkPath,
       required this.isFavorite,
       required this.folderPath,
-      required this.scannedAt});
+      required this.scannedAt,
+      this.thumbnailPath,
+      this.imageWidth,
+      this.imageHeight,
+      this.imageDateTaken,
+      this.imageCameraMake,
+      this.imageCameraModel,
+      this.imageGpsLat,
+      this.imageGpsLng,
+      this.imageIso,
+      this.imageFocalLength,
+      this.imageFNumber,
+      this.videoWidth,
+      this.videoHeight,
+      this.videoCodec,
+      this.videoFps});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -298,6 +549,51 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
     map['is_favorite'] = Variable<int>(isFavorite);
     map['folder_path'] = Variable<String>(folderPath);
     map['scanned_at'] = Variable<String>(scannedAt);
+    if (!nullToAbsent || thumbnailPath != null) {
+      map['thumbnail_path'] = Variable<String>(thumbnailPath);
+    }
+    if (!nullToAbsent || imageWidth != null) {
+      map['image_width'] = Variable<int>(imageWidth);
+    }
+    if (!nullToAbsent || imageHeight != null) {
+      map['image_height'] = Variable<int>(imageHeight);
+    }
+    if (!nullToAbsent || imageDateTaken != null) {
+      map['image_date_taken'] = Variable<String>(imageDateTaken);
+    }
+    if (!nullToAbsent || imageCameraMake != null) {
+      map['image_camera_make'] = Variable<String>(imageCameraMake);
+    }
+    if (!nullToAbsent || imageCameraModel != null) {
+      map['image_camera_model'] = Variable<String>(imageCameraModel);
+    }
+    if (!nullToAbsent || imageGpsLat != null) {
+      map['image_gps_lat'] = Variable<double>(imageGpsLat);
+    }
+    if (!nullToAbsent || imageGpsLng != null) {
+      map['image_gps_lng'] = Variable<double>(imageGpsLng);
+    }
+    if (!nullToAbsent || imageIso != null) {
+      map['image_iso'] = Variable<int>(imageIso);
+    }
+    if (!nullToAbsent || imageFocalLength != null) {
+      map['image_focal_length'] = Variable<double>(imageFocalLength);
+    }
+    if (!nullToAbsent || imageFNumber != null) {
+      map['image_f_number'] = Variable<double>(imageFNumber);
+    }
+    if (!nullToAbsent || videoWidth != null) {
+      map['video_width'] = Variable<int>(videoWidth);
+    }
+    if (!nullToAbsent || videoHeight != null) {
+      map['video_height'] = Variable<int>(videoHeight);
+    }
+    if (!nullToAbsent || videoCodec != null) {
+      map['video_codec'] = Variable<String>(videoCodec);
+    }
+    if (!nullToAbsent || videoFps != null) {
+      map['video_fps'] = Variable<double>(videoFps);
+    }
     return map;
   }
 
@@ -326,6 +622,51 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
       isFavorite: Value(isFavorite),
       folderPath: Value(folderPath),
       scannedAt: Value(scannedAt),
+      thumbnailPath: thumbnailPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(thumbnailPath),
+      imageWidth: imageWidth == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imageWidth),
+      imageHeight: imageHeight == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imageHeight),
+      imageDateTaken: imageDateTaken == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imageDateTaken),
+      imageCameraMake: imageCameraMake == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imageCameraMake),
+      imageCameraModel: imageCameraModel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imageCameraModel),
+      imageGpsLat: imageGpsLat == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imageGpsLat),
+      imageGpsLng: imageGpsLng == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imageGpsLng),
+      imageIso: imageIso == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imageIso),
+      imageFocalLength: imageFocalLength == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imageFocalLength),
+      imageFNumber: imageFNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imageFNumber),
+      videoWidth: videoWidth == null && nullToAbsent
+          ? const Value.absent()
+          : Value(videoWidth),
+      videoHeight: videoHeight == null && nullToAbsent
+          ? const Value.absent()
+          : Value(videoHeight),
+      videoCodec: videoCodec == null && nullToAbsent
+          ? const Value.absent()
+          : Value(videoCodec),
+      videoFps: videoFps == null && nullToAbsent
+          ? const Value.absent()
+          : Value(videoFps),
     );
   }
 
@@ -347,6 +688,21 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
       isFavorite: serializer.fromJson<int>(json['isFavorite']),
       folderPath: serializer.fromJson<String>(json['folderPath']),
       scannedAt: serializer.fromJson<String>(json['scannedAt']),
+      thumbnailPath: serializer.fromJson<String?>(json['thumbnailPath']),
+      imageWidth: serializer.fromJson<int?>(json['imageWidth']),
+      imageHeight: serializer.fromJson<int?>(json['imageHeight']),
+      imageDateTaken: serializer.fromJson<String?>(json['imageDateTaken']),
+      imageCameraMake: serializer.fromJson<String?>(json['imageCameraMake']),
+      imageCameraModel: serializer.fromJson<String?>(json['imageCameraModel']),
+      imageGpsLat: serializer.fromJson<double?>(json['imageGpsLat']),
+      imageGpsLng: serializer.fromJson<double?>(json['imageGpsLng']),
+      imageIso: serializer.fromJson<int?>(json['imageIso']),
+      imageFocalLength: serializer.fromJson<double?>(json['imageFocalLength']),
+      imageFNumber: serializer.fromJson<double?>(json['imageFNumber']),
+      videoWidth: serializer.fromJson<int?>(json['videoWidth']),
+      videoHeight: serializer.fromJson<int?>(json['videoHeight']),
+      videoCodec: serializer.fromJson<String?>(json['videoCodec']),
+      videoFps: serializer.fromJson<double?>(json['videoFps']),
     );
   }
   @override
@@ -367,6 +723,21 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
       'isFavorite': serializer.toJson<int>(isFavorite),
       'folderPath': serializer.toJson<String>(folderPath),
       'scannedAt': serializer.toJson<String>(scannedAt),
+      'thumbnailPath': serializer.toJson<String?>(thumbnailPath),
+      'imageWidth': serializer.toJson<int?>(imageWidth),
+      'imageHeight': serializer.toJson<int?>(imageHeight),
+      'imageDateTaken': serializer.toJson<String?>(imageDateTaken),
+      'imageCameraMake': serializer.toJson<String?>(imageCameraMake),
+      'imageCameraModel': serializer.toJson<String?>(imageCameraModel),
+      'imageGpsLat': serializer.toJson<double?>(imageGpsLat),
+      'imageGpsLng': serializer.toJson<double?>(imageGpsLng),
+      'imageIso': serializer.toJson<int?>(imageIso),
+      'imageFocalLength': serializer.toJson<double?>(imageFocalLength),
+      'imageFNumber': serializer.toJson<double?>(imageFNumber),
+      'videoWidth': serializer.toJson<int?>(videoWidth),
+      'videoHeight': serializer.toJson<int?>(videoHeight),
+      'videoCodec': serializer.toJson<String?>(videoCodec),
+      'videoFps': serializer.toJson<double?>(videoFps),
     };
   }
 
@@ -384,7 +755,22 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
           Value<String?> artworkPath = const Value.absent(),
           int? isFavorite,
           String? folderPath,
-          String? scannedAt}) =>
+          String? scannedAt,
+          Value<String?> thumbnailPath = const Value.absent(),
+          Value<int?> imageWidth = const Value.absent(),
+          Value<int?> imageHeight = const Value.absent(),
+          Value<String?> imageDateTaken = const Value.absent(),
+          Value<String?> imageCameraMake = const Value.absent(),
+          Value<String?> imageCameraModel = const Value.absent(),
+          Value<double?> imageGpsLat = const Value.absent(),
+          Value<double?> imageGpsLng = const Value.absent(),
+          Value<int?> imageIso = const Value.absent(),
+          Value<double?> imageFocalLength = const Value.absent(),
+          Value<double?> imageFNumber = const Value.absent(),
+          Value<int?> videoWidth = const Value.absent(),
+          Value<int?> videoHeight = const Value.absent(),
+          Value<String?> videoCodec = const Value.absent(),
+          Value<double?> videoFps = const Value.absent()}) =>
       MediaItemRow(
         path: path ?? this.path,
         name: name ?? this.name,
@@ -400,6 +786,30 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
         isFavorite: isFavorite ?? this.isFavorite,
         folderPath: folderPath ?? this.folderPath,
         scannedAt: scannedAt ?? this.scannedAt,
+        thumbnailPath:
+            thumbnailPath.present ? thumbnailPath.value : this.thumbnailPath,
+        imageWidth: imageWidth.present ? imageWidth.value : this.imageWidth,
+        imageHeight: imageHeight.present ? imageHeight.value : this.imageHeight,
+        imageDateTaken:
+            imageDateTaken.present ? imageDateTaken.value : this.imageDateTaken,
+        imageCameraMake: imageCameraMake.present
+            ? imageCameraMake.value
+            : this.imageCameraMake,
+        imageCameraModel: imageCameraModel.present
+            ? imageCameraModel.value
+            : this.imageCameraModel,
+        imageGpsLat: imageGpsLat.present ? imageGpsLat.value : this.imageGpsLat,
+        imageGpsLng: imageGpsLng.present ? imageGpsLng.value : this.imageGpsLng,
+        imageIso: imageIso.present ? imageIso.value : this.imageIso,
+        imageFocalLength: imageFocalLength.present
+            ? imageFocalLength.value
+            : this.imageFocalLength,
+        imageFNumber:
+            imageFNumber.present ? imageFNumber.value : this.imageFNumber,
+        videoWidth: videoWidth.present ? videoWidth.value : this.videoWidth,
+        videoHeight: videoHeight.present ? videoHeight.value : this.videoHeight,
+        videoCodec: videoCodec.present ? videoCodec.value : this.videoCodec,
+        videoFps: videoFps.present ? videoFps.value : this.videoFps,
       );
   MediaItemRow copyWithCompanion(MediaItemsCompanion data) {
     return MediaItemRow(
@@ -421,6 +831,40 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
       folderPath:
           data.folderPath.present ? data.folderPath.value : this.folderPath,
       scannedAt: data.scannedAt.present ? data.scannedAt.value : this.scannedAt,
+      thumbnailPath: data.thumbnailPath.present
+          ? data.thumbnailPath.value
+          : this.thumbnailPath,
+      imageWidth:
+          data.imageWidth.present ? data.imageWidth.value : this.imageWidth,
+      imageHeight:
+          data.imageHeight.present ? data.imageHeight.value : this.imageHeight,
+      imageDateTaken: data.imageDateTaken.present
+          ? data.imageDateTaken.value
+          : this.imageDateTaken,
+      imageCameraMake: data.imageCameraMake.present
+          ? data.imageCameraMake.value
+          : this.imageCameraMake,
+      imageCameraModel: data.imageCameraModel.present
+          ? data.imageCameraModel.value
+          : this.imageCameraModel,
+      imageGpsLat:
+          data.imageGpsLat.present ? data.imageGpsLat.value : this.imageGpsLat,
+      imageGpsLng:
+          data.imageGpsLng.present ? data.imageGpsLng.value : this.imageGpsLng,
+      imageIso: data.imageIso.present ? data.imageIso.value : this.imageIso,
+      imageFocalLength: data.imageFocalLength.present
+          ? data.imageFocalLength.value
+          : this.imageFocalLength,
+      imageFNumber: data.imageFNumber.present
+          ? data.imageFNumber.value
+          : this.imageFNumber,
+      videoWidth:
+          data.videoWidth.present ? data.videoWidth.value : this.videoWidth,
+      videoHeight:
+          data.videoHeight.present ? data.videoHeight.value : this.videoHeight,
+      videoCodec:
+          data.videoCodec.present ? data.videoCodec.value : this.videoCodec,
+      videoFps: data.videoFps.present ? data.videoFps.value : this.videoFps,
     );
   }
 
@@ -440,27 +884,58 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
           ..write('artworkPath: $artworkPath, ')
           ..write('isFavorite: $isFavorite, ')
           ..write('folderPath: $folderPath, ')
-          ..write('scannedAt: $scannedAt')
+          ..write('scannedAt: $scannedAt, ')
+          ..write('thumbnailPath: $thumbnailPath, ')
+          ..write('imageWidth: $imageWidth, ')
+          ..write('imageHeight: $imageHeight, ')
+          ..write('imageDateTaken: $imageDateTaken, ')
+          ..write('imageCameraMake: $imageCameraMake, ')
+          ..write('imageCameraModel: $imageCameraModel, ')
+          ..write('imageGpsLat: $imageGpsLat, ')
+          ..write('imageGpsLng: $imageGpsLng, ')
+          ..write('imageIso: $imageIso, ')
+          ..write('imageFocalLength: $imageFocalLength, ')
+          ..write('imageFNumber: $imageFNumber, ')
+          ..write('videoWidth: $videoWidth, ')
+          ..write('videoHeight: $videoHeight, ')
+          ..write('videoCodec: $videoCodec, ')
+          ..write('videoFps: $videoFps')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      path,
-      name,
-      type,
-      size,
-      modified,
-      fileHash,
-      title,
-      artist,
-      album,
-      durationMs,
-      artworkPath,
-      isFavorite,
-      folderPath,
-      scannedAt);
+  int get hashCode => Object.hashAll([
+        path,
+        name,
+        type,
+        size,
+        modified,
+        fileHash,
+        title,
+        artist,
+        album,
+        durationMs,
+        artworkPath,
+        isFavorite,
+        folderPath,
+        scannedAt,
+        thumbnailPath,
+        imageWidth,
+        imageHeight,
+        imageDateTaken,
+        imageCameraMake,
+        imageCameraModel,
+        imageGpsLat,
+        imageGpsLng,
+        imageIso,
+        imageFocalLength,
+        imageFNumber,
+        videoWidth,
+        videoHeight,
+        videoCodec,
+        videoFps
+      ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -478,7 +953,22 @@ class MediaItemRow extends DataClass implements Insertable<MediaItemRow> {
           other.artworkPath == this.artworkPath &&
           other.isFavorite == this.isFavorite &&
           other.folderPath == this.folderPath &&
-          other.scannedAt == this.scannedAt);
+          other.scannedAt == this.scannedAt &&
+          other.thumbnailPath == this.thumbnailPath &&
+          other.imageWidth == this.imageWidth &&
+          other.imageHeight == this.imageHeight &&
+          other.imageDateTaken == this.imageDateTaken &&
+          other.imageCameraMake == this.imageCameraMake &&
+          other.imageCameraModel == this.imageCameraModel &&
+          other.imageGpsLat == this.imageGpsLat &&
+          other.imageGpsLng == this.imageGpsLng &&
+          other.imageIso == this.imageIso &&
+          other.imageFocalLength == this.imageFocalLength &&
+          other.imageFNumber == this.imageFNumber &&
+          other.videoWidth == this.videoWidth &&
+          other.videoHeight == this.videoHeight &&
+          other.videoCodec == this.videoCodec &&
+          other.videoFps == this.videoFps);
 }
 
 class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
@@ -496,6 +986,21 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
   final Value<int> isFavorite;
   final Value<String> folderPath;
   final Value<String> scannedAt;
+  final Value<String?> thumbnailPath;
+  final Value<int?> imageWidth;
+  final Value<int?> imageHeight;
+  final Value<String?> imageDateTaken;
+  final Value<String?> imageCameraMake;
+  final Value<String?> imageCameraModel;
+  final Value<double?> imageGpsLat;
+  final Value<double?> imageGpsLng;
+  final Value<int?> imageIso;
+  final Value<double?> imageFocalLength;
+  final Value<double?> imageFNumber;
+  final Value<int?> videoWidth;
+  final Value<int?> videoHeight;
+  final Value<String?> videoCodec;
+  final Value<double?> videoFps;
   final Value<int> rowid;
   const MediaItemsCompanion({
     this.path = const Value.absent(),
@@ -512,6 +1017,21 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
     this.isFavorite = const Value.absent(),
     this.folderPath = const Value.absent(),
     this.scannedAt = const Value.absent(),
+    this.thumbnailPath = const Value.absent(),
+    this.imageWidth = const Value.absent(),
+    this.imageHeight = const Value.absent(),
+    this.imageDateTaken = const Value.absent(),
+    this.imageCameraMake = const Value.absent(),
+    this.imageCameraModel = const Value.absent(),
+    this.imageGpsLat = const Value.absent(),
+    this.imageGpsLng = const Value.absent(),
+    this.imageIso = const Value.absent(),
+    this.imageFocalLength = const Value.absent(),
+    this.imageFNumber = const Value.absent(),
+    this.videoWidth = const Value.absent(),
+    this.videoHeight = const Value.absent(),
+    this.videoCodec = const Value.absent(),
+    this.videoFps = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MediaItemsCompanion.insert({
@@ -529,6 +1049,21 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
     this.isFavorite = const Value.absent(),
     required String folderPath,
     this.scannedAt = const Value.absent(),
+    this.thumbnailPath = const Value.absent(),
+    this.imageWidth = const Value.absent(),
+    this.imageHeight = const Value.absent(),
+    this.imageDateTaken = const Value.absent(),
+    this.imageCameraMake = const Value.absent(),
+    this.imageCameraModel = const Value.absent(),
+    this.imageGpsLat = const Value.absent(),
+    this.imageGpsLng = const Value.absent(),
+    this.imageIso = const Value.absent(),
+    this.imageFocalLength = const Value.absent(),
+    this.imageFNumber = const Value.absent(),
+    this.videoWidth = const Value.absent(),
+    this.videoHeight = const Value.absent(),
+    this.videoCodec = const Value.absent(),
+    this.videoFps = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : path = Value(path),
         name = Value(name),
@@ -550,6 +1085,21 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
     Expression<int>? isFavorite,
     Expression<String>? folderPath,
     Expression<String>? scannedAt,
+    Expression<String>? thumbnailPath,
+    Expression<int>? imageWidth,
+    Expression<int>? imageHeight,
+    Expression<String>? imageDateTaken,
+    Expression<String>? imageCameraMake,
+    Expression<String>? imageCameraModel,
+    Expression<double>? imageGpsLat,
+    Expression<double>? imageGpsLng,
+    Expression<int>? imageIso,
+    Expression<double>? imageFocalLength,
+    Expression<double>? imageFNumber,
+    Expression<int>? videoWidth,
+    Expression<int>? videoHeight,
+    Expression<String>? videoCodec,
+    Expression<double>? videoFps,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -567,6 +1117,21 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
       if (isFavorite != null) 'is_favorite': isFavorite,
       if (folderPath != null) 'folder_path': folderPath,
       if (scannedAt != null) 'scanned_at': scannedAt,
+      if (thumbnailPath != null) 'thumbnail_path': thumbnailPath,
+      if (imageWidth != null) 'image_width': imageWidth,
+      if (imageHeight != null) 'image_height': imageHeight,
+      if (imageDateTaken != null) 'image_date_taken': imageDateTaken,
+      if (imageCameraMake != null) 'image_camera_make': imageCameraMake,
+      if (imageCameraModel != null) 'image_camera_model': imageCameraModel,
+      if (imageGpsLat != null) 'image_gps_lat': imageGpsLat,
+      if (imageGpsLng != null) 'image_gps_lng': imageGpsLng,
+      if (imageIso != null) 'image_iso': imageIso,
+      if (imageFocalLength != null) 'image_focal_length': imageFocalLength,
+      if (imageFNumber != null) 'image_f_number': imageFNumber,
+      if (videoWidth != null) 'video_width': videoWidth,
+      if (videoHeight != null) 'video_height': videoHeight,
+      if (videoCodec != null) 'video_codec': videoCodec,
+      if (videoFps != null) 'video_fps': videoFps,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -586,6 +1151,21 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
       Value<int>? isFavorite,
       Value<String>? folderPath,
       Value<String>? scannedAt,
+      Value<String?>? thumbnailPath,
+      Value<int?>? imageWidth,
+      Value<int?>? imageHeight,
+      Value<String?>? imageDateTaken,
+      Value<String?>? imageCameraMake,
+      Value<String?>? imageCameraModel,
+      Value<double?>? imageGpsLat,
+      Value<double?>? imageGpsLng,
+      Value<int?>? imageIso,
+      Value<double?>? imageFocalLength,
+      Value<double?>? imageFNumber,
+      Value<int?>? videoWidth,
+      Value<int?>? videoHeight,
+      Value<String?>? videoCodec,
+      Value<double?>? videoFps,
       Value<int>? rowid}) {
     return MediaItemsCompanion(
       path: path ?? this.path,
@@ -602,6 +1182,21 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
       isFavorite: isFavorite ?? this.isFavorite,
       folderPath: folderPath ?? this.folderPath,
       scannedAt: scannedAt ?? this.scannedAt,
+      thumbnailPath: thumbnailPath ?? this.thumbnailPath,
+      imageWidth: imageWidth ?? this.imageWidth,
+      imageHeight: imageHeight ?? this.imageHeight,
+      imageDateTaken: imageDateTaken ?? this.imageDateTaken,
+      imageCameraMake: imageCameraMake ?? this.imageCameraMake,
+      imageCameraModel: imageCameraModel ?? this.imageCameraModel,
+      imageGpsLat: imageGpsLat ?? this.imageGpsLat,
+      imageGpsLng: imageGpsLng ?? this.imageGpsLng,
+      imageIso: imageIso ?? this.imageIso,
+      imageFocalLength: imageFocalLength ?? this.imageFocalLength,
+      imageFNumber: imageFNumber ?? this.imageFNumber,
+      videoWidth: videoWidth ?? this.videoWidth,
+      videoHeight: videoHeight ?? this.videoHeight,
+      videoCodec: videoCodec ?? this.videoCodec,
+      videoFps: videoFps ?? this.videoFps,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -651,6 +1246,51 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
     if (scannedAt.present) {
       map['scanned_at'] = Variable<String>(scannedAt.value);
     }
+    if (thumbnailPath.present) {
+      map['thumbnail_path'] = Variable<String>(thumbnailPath.value);
+    }
+    if (imageWidth.present) {
+      map['image_width'] = Variable<int>(imageWidth.value);
+    }
+    if (imageHeight.present) {
+      map['image_height'] = Variable<int>(imageHeight.value);
+    }
+    if (imageDateTaken.present) {
+      map['image_date_taken'] = Variable<String>(imageDateTaken.value);
+    }
+    if (imageCameraMake.present) {
+      map['image_camera_make'] = Variable<String>(imageCameraMake.value);
+    }
+    if (imageCameraModel.present) {
+      map['image_camera_model'] = Variable<String>(imageCameraModel.value);
+    }
+    if (imageGpsLat.present) {
+      map['image_gps_lat'] = Variable<double>(imageGpsLat.value);
+    }
+    if (imageGpsLng.present) {
+      map['image_gps_lng'] = Variable<double>(imageGpsLng.value);
+    }
+    if (imageIso.present) {
+      map['image_iso'] = Variable<int>(imageIso.value);
+    }
+    if (imageFocalLength.present) {
+      map['image_focal_length'] = Variable<double>(imageFocalLength.value);
+    }
+    if (imageFNumber.present) {
+      map['image_f_number'] = Variable<double>(imageFNumber.value);
+    }
+    if (videoWidth.present) {
+      map['video_width'] = Variable<int>(videoWidth.value);
+    }
+    if (videoHeight.present) {
+      map['video_height'] = Variable<int>(videoHeight.value);
+    }
+    if (videoCodec.present) {
+      map['video_codec'] = Variable<String>(videoCodec.value);
+    }
+    if (videoFps.present) {
+      map['video_fps'] = Variable<double>(videoFps.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -674,6 +1314,21 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItemRow> {
           ..write('isFavorite: $isFavorite, ')
           ..write('folderPath: $folderPath, ')
           ..write('scannedAt: $scannedAt, ')
+          ..write('thumbnailPath: $thumbnailPath, ')
+          ..write('imageWidth: $imageWidth, ')
+          ..write('imageHeight: $imageHeight, ')
+          ..write('imageDateTaken: $imageDateTaken, ')
+          ..write('imageCameraMake: $imageCameraMake, ')
+          ..write('imageCameraModel: $imageCameraModel, ')
+          ..write('imageGpsLat: $imageGpsLat, ')
+          ..write('imageGpsLng: $imageGpsLng, ')
+          ..write('imageIso: $imageIso, ')
+          ..write('imageFocalLength: $imageFocalLength, ')
+          ..write('imageFNumber: $imageFNumber, ')
+          ..write('videoWidth: $videoWidth, ')
+          ..write('videoHeight: $videoHeight, ')
+          ..write('videoCodec: $videoCodec, ')
+          ..write('videoFps: $videoFps, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2950,6 +3605,21 @@ typedef $$MediaItemsTableCreateCompanionBuilder = MediaItemsCompanion Function({
   Value<int> isFavorite,
   required String folderPath,
   Value<String> scannedAt,
+  Value<String?> thumbnailPath,
+  Value<int?> imageWidth,
+  Value<int?> imageHeight,
+  Value<String?> imageDateTaken,
+  Value<String?> imageCameraMake,
+  Value<String?> imageCameraModel,
+  Value<double?> imageGpsLat,
+  Value<double?> imageGpsLng,
+  Value<int?> imageIso,
+  Value<double?> imageFocalLength,
+  Value<double?> imageFNumber,
+  Value<int?> videoWidth,
+  Value<int?> videoHeight,
+  Value<String?> videoCodec,
+  Value<double?> videoFps,
   Value<int> rowid,
 });
 typedef $$MediaItemsTableUpdateCompanionBuilder = MediaItemsCompanion Function({
@@ -2967,6 +3637,21 @@ typedef $$MediaItemsTableUpdateCompanionBuilder = MediaItemsCompanion Function({
   Value<int> isFavorite,
   Value<String> folderPath,
   Value<String> scannedAt,
+  Value<String?> thumbnailPath,
+  Value<int?> imageWidth,
+  Value<int?> imageHeight,
+  Value<String?> imageDateTaken,
+  Value<String?> imageCameraMake,
+  Value<String?> imageCameraModel,
+  Value<double?> imageGpsLat,
+  Value<double?> imageGpsLng,
+  Value<int?> imageIso,
+  Value<double?> imageFocalLength,
+  Value<double?> imageFNumber,
+  Value<int?> videoWidth,
+  Value<int?> videoHeight,
+  Value<String?> videoCodec,
+  Value<double?> videoFps,
   Value<int> rowid,
 });
 
@@ -3085,6 +3770,55 @@ class $$MediaItemsTableFilterComposer
 
   ColumnFilters<String> get scannedAt => $composableBuilder(
       column: $table.scannedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get thumbnailPath => $composableBuilder(
+      column: $table.thumbnailPath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get imageWidth => $composableBuilder(
+      column: $table.imageWidth, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get imageHeight => $composableBuilder(
+      column: $table.imageHeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get imageDateTaken => $composableBuilder(
+      column: $table.imageDateTaken,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get imageCameraMake => $composableBuilder(
+      column: $table.imageCameraMake,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get imageCameraModel => $composableBuilder(
+      column: $table.imageCameraModel,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get imageGpsLat => $composableBuilder(
+      column: $table.imageGpsLat, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get imageGpsLng => $composableBuilder(
+      column: $table.imageGpsLng, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get imageIso => $composableBuilder(
+      column: $table.imageIso, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get imageFocalLength => $composableBuilder(
+      column: $table.imageFocalLength,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get imageFNumber => $composableBuilder(
+      column: $table.imageFNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get videoWidth => $composableBuilder(
+      column: $table.videoWidth, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get videoHeight => $composableBuilder(
+      column: $table.videoHeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get videoCodec => $composableBuilder(
+      column: $table.videoCodec, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get videoFps => $composableBuilder(
+      column: $table.videoFps, builder: (column) => ColumnFilters(column));
 
   Expression<bool> mediaTagsRefs(
       Expression<bool> Function($$MediaTagsTableFilterComposer f) f) {
@@ -3221,6 +3955,57 @@ class $$MediaItemsTableOrderingComposer
 
   ColumnOrderings<String> get scannedAt => $composableBuilder(
       column: $table.scannedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get thumbnailPath => $composableBuilder(
+      column: $table.thumbnailPath,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get imageWidth => $composableBuilder(
+      column: $table.imageWidth, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get imageHeight => $composableBuilder(
+      column: $table.imageHeight, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get imageDateTaken => $composableBuilder(
+      column: $table.imageDateTaken,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get imageCameraMake => $composableBuilder(
+      column: $table.imageCameraMake,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get imageCameraModel => $composableBuilder(
+      column: $table.imageCameraModel,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get imageGpsLat => $composableBuilder(
+      column: $table.imageGpsLat, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get imageGpsLng => $composableBuilder(
+      column: $table.imageGpsLng, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get imageIso => $composableBuilder(
+      column: $table.imageIso, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get imageFocalLength => $composableBuilder(
+      column: $table.imageFocalLength,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get imageFNumber => $composableBuilder(
+      column: $table.imageFNumber,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get videoWidth => $composableBuilder(
+      column: $table.videoWidth, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get videoHeight => $composableBuilder(
+      column: $table.videoHeight, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get videoCodec => $composableBuilder(
+      column: $table.videoCodec, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get videoFps => $composableBuilder(
+      column: $table.videoFps, builder: (column) => ColumnOrderings(column));
 }
 
 class $$MediaItemsTableAnnotationComposer
@@ -3273,6 +4058,51 @@ class $$MediaItemsTableAnnotationComposer
 
   GeneratedColumn<String> get scannedAt =>
       $composableBuilder(column: $table.scannedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get thumbnailPath => $composableBuilder(
+      column: $table.thumbnailPath, builder: (column) => column);
+
+  GeneratedColumn<int> get imageWidth => $composableBuilder(
+      column: $table.imageWidth, builder: (column) => column);
+
+  GeneratedColumn<int> get imageHeight => $composableBuilder(
+      column: $table.imageHeight, builder: (column) => column);
+
+  GeneratedColumn<String> get imageDateTaken => $composableBuilder(
+      column: $table.imageDateTaken, builder: (column) => column);
+
+  GeneratedColumn<String> get imageCameraMake => $composableBuilder(
+      column: $table.imageCameraMake, builder: (column) => column);
+
+  GeneratedColumn<String> get imageCameraModel => $composableBuilder(
+      column: $table.imageCameraModel, builder: (column) => column);
+
+  GeneratedColumn<double> get imageGpsLat => $composableBuilder(
+      column: $table.imageGpsLat, builder: (column) => column);
+
+  GeneratedColumn<double> get imageGpsLng => $composableBuilder(
+      column: $table.imageGpsLng, builder: (column) => column);
+
+  GeneratedColumn<int> get imageIso =>
+      $composableBuilder(column: $table.imageIso, builder: (column) => column);
+
+  GeneratedColumn<double> get imageFocalLength => $composableBuilder(
+      column: $table.imageFocalLength, builder: (column) => column);
+
+  GeneratedColumn<double> get imageFNumber => $composableBuilder(
+      column: $table.imageFNumber, builder: (column) => column);
+
+  GeneratedColumn<int> get videoWidth => $composableBuilder(
+      column: $table.videoWidth, builder: (column) => column);
+
+  GeneratedColumn<int> get videoHeight => $composableBuilder(
+      column: $table.videoHeight, builder: (column) => column);
+
+  GeneratedColumn<String> get videoCodec => $composableBuilder(
+      column: $table.videoCodec, builder: (column) => column);
+
+  GeneratedColumn<double> get videoFps =>
+      $composableBuilder(column: $table.videoFps, builder: (column) => column);
 
   Expression<T> mediaTagsRefs<T extends Object>(
       Expression<T> Function($$MediaTagsTableAnnotationComposer a) f) {
@@ -3400,6 +4230,21 @@ class $$MediaItemsTableTableManager extends RootTableManager<
             Value<int> isFavorite = const Value.absent(),
             Value<String> folderPath = const Value.absent(),
             Value<String> scannedAt = const Value.absent(),
+            Value<String?> thumbnailPath = const Value.absent(),
+            Value<int?> imageWidth = const Value.absent(),
+            Value<int?> imageHeight = const Value.absent(),
+            Value<String?> imageDateTaken = const Value.absent(),
+            Value<String?> imageCameraMake = const Value.absent(),
+            Value<String?> imageCameraModel = const Value.absent(),
+            Value<double?> imageGpsLat = const Value.absent(),
+            Value<double?> imageGpsLng = const Value.absent(),
+            Value<int?> imageIso = const Value.absent(),
+            Value<double?> imageFocalLength = const Value.absent(),
+            Value<double?> imageFNumber = const Value.absent(),
+            Value<int?> videoWidth = const Value.absent(),
+            Value<int?> videoHeight = const Value.absent(),
+            Value<String?> videoCodec = const Value.absent(),
+            Value<double?> videoFps = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               MediaItemsCompanion(
@@ -3417,6 +4262,21 @@ class $$MediaItemsTableTableManager extends RootTableManager<
             isFavorite: isFavorite,
             folderPath: folderPath,
             scannedAt: scannedAt,
+            thumbnailPath: thumbnailPath,
+            imageWidth: imageWidth,
+            imageHeight: imageHeight,
+            imageDateTaken: imageDateTaken,
+            imageCameraMake: imageCameraMake,
+            imageCameraModel: imageCameraModel,
+            imageGpsLat: imageGpsLat,
+            imageGpsLng: imageGpsLng,
+            imageIso: imageIso,
+            imageFocalLength: imageFocalLength,
+            imageFNumber: imageFNumber,
+            videoWidth: videoWidth,
+            videoHeight: videoHeight,
+            videoCodec: videoCodec,
+            videoFps: videoFps,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -3434,6 +4294,21 @@ class $$MediaItemsTableTableManager extends RootTableManager<
             Value<int> isFavorite = const Value.absent(),
             required String folderPath,
             Value<String> scannedAt = const Value.absent(),
+            Value<String?> thumbnailPath = const Value.absent(),
+            Value<int?> imageWidth = const Value.absent(),
+            Value<int?> imageHeight = const Value.absent(),
+            Value<String?> imageDateTaken = const Value.absent(),
+            Value<String?> imageCameraMake = const Value.absent(),
+            Value<String?> imageCameraModel = const Value.absent(),
+            Value<double?> imageGpsLat = const Value.absent(),
+            Value<double?> imageGpsLng = const Value.absent(),
+            Value<int?> imageIso = const Value.absent(),
+            Value<double?> imageFocalLength = const Value.absent(),
+            Value<double?> imageFNumber = const Value.absent(),
+            Value<int?> videoWidth = const Value.absent(),
+            Value<int?> videoHeight = const Value.absent(),
+            Value<String?> videoCodec = const Value.absent(),
+            Value<double?> videoFps = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               MediaItemsCompanion.insert(
@@ -3451,6 +4326,21 @@ class $$MediaItemsTableTableManager extends RootTableManager<
             isFavorite: isFavorite,
             folderPath: folderPath,
             scannedAt: scannedAt,
+            thumbnailPath: thumbnailPath,
+            imageWidth: imageWidth,
+            imageHeight: imageHeight,
+            imageDateTaken: imageDateTaken,
+            imageCameraMake: imageCameraMake,
+            imageCameraModel: imageCameraModel,
+            imageGpsLat: imageGpsLat,
+            imageGpsLng: imageGpsLng,
+            imageIso: imageIso,
+            imageFocalLength: imageFocalLength,
+            imageFNumber: imageFNumber,
+            videoWidth: videoWidth,
+            videoHeight: videoHeight,
+            videoCodec: videoCodec,
+            videoFps: videoFps,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

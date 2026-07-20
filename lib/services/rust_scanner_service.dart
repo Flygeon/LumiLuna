@@ -84,6 +84,7 @@ class RustScannerService {
   Future<List<MediaItem>> scanMediaBatch(
     List<String> folders, {
     int maxDepth = 8,
+    required String cacheDir,
     int offset = 0,
     int limit = 500,
   }) async {
@@ -92,6 +93,7 @@ class RustScannerService {
       final rustItems = await rust_api.scanMediaBatch(
         folders: folders,
         maxDepth: maxDepth,
+        cacheDir: cacheDir,
         offset: offset,
         limit: limit,
       );
@@ -105,6 +107,7 @@ class RustScannerService {
   Future<List<MediaItem>> scanMediaBatches(
     List<String> folders, {
     int maxDepth = 8,
+    required String cacheDir,
     int batchSize = 500,
   }) async {
     try {
@@ -112,6 +115,7 @@ class RustScannerService {
       final batches = await rust_api.scanMediaBatches(
         folders: folders,
         maxDepth: maxDepth,
+        cacheDir: cacheDir,
         batchSize: batchSize,
       );
       return [for (final batch in batches) ...batch.map(_toMediaItem)];
@@ -122,12 +126,13 @@ class RustScannerService {
   }
 
   Future<List<MediaItem>> scanMedia(List<String> folders,
-      {int maxDepth = 8}) async {
+      {int maxDepth = 8, required String cacheDir}) async {
     try {
       await _ensureInitialized();
       final rustItems = await rust_api.scanMedia(
         folders: folders,
         maxDepth: maxDepth,
+        cacheDir: cacheDir,
       );
       return rustItems.map(_toMediaItem).toList();
     } catch (_) {
@@ -162,6 +167,22 @@ class RustScannerService {
       artist: rustItem.artist,
       album: rustItem.album,
       durationMs: rustItem.durationMs?.toInt(),
+      artworkPath: rustItem.artworkPath,
+      thumbnailPath: rustItem.thumbnailPath,
+      imageWidth: rustItem.imageWidth,
+      imageHeight: rustItem.imageHeight,
+      imageDateTaken: rustItem.imageDateTaken,
+      imageCameraMake: rustItem.imageCameraMake,
+      imageCameraModel: rustItem.imageCameraModel,
+      imageGpsLat: rustItem.imageGpsLat,
+      imageGpsLng: rustItem.imageGpsLng,
+      imageIso: rustItem.imageIso,
+      imageFocalLength: rustItem.imageFocalLength,
+      imageFNumber: rustItem.imageFNumber,
+      videoWidth: rustItem.videoWidth,
+      videoHeight: rustItem.videoHeight,
+      videoCodec: rustItem.videoCodec,
+      videoFps: rustItem.videoFps,
     );
   }
 

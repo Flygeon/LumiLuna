@@ -106,6 +106,21 @@ class VideoPlayerScreen extends ConsumerWidget {
                 ),
               ),
             ),
+            // Video metadata overlay - bottom left
+            Positioned(
+              left: 16,
+              bottom: 80,
+              child: SafeArea(
+                top: false,
+                child: _VideoInfoBadge(
+                  width: current?.videoWidth,
+                  height: current?.videoHeight,
+                  codec: current?.videoCodec,
+                  fps: current?.videoFps,
+                  fileSize: current?.size,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -175,5 +190,64 @@ class _VideoSpeedButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _VideoInfoBadge extends StatelessWidget {
+  final int? width;
+  final int? height;
+  final String? codec;
+  final double? fps;
+  final int? fileSize;
+
+  const _VideoInfoBadge({
+    this.width,
+    this.height,
+    this.codec,
+    this.fps,
+    this.fileSize,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = <String>[];
+    if (width != null && height != null) {
+      parts.add('${width}x$height');
+    }
+    if (codec != null && codec!.isNotEmpty) {
+      parts.add(codec!.toUpperCase());
+    }
+    if (fps != null && fps! > 0) {
+      parts.add('${fps!.toStringAsFixed(1)} FPS');
+    }
+    if (fileSize != null && fileSize! > 0) {
+      parts.add(_formatFileSize(fileSize!));
+    }
+    if (parts.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        parts.join(' · '),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  String _formatFileSize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 }

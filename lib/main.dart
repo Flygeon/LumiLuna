@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'app.dart';
 import 'providers/settings_provider.dart';
+import 'services/cache_manager.dart';
 import 'services/database/app_database.dart';
 import 'services/settings_service.dart';
 
@@ -115,6 +116,23 @@ void main() {
         startupError = '数据库初始化失败: $e';
         // ignore: avoid_print
         print(startupError);
+      }
+
+      // Migrate old caches to new location
+      try {
+        final tempDir = await getTemporaryDirectory();
+        final newArtworkDir = await CacheManager.artworkDir;
+        await CacheManager.migrateFrom(
+          '${tempDir.path}/lumiluna_artwork',
+          newArtworkDir,
+        );
+        final newVideoThumbsDir = await CacheManager.videoThumbsDir;
+        await CacheManager.migrateFrom(
+          '${tempDir.path}/lumiluna_thumbs',
+          newVideoThumbsDir,
+        );
+      } catch (e) {
+        // Best-effort migration — non-fatal if old dirs don't exist.
       }
 
       final settingsService = await SettingsService.create();

@@ -35,6 +35,20 @@ class MediaThumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (item.type == MediaType.image) {
+      // Use cached thumbnail if available
+      if (item.thumbnailPath != null) {
+        return LazyLoadWidget(
+          placeholder: _placeholder(context, item),
+          child: Image.file(
+            File(item.thumbnailPath!),
+            fit: fit,
+            gaplessPlayback: true,
+            filterQuality: FilterQuality.low,
+            errorBuilder: (_, __, ___) => _placeholder(context, item),
+          ),
+        );
+      }
+      // Fall back to full-size decode
       return LazyLoadWidget(
         placeholder: _placeholder(context, item),
         child: Image.file(
@@ -118,7 +132,13 @@ class _VideoThumbnailState extends ConsumerState<_VideoThumbnail> {
   @override
   void initState() {
     super.initState();
-    _loadFromDiskCache();
+    // Use cached thumbnail path from database if available
+    if (widget.item.thumbnailPath != null &&
+        File(widget.item.thumbnailPath!).existsSync()) {
+      _thumbPath = widget.item.thumbnailPath;
+    } else {
+      _loadFromDiskCache();
+    }
   }
 
   /// Check the disk cache immediately so already-cached thumbnails show

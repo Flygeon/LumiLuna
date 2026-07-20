@@ -478,6 +478,28 @@ impl SseDecode for Option<i64> {
     }
 }
 
+impl SseDecode for Option<i32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<i32>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<f64> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<f64>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for crate::api::media_scan::RustMediaItem {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -491,6 +513,21 @@ impl SseDecode for crate::api::media_scan::RustMediaItem {
         let mut var_artist = <Option<String>>::sse_decode(deserializer);
         let mut var_album = <Option<String>>::sse_decode(deserializer);
         let mut var_durationMs = <Option<i64>>::sse_decode(deserializer);
+        let mut var_thumbnailPath = <Option<String>>::sse_decode(deserializer);
+        let mut var_imageWidth = <Option<i32>>::sse_decode(deserializer);
+        let mut var_imageHeight = <Option<i32>>::sse_decode(deserializer);
+        let mut var_imageDateTaken = <Option<String>>::sse_decode(deserializer);
+        let mut var_imageCameraMake = <Option<String>>::sse_decode(deserializer);
+        let mut var_imageCameraModel = <Option<String>>::sse_decode(deserializer);
+        let mut var_imageGpsLat = <Option<f64>>::sse_decode(deserializer);
+        let mut var_imageGpsLng = <Option<f64>>::sse_decode(deserializer);
+        let mut var_imageIso = <Option<i32>>::sse_decode(deserializer);
+        let mut var_imageFocalLength = <Option<f64>>::sse_decode(deserializer);
+        let mut var_imageFNumber = <Option<f64>>::sse_decode(deserializer);
+        let mut var_videoWidth = <Option<i32>>::sse_decode(deserializer);
+        let mut var_videoHeight = <Option<i32>>::sse_decode(deserializer);
+        let mut var_videoCodec = <Option<String>>::sse_decode(deserializer);
+        let mut var_videoFps = <Option<f64>>::sse_decode(deserializer);
         return crate::api::media_scan::RustMediaItem {
             path: var_path,
             name: var_name,
@@ -502,6 +539,21 @@ impl SseDecode for crate::api::media_scan::RustMediaItem {
             artist: var_artist,
             album: var_album,
             duration_ms: var_durationMs,
+            thumbnail_path: var_thumbnailPath,
+            image_width: var_imageWidth,
+            image_height: var_imageHeight,
+            image_date_taken: var_imageDateTaken,
+            image_camera_make: var_imageCameraMake,
+            image_camera_model: var_imageCameraModel,
+            image_gps_lat: var_imageGpsLat,
+            image_gps_lng: var_imageGpsLng,
+            image_iso: var_imageIso,
+            image_focal_length: var_imageFocalLength,
+            image_f_number: var_imageFNumber,
+            video_width: var_videoWidth,
+            video_height: var_videoHeight,
+            video_codec: var_videoCodec,
+            video_fps: var_videoFps,
         };
     }
 }
@@ -536,6 +588,13 @@ impl SseDecode for i32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         deserializer.cursor.read_i32::<NativeEndian>().unwrap()
+    }
+}
+
+impl SseDecode for f64 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        deserializer.cursor.read_f64::<NativeEndian>().unwrap()
     }
 }
 
@@ -601,6 +660,21 @@ impl flutter_rust_bridge::IntoDart for crate::api::media_scan::RustMediaItem {
             self.artist.into_into_dart().into_dart(),
             self.album.into_into_dart().into_dart(),
             self.duration_ms.into_into_dart().into_dart(),
+            self.thumbnail_path.into_into_dart().into_dart(),
+            self.image_width.into_into_dart().into_dart(),
+            self.image_height.into_into_dart().into_dart(),
+            self.image_date_taken.into_into_dart().into_dart(),
+            self.image_camera_make.into_into_dart().into_dart(),
+            self.image_camera_model.into_into_dart().into_dart(),
+            self.image_gps_lat.into_into_dart().into_dart(),
+            self.image_gps_lng.into_into_dart().into_dart(),
+            self.image_iso.into_into_dart().into_dart(),
+            self.image_focal_length.into_into_dart().into_dart(),
+            self.image_f_number.into_into_dart().into_dart(),
+            self.video_width.into_into_dart().into_dart(),
+            self.video_height.into_into_dart().into_dart(),
+            self.video_codec.into_into_dart().into_dart(),
+            self.video_fps.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -698,6 +772,26 @@ impl SseEncode for Option<i64> {
     }
 }
 
+impl SseEncode for Option<i32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <i32>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<f64> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <f64>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for crate::api::media_scan::RustMediaItem {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -711,6 +805,21 @@ impl SseEncode for crate::api::media_scan::RustMediaItem {
         <Option<String>>::sse_encode(self.artist, serializer);
         <Option<String>>::sse_encode(self.album, serializer);
         <Option<i64>>::sse_encode(self.duration_ms, serializer);
+        <Option<String>>::sse_encode(self.thumbnail_path, serializer);
+        <Option<i32>>::sse_encode(self.image_width, serializer);
+        <Option<i32>>::sse_encode(self.image_height, serializer);
+        <Option<String>>::sse_encode(self.image_date_taken, serializer);
+        <Option<String>>::sse_encode(self.image_camera_make, serializer);
+        <Option<String>>::sse_encode(self.image_camera_model, serializer);
+        <Option<f64>>::sse_encode(self.image_gps_lat, serializer);
+        <Option<f64>>::sse_encode(self.image_gps_lng, serializer);
+        <Option<i32>>::sse_encode(self.image_iso, serializer);
+        <Option<f64>>::sse_encode(self.image_focal_length, serializer);
+        <Option<f64>>::sse_encode(self.image_f_number, serializer);
+        <Option<i32>>::sse_encode(self.video_width, serializer);
+        <Option<i32>>::sse_encode(self.video_height, serializer);
+        <Option<String>>::sse_encode(self.video_codec, serializer);
+        <Option<f64>>::sse_encode(self.video_fps, serializer);
     }
 }
 
@@ -744,6 +853,13 @@ impl SseEncode for i32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         serializer.cursor.write_i32::<NativeEndian>(self).unwrap();
+    }
+}
+
+impl SseEncode for f64 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        serializer.cursor.write_f64::<NativeEndian>(self).unwrap();
     }
 }
 

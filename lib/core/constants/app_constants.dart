@@ -99,6 +99,12 @@ class AppConstants {
   // Max age of a valid cache before a full rescan is triggered (hours).
   static const int cacheMaxAgeHours = 24;
 
+  // Cache directory constants
+  static const String cacheRootName = 'lumiluna_cache';
+  static const String cacheThumbnailsDir = 'thumbnails';
+  static const String cacheVideoThumbsDir = 'video_thumbs';
+  static const String cacheArtworkDir = 'artwork';
+
   // Trash / recycle bin.
   static const String trashManifestName = 'lumiluna_trash.json';
   static const String trashDirName = 'lumiluna_trash';

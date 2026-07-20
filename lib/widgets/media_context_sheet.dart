@@ -8,6 +8,7 @@ import '../models/media_item.dart';
 import '../providers/media_provider.dart';
 import '../providers/selection_provider.dart';
 import '../services/trash_manager.dart';
+import 'image_detail_dialog.dart';
 
 /// Modal bottom sheet shown when the user long-presses a media item.
 ///
@@ -89,6 +90,17 @@ class MediaContextSheet {
                   _toggleFavorite(context, item, ref);
                 },
               ),
+              // Image details option (only for image type)
+              if (item.type == MediaType.image)
+                ListTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: Text('详情'),
+                  subtitle: const Text('查看文件信息和 EXIF 元数据'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    ImageDetailDialog.show(context, item);
+                  },
+                ),
               ListTile(
                 leading: const Icon(Icons.edit),
                 title: Text(l10n.rename),
