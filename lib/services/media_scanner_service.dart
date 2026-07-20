@@ -7,16 +7,8 @@ import 'package:path_provider/path_provider.dart';
 
 import '../core/constants/app_constants.dart';
 import '../models/media_item.dart';
-import '../models/media_metadata.dart';
 import '../models/media_type.dart';
 import 'rust_scanner_service.dart';
-
-/// The result of a scan — slim [MediaItem]s plus their [MediaMetadata].
-class ScanResult {
-  final List<MediaItem> items;
-  final List<MediaMetadata> metadata;
-  const ScanResult(this.items, this.metadata);
-}
 
 /// Scans local folders for media files on a background isolate.
 ///
