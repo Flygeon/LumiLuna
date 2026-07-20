@@ -176,7 +176,10 @@ fn gps_to_f64(
 ) -> Option<f64> {
     let field = exif.get_field(tag, exif::In::PRIMARY)?;
     let ref_field = exif.get_field(ref_tag, exif::In::PRIMARY)?;
-    let components: Vec<f64> = field.value.iter().map(|v| v.to_num::<f64>()).collect();
+    let components: Vec<f64> = match field.value {
+        exif::Value::Rational(ref vals) => vals.iter().map(|v| v.to_num::<f64>()).collect(),
+        _ => return None,
+    };
     if components.len() != 3 {
         return None;
     }
@@ -249,12 +252,16 @@ fn read_exif(
         .map(|v| v as i32);
     let focal_length = exif
         .get_field(exif::Tag::FocalLength, exif::In::PRIMARY)
-        .and_then(|f| f.value.iter().next())
-        .map(|v| v.to_num::<f64>());
+        .and_then(|f| match f.value {
+            exif::Value::Rational(ref vals) => vals.first().map(|v| v.to_num::<f64>()),
+            _ => None,
+        });
     let f_number = exif
         .get_field(exif::Tag::FNumber, exif::In::PRIMARY)
-        .and_then(|f| f.value.iter().next())
-        .map(|v| v.to_num::<f64>());
+        .and_then(|f| match f.value {
+            exif::Value::Rational(ref vals) => vals.first().map(|v| v.to_num::<f64>()),
+            _ => None,
+        });
 
     (
         width,
@@ -414,15 +421,14 @@ fn walk(
     }
 }
 
-fn ext_for_mime(mime: &str) -> &str {
-    if mime.contains("png") {
-        "png"
-    } else if mime.contains("webp") {
-        "webp"
-    } else if mime.contains("bmp") {
-        "bmp"
-    } else {
-        "jpg"
+fn ext_for_mime(mime: &lofty::MimeType) -> &str {
+    match mime {
+        lofty::MimeType::Png => "png",
+        lofty::MimeType::Jpeg => "jpg",
+        lofty::MimeType::Bmp => "bmp",
+        lofty::MimeType::Gif => "gif",
+        lofty::MimeType::Tiff => "tiff",
+        _ => "jpg",
     }
 }
 
@@ -435,7 +441,7 @@ fn read_audio_metadata(path: &Path, cache_dir: &str) -> (Option<String>, Option<
     let properties = tagged_file.properties();
     let artwork_path = tag.and_then(|t| {
         t.pictures().first().map(|pic| {
-            let ext = ext_for_mime(pic.mime_type().unwrap_or("image/jpeg"));
+            let ext = pic.mime_type().map(|m| ext_for_mime(m)).unwrap_or("jpg");
             let hash = xxh3_64(path.to_string_lossy().as_bytes());
             let artwork_dir = format!("{}/artwork", cache_dir);
             std::fs::create_dir_all(&artwork_dir).ok();
