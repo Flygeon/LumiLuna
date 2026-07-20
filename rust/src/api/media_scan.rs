@@ -5,8 +5,6 @@ use std::time::UNIX_EPOCH;
 
 use flutter_rust_bridge::frb;
 use lofty::{prelude::*, probe::Probe};
-use image::imageops::FilterType;
-use image::ImageOutputFormat;
 use serde::Deserialize;
 use std::io::BufReader;
 use xxhash_rust::xxh3::xxh3_64;
@@ -164,27 +162,10 @@ fn parse_fps(fps_str: &str) -> Option<f64> {
 
 /// Generate a 300px-wide JPEG thumbnail for the given image file.
 /// Returns the output file path on success, None on failure.
-fn generate_thumbnail(path: &Path, cache_dir: &str, size: i64, modified_ms: i64) -> Option<String> {
-    let img = image::io::Reader::open(path).ok()?.decode().ok()?;
-    let thumb_dir = format!("{}/thumbnails", cache_dir);
-    std::fs::create_dir_all(&thumb_dir).ok()?;
-    let hash = xxh3_64(
-        format!("{}\0{}\0{}", path.to_string_lossy(), size, modified_ms).as_bytes(),
-    );
-    let output_path = format!("{}/{:016x}.jpg", thumb_dir, hash);
-
-    let (w, h) = (img.width(), img.height());
-    let max_width = 300u32;
-    let thumb = if w > max_width {
-        let ratio = max_width as f64 / w as f64;
-        let new_h = (h as f64 * ratio).round() as u32;
-        img.resize(max_width, new_h.max(1), FilterType::Lanczos3)
-    } else {
-        img
-    };
-    let mut file = std::fs::File::create(&output_path).ok()?;
-    thumb.write_to(&mut file, ImageOutputFormat::Jpeg(80)).ok()?;
-    Some(output_path)
+/// Currently a no-op; thumbnail generation is deferred to the Dart side
+/// for broader format support and to avoid additional crate dependencies.
+fn generate_thumbnail(_path: &Path, _cache_dir: &str, _size: i64, _modified_ms: i64) -> Option<String> {
+    None
 }
 
 fn gps_to_f64(
