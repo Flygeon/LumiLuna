@@ -79,20 +79,7 @@ class MediaScannerService {
   static Future<List<MediaItem>> scan(List<String> folders) async {
     if (folders.isEmpty) return const [];
 
-    List<MediaItem> items;
-    if (_useRustScanning && RustScannerService.isRustAvailable) {
-      try {
-        items = await RustScannerService().scanMediaBatches(
-          folders,
-          maxDepth: AppConstants.maxScanDepth,
-        );
-      } catch (_) {
-        items = await _scanWithDart(folders);
-      }
-    } else {
-      items = await _scanWithDart(folders);
-    }
-
+    final items = await _scanWithDart(folders);
     return _enrichAudioMetadataParallel(items);
   }
 

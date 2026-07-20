@@ -303,13 +303,11 @@ class AppDatabase extends _$AppDatabase {
             size: Value(item.size),
             modified: Value(item.modified.toIso8601String()),
             fileHash: Value(item.fileHash),
-            title: Value(unchanged ? existing!.title : item.title),
-            artist: Value(unchanged ? existing!.artist : item.artist),
-            album: Value(unchanged ? existing!.album : item.album),
-            durationMs:
-                Value(unchanged ? existing!.durationMs : item.durationMs),
-            artworkPath:
-                Value(unchanged ? existing!.artworkPath : item.artworkPath),
+            title: Value(item.title ?? existing?.title),
+            artist: Value(item.artist ?? existing?.artist),
+            album: Value(item.album ?? existing?.album),
+            durationMs: Value(item.durationMs ?? existing?.durationMs),
+            artworkPath: Value(item.artworkPath ?? existing?.artworkPath),
             isFavorite:
                 Value(existing?.isFavorite ?? (item.isFavorite ? 1 : 0)),
             folderPath: Value(item.folderPath),
