@@ -196,7 +196,7 @@ class SettingsScreen extends ConsumerWidget {
 }
 
 class _CacheSizeTile extends StatefulWidget {
-  final VoidCallback onClear;
+  final Future<void> Function() onClear;
   const _CacheSizeTile({required this.onClear});
 
   @override

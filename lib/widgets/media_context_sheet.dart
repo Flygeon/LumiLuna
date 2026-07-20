@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/l10n.dart';
 import '../models/media_item.dart';
+import '../models/media_type.dart';
 import '../providers/media_provider.dart';
 import '../providers/selection_provider.dart';
 import '../services/trash_manager.dart';
