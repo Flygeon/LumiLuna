@@ -212,12 +212,14 @@ fn wire__crate__api__media_scan__scan_media_impl(
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_folders = <Vec<String>>::sse_decode(&mut deserializer);
             let api_max_depth = <u32>::sse_decode(&mut deserializer);
+            let api_cache_dir = <String>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, ()>((move || {
                     let output_ok = Result::<_, ()>::Ok(crate::api::media_scan::scan_media(
                         api_folders,
                         api_max_depth,
+                        api_cache_dir,
                     ))?;
                     Ok(output_ok)
                 })())
@@ -249,6 +251,7 @@ fn wire__crate__api__media_scan__scan_media_batch_impl(
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_folders = <Vec<String>>::sse_decode(&mut deserializer);
             let api_max_depth = <u32>::sse_decode(&mut deserializer);
+            let api_cache_dir = <String>::sse_decode(&mut deserializer);
             let api_offset = <u32>::sse_decode(&mut deserializer);
             let api_limit = <u32>::sse_decode(&mut deserializer);
             deserializer.end();
@@ -257,6 +260,7 @@ fn wire__crate__api__media_scan__scan_media_batch_impl(
                     let output_ok = Result::<_, ()>::Ok(crate::api::media_scan::scan_media_batch(
                         api_folders,
                         api_max_depth,
+                        api_cache_dir,
                         api_offset,
                         api_limit,
                     ))?;
@@ -290,6 +294,7 @@ fn wire__crate__api__media_scan__scan_media_batches_impl(
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_folders = <Vec<String>>::sse_decode(&mut deserializer);
             let api_max_depth = <u32>::sse_decode(&mut deserializer);
+            let api_cache_dir = <String>::sse_decode(&mut deserializer);
             let api_batch_size = <u32>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
@@ -298,6 +303,7 @@ fn wire__crate__api__media_scan__scan_media_batches_impl(
                         Result::<_, ()>::Ok(crate::api::media_scan::scan_media_batches(
                             api_folders,
                             api_max_depth,
+                            api_cache_dir,
                             api_batch_size,
                         ))?;
                     Ok(output_ok)
@@ -513,6 +519,7 @@ impl SseDecode for crate::api::media_scan::RustMediaItem {
         let mut var_artist = <Option<String>>::sse_decode(deserializer);
         let mut var_album = <Option<String>>::sse_decode(deserializer);
         let mut var_durationMs = <Option<i64>>::sse_decode(deserializer);
+        let mut var_artworkPath = <Option<String>>::sse_decode(deserializer);
         let mut var_thumbnailPath = <Option<String>>::sse_decode(deserializer);
         let mut var_imageWidth = <Option<i32>>::sse_decode(deserializer);
         let mut var_imageHeight = <Option<i32>>::sse_decode(deserializer);
@@ -539,6 +546,7 @@ impl SseDecode for crate::api::media_scan::RustMediaItem {
             artist: var_artist,
             album: var_album,
             duration_ms: var_durationMs,
+            artwork_path: var_artworkPath,
             thumbnail_path: var_thumbnailPath,
             image_width: var_imageWidth,
             image_height: var_imageHeight,
@@ -805,6 +813,7 @@ impl SseEncode for crate::api::media_scan::RustMediaItem {
         <Option<String>>::sse_encode(self.artist, serializer);
         <Option<String>>::sse_encode(self.album, serializer);
         <Option<i64>>::sse_encode(self.duration_ms, serializer);
+        <Option<String>>::sse_encode(self.artwork_path, serializer);
         <Option<String>>::sse_encode(self.thumbnail_path, serializer);
         <Option<i32>>::sse_encode(self.image_width, serializer);
         <Option<i32>>::sse_encode(self.image_height, serializer);

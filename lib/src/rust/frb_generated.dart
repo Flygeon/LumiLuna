@@ -92,17 +92,19 @@ abstract class RustLibApi extends BaseApi {
   Future<String> crateApiMediaScanPing();
 
   Future<List<RustMediaItem>> crateApiMediaScanScanMedia(
-      {required List<String> folders, required int maxDepth});
+      {required List<String> folders, required int maxDepth, required String cacheDir});
 
   Future<List<RustMediaItem>> crateApiMediaScanScanMediaBatch(
       {required List<String> folders,
       required int maxDepth,
+      required String cacheDir,
       required int offset,
       required int limit});
 
   Future<List<List<RustMediaItem>>> crateApiMediaScanScanMediaBatches(
       {required List<String> folders,
       required int maxDepth,
+      required String cacheDir,
       required int batchSize});
 
   Future<BigInt> crateApiMediaScanStableFileHash(
@@ -224,12 +226,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   Future<List<RustMediaItem>> crateApiMediaScanScanMedia(
-      {required List<String> folders, required int maxDepth}) {
+      {required List<String> folders, required int maxDepth, required String cacheDir}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_list_String(folders, serializer);
         sse_encode_u_32(maxDepth, serializer);
+        sse_encode_String(cacheDir, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 5, port: port_);
       },
@@ -238,20 +241,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeErrorData: null,
       ),
       constMeta: kCrateApiMediaScanScanMediaConstMeta,
-      argValues: [folders, maxDepth],
+      argValues: [folders, maxDepth, cacheDir],
       apiImpl: this,
     ));
   }
 
   TaskConstMeta get kCrateApiMediaScanScanMediaConstMeta => const TaskConstMeta(
         debugName: "scan_media",
-        argNames: ["folders", "maxDepth"],
+        argNames: ["folders", "maxDepth", "cacheDir"],
       );
 
   @override
   Future<List<RustMediaItem>> crateApiMediaScanScanMediaBatch(
       {required List<String> folders,
       required int maxDepth,
+      required String cacheDir,
       required int offset,
       required int limit}) {
     return handler.executeNormal(NormalTask(
@@ -259,6 +263,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_list_String(folders, serializer);
         sse_encode_u_32(maxDepth, serializer);
+        sse_encode_String(cacheDir, serializer);
         sse_encode_u_32(offset, serializer);
         sse_encode_u_32(limit, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
@@ -269,7 +274,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeErrorData: null,
       ),
       constMeta: kCrateApiMediaScanScanMediaBatchConstMeta,
-      argValues: [folders, maxDepth, offset, limit],
+      argValues: [folders, maxDepth, cacheDir, offset, limit],
       apiImpl: this,
     ));
   }
@@ -277,19 +282,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiMediaScanScanMediaBatchConstMeta =>
       const TaskConstMeta(
         debugName: "scan_media_batch",
-        argNames: ["folders", "maxDepth", "offset", "limit"],
+        argNames: ["folders", "maxDepth", "cacheDir", "offset", "limit"],
       );
 
   @override
   Future<List<List<RustMediaItem>>> crateApiMediaScanScanMediaBatches(
       {required List<String> folders,
       required int maxDepth,
+      required String cacheDir,
       required int batchSize}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_list_String(folders, serializer);
         sse_encode_u_32(maxDepth, serializer);
+        sse_encode_String(cacheDir, serializer);
         sse_encode_u_32(batchSize, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 7, port: port_);
@@ -299,7 +306,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeErrorData: null,
       ),
       constMeta: kCrateApiMediaScanScanMediaBatchesConstMeta,
-      argValues: [folders, maxDepth, batchSize],
+      argValues: [folders, maxDepth, cacheDir, batchSize],
       apiImpl: this,
     ));
   }
@@ -307,7 +314,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiMediaScanScanMediaBatchesConstMeta =>
       const TaskConstMeta(
         debugName: "scan_media_batches",
-        argNames: ["folders", "maxDepth", "batchSize"],
+        argNames: ["folders", "maxDepth", "cacheDir", "batchSize"],
       );
 
   @override
@@ -465,8 +472,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   RustMediaItem dco_decode_rust_media_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 10)
-      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    if (arr.length != 26)
+      throw Exception('unexpected arr length: expect 26 but see ${arr.length}');
     return RustMediaItem(
       path: dco_decode_String(arr[0]),
       name: dco_decode_String(arr[1]),
@@ -478,6 +485,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       artist: dco_decode_opt_String(arr[7]),
       album: dco_decode_opt_String(arr[8]),
       durationMs: dco_decode_opt_box_autoadd_i_64(arr[9]),
+      artworkPath: dco_decode_opt_String(arr[10]),
+      thumbnailPath: dco_decode_opt_String(arr[11]),
+      imageWidth: dco_decode_opt_box_autoadd_i_32(arr[12]),
+      imageHeight: dco_decode_opt_box_autoadd_i_32(arr[13]),
+      imageDateTaken: dco_decode_opt_String(arr[14]),
+      imageCameraMake: dco_decode_opt_String(arr[15]),
+      imageCameraModel: dco_decode_opt_String(arr[16]),
+      imageGpsLat: dco_decode_opt_box_autoadd_f_64(arr[17]),
+      imageGpsLng: dco_decode_opt_box_autoadd_f_64(arr[18]),
+      imageIso: dco_decode_opt_box_autoadd_i_32(arr[19]),
+      imageFocalLength: dco_decode_opt_box_autoadd_f_64(arr[20]),
+      imageFNumber: dco_decode_opt_box_autoadd_f_64(arr[21]),
+      videoWidth: dco_decode_opt_box_autoadd_i_32(arr[22]),
+      videoHeight: dco_decode_opt_box_autoadd_i_32(arr[23]),
+      videoCodec: dco_decode_opt_String(arr[24]),
+      videoFps: dco_decode_opt_box_autoadd_f_64(arr[25]),
     );
   }
 
@@ -610,6 +633,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_artist = sse_decode_opt_String(deserializer);
     final var_album = sse_decode_opt_String(deserializer);
     final var_durationMs = sse_decode_opt_box_autoadd_i_64(deserializer);
+    final var_artworkPath = sse_decode_opt_String(deserializer);
+    final var_thumbnailPath = sse_decode_opt_String(deserializer);
+    final var_imageWidth = sse_decode_opt_box_autoadd_i_32(deserializer);
+    final var_imageHeight = sse_decode_opt_box_autoadd_i_32(deserializer);
+    final var_imageDateTaken = sse_decode_opt_String(deserializer);
+    final var_imageCameraMake = sse_decode_opt_String(deserializer);
+    final var_imageCameraModel = sse_decode_opt_String(deserializer);
+    final var_imageGpsLat = sse_decode_opt_box_autoadd_f_64(deserializer);
+    final var_imageGpsLng = sse_decode_opt_box_autoadd_f_64(deserializer);
+    final var_imageIso = sse_decode_opt_box_autoadd_i_32(deserializer);
+    final var_imageFocalLength = sse_decode_opt_box_autoadd_f_64(deserializer);
+    final var_imageFNumber = sse_decode_opt_box_autoadd_f_64(deserializer);
+    final var_videoWidth = sse_decode_opt_box_autoadd_i_32(deserializer);
+    final var_videoHeight = sse_decode_opt_box_autoadd_i_32(deserializer);
+    final var_videoCodec = sse_decode_opt_String(deserializer);
+    final var_videoFps = sse_decode_opt_box_autoadd_f_64(deserializer);
     return RustMediaItem(
         path: var_path,
         name: var_name,
@@ -620,7 +659,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         title: var_title,
         artist: var_artist,
         album: var_album,
-        durationMs: var_durationMs);
+        durationMs: var_durationMs,
+        artworkPath: var_artworkPath,
+        thumbnailPath: var_thumbnailPath,
+        imageWidth: var_imageWidth,
+        imageHeight: var_imageHeight,
+        imageDateTaken: var_imageDateTaken,
+        imageCameraMake: var_imageCameraMake,
+        imageCameraModel: var_imageCameraModel,
+        imageGpsLat: var_imageGpsLat,
+        imageGpsLng: var_imageGpsLng,
+        imageIso: var_imageIso,
+        imageFocalLength: var_imageFocalLength,
+        imageFNumber: var_imageFNumber,
+        videoWidth: var_videoWidth,
+        videoHeight: var_videoHeight,
+        videoCodec: var_videoCodec,
+        videoFps: var_videoFps);
   }
 
   @protected
@@ -749,6 +804,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.artist, serializer);
     sse_encode_opt_String(self.album, serializer);
     sse_encode_opt_box_autoadd_i_64(self.durationMs, serializer);
+    sse_encode_opt_String(self.artworkPath, serializer);
+    sse_encode_opt_String(self.thumbnailPath, serializer);
+    sse_encode_opt_box_autoadd_i_32(self.imageWidth, serializer);
+    sse_encode_opt_box_autoadd_i_32(self.imageHeight, serializer);
+    sse_encode_opt_String(self.imageDateTaken, serializer);
+    sse_encode_opt_String(self.imageCameraMake, serializer);
+    sse_encode_opt_String(self.imageCameraModel, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.imageGpsLat, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.imageGpsLng, serializer);
+    sse_encode_opt_box_autoadd_i_32(self.imageIso, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.imageFocalLength, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.imageFNumber, serializer);
+    sse_encode_opt_box_autoadd_i_32(self.videoWidth, serializer);
+    sse_encode_opt_box_autoadd_i_32(self.videoHeight, serializer);
+    sse_encode_opt_String(self.videoCodec, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.videoFps, serializer);
   }
 
   @protected
