@@ -107,7 +107,7 @@ class CacheManager {
     final active = activeCacheKeys.toSet();
     await for (final sub in dir.list()) {
       if (sub is Directory) {
-        await for (final entry in sub.list()) {
+        await for (final entry in sub.list(recursive: true)) {
           if (entry is File) {
             final name = entry.uri.pathSegments.last;
             final withoutExt = name.contains('.')

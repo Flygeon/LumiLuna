@@ -5,9 +5,9 @@ use std::time::UNIX_EPOCH;
 
 use flutter_rust_bridge::frb;
 use lofty::{prelude::*, probe::Probe};
-use image::DynamicImage;
 use image::imageops::FilterType;
 use image::ImageOutputFormat;
+use serde::Deserialize;
 use std::io::BufReader;
 use xxhash_rust::xxh3::xxh3_64;
 
@@ -93,6 +93,25 @@ pub fn extract_video_cover(path: String, output_path: String, time_ms: u32) -> b
         .unwrap_or(false)
 }
 
+/// ffprobe JSON stream output — only the fields we need.
+#[derive(Deserialize)]
+struct FfprobeStream {
+    #[serde(rename = "codec_type")]
+    codec_type: Option<String>,
+    #[serde(rename = "codec_name")]
+    codec_name: Option<String>,
+    width: Option<i32>,
+    height: Option<i32>,
+    #[serde(rename = "r_frame_rate")]
+    r_frame_rate: Option<String>,
+}
+
+/// ffprobe `-show_streams` root object.
+#[derive(Deserialize)]
+struct FfprobeOutput {
+    streams: Vec<FfprobeStream>,
+}
+
 fn read_video_metadata(path: &Path) -> (Option<i32>, Option<i32>, Option<String>, Option<f64>) {
     let output = match Command::new("ffprobe")
         .args([
@@ -109,59 +128,22 @@ fn read_video_metadata(path: &Path) -> (Option<i32>, Option<i32>, Option<String>
         _ => return (None, None, None, None),
     };
 
-    let json_str = String::from_utf8_lossy(&output);
-
-    // Find the video stream entry by locating "codec_type": "video"
-    let video_pos = match json_str.find("\"codec_type\": \"video\"") {
-        Some(pos) => pos,
-        None => return (None, None, None, None),
+    let parsed: FfprobeOutput = match serde_json::from_slice(&output) {
+        Ok(p) => p,
+        Err(_) => return (None, None, None, None),
     };
 
-    // Walk backward to find the opening '{' of this stream object
-    let obj_start = match json_str[..video_pos].rfind('{') {
-        Some(pos) => pos,
-        None => return (None, None, None, None),
-    };
+    let video_stream = parsed
+        .streams
+        .iter()
+        .find(|s| s.codec_type.as_deref() == Some("video"));
 
-    // Search within this stream object only
-    let relevant = &json_str[obj_start..];
-
-    let width = extract_json_int(relevant, "\"width\"").filter(|&n| n > 0);
-    let height = extract_json_int(relevant, "\"height\"").filter(|&n| n > 0);
-    let codec = extract_json_string(relevant, "\"codec_name\"");
-    let fps = extract_json_string(relevant, "\"r_frame_rate\"").and_then(|s| parse_fps(&s));
-
-    (width, height, codec, fps)
-}
-
-/// Extract an integer value for a JSON key from a JSON object string.
-/// Assumes the format `"key": <number>` (no nesting for the target key).
-fn extract_json_int(json: &str, key: &str) -> Option<i32> {
-    let key_pos = json.find(key)?;
-    let after_key = &json[key_pos + key.len()..];
-    let after_colon = after_key.trim_start().strip_prefix(':')?;
-    let after_colon = after_colon.trim_start();
-    let num_str: String = after_colon.chars().take_while(|c| c.is_ascii_digit()).collect();
-    if num_str.is_empty() {
-        None
-    } else {
-        num_str.parse().ok()
-    }
-}
-
-/// Extract a string value for a JSON key from a JSON object string.
-/// Assumes the format `"key": "value"`.
-fn extract_json_string(json: &str, key: &str) -> Option<String> {
-    let key_pos = json.find(key)?;
-    let after_key = &json[key_pos + key.len()..];
-    let after_colon = after_key.trim_start().strip_prefix(':')?;
-    let after_colon = after_colon.trim_start();
-    let after_quote = after_colon.strip_prefix('"')?;
-    let value: String = after_quote.chars().take_while(|c| *c != '"').collect();
-    if value.is_empty() {
-        None
-    } else {
-        Some(value)
+    match video_stream {
+        Some(stream) => {
+            let fps = stream.r_frame_rate.as_ref().and_then(|s| parse_fps(s));
+            (stream.width, stream.height, stream.codec_name.clone(), fps)
+        }
+        None => (None, None, None, None),
     }
 }
 
@@ -179,6 +161,7 @@ fn parse_fps(fps_str: &str) -> Option<f64> {
         parts[0].parse::<f64>().ok()
     }
 }
+
 /// Generate a 300px-wide JPEG thumbnail for the given image file.
 /// Returns the output file path on success, None on failure.
 fn generate_thumbnail(path: &Path, cache_dir: &str, size: i64, modified_ms: i64) -> Option<String> {

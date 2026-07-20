@@ -228,7 +228,7 @@ class _CacheSizeTileState extends State<_CacheSizeTile> {
             : '计算中…',
       ),
       onTap: () async {
-        widget.onClear();
+        await widget.onClear();
         final size = await CacheManager.getCacheSize();
         if (mounted) setState(() => _cacheSize = size);
       },

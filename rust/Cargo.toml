@@ -12,6 +12,8 @@ xxhash-rust = { version = "0.8.17", features = ["std", "xxh3"] }
 lofty = "0.22.4"
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp", "gif", "bmp"] }
 kamadak-exif = "0.6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
