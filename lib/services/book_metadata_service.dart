@@ -3,10 +3,36 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
-import 'package:epub_pro/epub_pro.dart';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:yaepub/yaepub.dart';
+
+class ParsedEpubChapter {
+  final String title;
+  final String href;
+  final String html;
+
+  const ParsedEpubChapter({
+    required this.title,
+    required this.href,
+    required this.html,
+  });
+}
+
+class ParsedEpubBook {
+  final String title;
+  final String author;
+  final img.Image? cover;
+  final List<ParsedEpubChapter> chapters;
+
+  const ParsedEpubBook({
+    required this.title,
+    required this.author,
+    required this.cover,
+    required this.chapters,
+  });
+}
 
 class BookMetadata {
   final String? title;
@@ -21,9 +47,8 @@ class BookMetadataService {
     if (p.extension(file.path).toLowerCase() != '.epub') {
       return const BookMetadata();
     }
-    final book =
-        await EpubReader.readBook(await normalizeEpub(file.readAsBytes()));
-    final cover = book.coverImage;
+    final book = await readEpub(file);
+    final cover = book.cover;
     String? coverPath;
     if (cover != null) {
       coverPath = await _writeCover(
@@ -31,6 +56,35 @@ class BookMetadataService {
     }
     return BookMetadata(
         title: book.title, author: book.author, coverPath: coverPath);
+  }
+
+  Future<ParsedEpubBook> readEpub(File file) async {
+    final book = Book.from(
+      bytes: Uint8List.fromList(await normalizeEpub(file.readAsBytes())),
+    );
+    final navigation = book.navigation.flatten(level: 99);
+    final chapters = book.spine
+        .where((item) => item.linear.toLowerCase() != 'no')
+        .map((item) {
+      final href = item.href;
+      final nav = navigation.cast<Xnav?>().firstWhere(
+            (item) => item!.href.split('#').first == href,
+            orElse: () => null,
+          );
+      return ParsedEpubChapter(
+        title: nav?.label ?? '第 ${book.spine.indexOf(item) + 1} 章',
+        href: href,
+        html: item.file.asText,
+      );
+    }).toList();
+    final cover =
+        book.cover == null ? null : img.decodeImage(book.cover!.content);
+    return ParsedEpubBook(
+      title: book.title,
+      author: book.author,
+      cover: cover,
+      chapters: chapters,
+    );
   }
 
   Future<String?> _writeCover(File file, Uint8List bytes) async {

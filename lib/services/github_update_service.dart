@@ -41,18 +41,14 @@ class GithubUpdateService {
         'api.github.com',
         '/repos/${AppConstants.githubRepository}/releases/latest',
       ));
-      request.headers
-          .set(HttpHeaders.acceptHeader, 'application/vnd.github+json');
+      request.headers.set(HttpHeaders.acceptHeader, 'application/vnd.github+json');
       request.headers.set(HttpHeaders.userAgentHeader, 'LumiLuna');
-      final response =
-          await request.close().timeout(const Duration(seconds: 8));
+      final response = await request.close().timeout(const Duration(seconds: 8));
       if (response.statusCode != HttpStatus.ok) return null;
       final json = jsonDecode(await response.transform(utf8.decoder).join());
       if (json is! Map<String, dynamic>) return null;
       final release = GithubRelease.fromJson(json);
-      return _compareVersions(release.version, currentVersion) > 0
-          ? release
-          : null;
+      return _compareVersions(release.version, currentVersion) > 0 ? release : null;
     } finally {
       client.close(force: true);
     }

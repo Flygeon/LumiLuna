@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pdfx/pdfx.dart';
-import 'package:epub_pro/epub_pro.dart';
 import 'package:image/image.dart' as img;
 
 import '../../models/media_item.dart';
@@ -24,7 +23,7 @@ class BookReaderScreen extends ConsumerStatefulWidget {
 class _BookReaderScreenState extends ConsumerState<BookReaderScreen> {
   PdfController? _pdfController;
   final ScrollController _epubScrollController = ScrollController();
-  EpubBook? _epubBook;
+  ParsedEpubBook? _epubBook;
   String? _epubError;
   int _pdfPage = 1;
   int? _pdfPageCount;
@@ -94,16 +93,13 @@ class _BookReaderScreenState extends ConsumerState<BookReaderScreen> {
       _savedState = await ref
           .read(appDatabaseProvider)
           .getBookReadingState(widget.item.path);
-      final book = await EpubReader.readBook(
-          await BookMetadataService.normalizeEpub(
-              File(widget.item.path).readAsBytes()));
-      if (book.coverImage != null) {
+      final book = await BookMetadataService().readEpub(File(widget.item.path));
+      if (book.cover != null) {
         final path =
             await BookMetadataService().coverCachePath(File(widget.item.path));
         final coverFile = File(path);
         if (!await coverFile.exists()) {
-          await coverFile.writeAsBytes(
-              img.encodeJpg(book.coverImage!, quality: 85),
+          await coverFile.writeAsBytes(img.encodeJpg(book.cover!, quality: 85),
               flush: true);
         }
         await ref
@@ -242,10 +238,10 @@ class _BookReaderScreenState extends ConsumerState<BookReaderScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(chapter.title ?? '第 ${index + 1} 章',
+              Text(chapter.title,
                   style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 12),
-              Text(_plainText(chapter.htmlContent ?? ''),
+              Text(_plainText(chapter.html),
                   style:
                       TextStyle(fontSize: settings.bookFontSize, height: 1.7)),
             ],

@@ -19,7 +19,7 @@ dependencies:
   flutter_animate: ^4.5.2
   heroine: ^0.7.2
   pdfx: ^2.9.2
-  epub_pro: ^5.6.0
+  yaepub: ^1.0.6
   archive: ^4.0.9
   image: ^4.8.0
   flutter_typeahead: ^6.0.0
