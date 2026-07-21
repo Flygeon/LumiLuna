@@ -46,6 +46,9 @@ class BookMetadataService {
 
   static Future<List<int>> normalizeEpub(Future<List<int>> source) async {
     final archive = ZipDecoder().decodeBytes(await source);
+    // #region debug-point A:archive-entries
+    (() async { final client = HttpClient(); try { final config = await File('.dbg/epub-manifest-missing.env').readAsString(); final url = RegExp(r'DEBUG_SERVER_URL=(.+)').firstMatch(config)?.group(1); final session = RegExp(r'DEBUG_SESSION_ID=(.+)').firstMatch(config)?.group(1); if (url != null && session != null) { final request = await client.postUrl(Uri.parse(url)); request.headers.contentType = ContentType.json; request.write(jsonEncode({'sessionId': session, 'runId': 'pre-fix', 'hypothesisId': 'A', 'location': 'book_metadata_service.dart:50', 'msg': '[DEBUG] EPUB archive entries captured', 'data': {'entries': archive.map((entry) => entry.name).toList()}})); await request.close(); } } catch (_) {} finally { client.close(); } })();
+    // #endregion
     final normalized = Archive();
     for (final entry in archive) {
       var name = entry.name.replaceAll('\\', '/');
