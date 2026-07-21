@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heroine/heroine.dart';
 import 'package:lumiluna/l10n/generated/app_localizations.dart';
 
 import 'core/constants/app_constants.dart';
@@ -43,6 +44,7 @@ class MediaLibraryApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
+      navigatorObservers: [HeroineController()],
       home: SplashScreen(startupError: startupError),
       // Wrap the whole navigator in an ESC-aware scope. ESC pops the current
       // route (dialog / sub-page / player) exactly like the back button; at

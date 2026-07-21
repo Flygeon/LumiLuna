@@ -157,50 +157,57 @@ class _TrashScreenState extends ConsumerState<TrashScreen> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       itemCount: _entries.length,
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final entry = _entries[index];
         final isSystemTrash = entry.trashLocation == 'recycle_bin';
-        return ListTile(
-          leading: const Icon(Icons.insert_drive_file_outlined),
-          title: Text(
-            entry.fileName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Text(
-            '${FormatUtils.fileSize(entry.size)} · ${FormatUtils.dateTime(entry.deletedAt)}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!isSystemTrash)
-                IconButton(
-                  tooltip: context.l10n.restore,
-                  icon: const Icon(Icons.restore),
-                  onPressed: () => _restore(entry),
-                ),
-              if (!isSystemTrash)
-                IconButton(
-                  tooltip: context.l10n.deleteForever,
-                  icon: const Icon(Icons.delete_forever, color: Colors.red),
-                  onPressed: () => _permanentlyDelete(entry),
-                ),
-              if (isSystemTrash)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
-                    'In system Recycle Bin',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
+        return Card(
+          margin: EdgeInsets.zero,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: ListTile(
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+            leading: const Icon(Icons.insert_drive_file_outlined),
+            title: Text(
+              entry.fileName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(
+              '${FormatUtils.fileSize(entry.size)} · ${FormatUtils.dateTime(entry.deletedAt)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!isSystemTrash)
+                  IconButton(
+                    tooltip: context.l10n.restore,
+                    icon: const Icon(Icons.restore),
+                    onPressed: () => _restore(entry),
                   ),
-                ),
-            ],
+                if (!isSystemTrash)
+                  IconButton(
+                    tooltip: context.l10n.deleteForever,
+                    icon: const Icon(Icons.delete_forever, color: Colors.red),
+                    onPressed: () => _permanentlyDelete(entry),
+                  ),
+                if (isSystemTrash)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      'In system Recycle Bin',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         );
       },

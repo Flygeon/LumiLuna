@@ -375,4 +375,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get playbackSpeed => 'Playback speed';
+
+  @override
+  String get imageDetails => 'Image Details';
+
+  @override
+  String get fileInfo => 'File Info';
+
+  @override
+  String get exifMetadata => 'EXIF Metadata';
+
+  @override
+  String get noExifData => 'No EXIF data available';
+
+  @override
+  String get resolution => 'Resolution';
+
+  @override
+  String get cameraModel => 'Camera';
+
+  @override
+  String get focalLength => 'Focal Length';
+
+  @override
+  String get aperture => 'Aperture';
+
+  @override
+  String get gpsCoordinates => 'GPS Coordinates';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get details => 'Details';
+
+  @override
+  String get detailsHint => 'View file info and EXIF metadata';
 }

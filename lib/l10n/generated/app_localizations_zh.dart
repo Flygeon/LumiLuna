@@ -365,4 +365,40 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get playbackSpeed => '播放速度';
+
+  @override
+  String get imageDetails => '图片详情';
+
+  @override
+  String get fileInfo => '文件信息';
+
+  @override
+  String get exifMetadata => 'EXIF 元数据';
+
+  @override
+  String get noExifData => '无可用 EXIF 数据';
+
+  @override
+  String get resolution => '分辨率';
+
+  @override
+  String get cameraModel => '相机型号';
+
+  @override
+  String get focalLength => '焦距';
+
+  @override
+  String get aperture => '光圈';
+
+  @override
+  String get gpsCoordinates => 'GPS 坐标';
+
+  @override
+  String get close => '关闭';
+
+  @override
+  String get details => '详情';
+
+  @override
+  String get detailsHint => '查看文件信息和 EXIF 元数据';
 }

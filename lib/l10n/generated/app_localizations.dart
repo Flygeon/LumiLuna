@@ -757,6 +757,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Playback speed'**
   String get playbackSpeed;
+
+  /// No description provided for @imageDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Image Details'**
+  String get imageDetails;
+
+  /// No description provided for @fileInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'File Info'**
+  String get fileInfo;
+
+  /// No description provided for @exifMetadata.
+  ///
+  /// In en, this message translates to:
+  /// **'EXIF Metadata'**
+  String get exifMetadata;
+
+  /// No description provided for @noExifData.
+  ///
+  /// In en, this message translates to:
+  /// **'No EXIF data available'**
+  String get noExifData;
+
+  /// No description provided for @resolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolution'**
+  String get resolution;
+
+  /// No description provided for @cameraModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get cameraModel;
+
+  /// No description provided for @focalLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Focal Length'**
+  String get focalLength;
+
+  /// No description provided for @aperture.
+  ///
+  /// In en, this message translates to:
+  /// **'Aperture'**
+  String get aperture;
+
+  /// No description provided for @gpsCoordinates.
+  ///
+  /// In en, this message translates to:
+  /// **'GPS Coordinates'**
+  String get gpsCoordinates;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @details.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get details;
+
+  /// No description provided for @detailsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'View file info and EXIF metadata'**
+  String get detailsHint;
 }
 
 class _AppLocalizationsDelegate
