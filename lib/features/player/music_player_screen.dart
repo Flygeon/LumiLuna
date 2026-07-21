@@ -20,6 +20,7 @@ import '../../providers/lyrics_provider.dart';
 import '../../providers/player_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../services/lyrics_parser.dart';
+import '../../widgets/media_hero.dart';
 
 /// Music player inspired by Apple Music's design language, retaining some
 /// Material Design affordances for consistency.
@@ -630,12 +631,15 @@ class _AlbumArt extends StatelessWidget {
       art = _placeholder(size);
     }
 
-    return Container(
-      width: size,
-      height: size,
-      decoration:
-          BoxDecoration(borderRadius: borderRadius, boxShadow: [shadow]),
-      child: art,
+    return MediaHero(
+      tag: mediaHeroTag(item.path),
+      child: Container(
+        width: size,
+        height: size,
+        decoration:
+            BoxDecoration(borderRadius: borderRadius, boxShadow: [shadow]),
+        child: art,
+      ),
     );
   }
 

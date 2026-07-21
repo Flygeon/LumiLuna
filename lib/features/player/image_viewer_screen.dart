@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/l10n.dart';
 import '../../models/media_item.dart';
+import '../../widgets/media_hero.dart';
 
 /// Full-screen swipeable image viewer with pinch / double-tap zoom.
 class ImageViewerScreen extends StatefulWidget {
@@ -62,13 +63,16 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
             minScale: 1,
             maxScale: 5,
             child: Center(
-              child: Image.file(
-                item.file,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.broken_image_outlined,
-                  color: Colors.white54,
-                  size: 80,
+              child: MediaHero(
+                tag: mediaHeroTag(item.path),
+                child: Image.file(
+                  item.file,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.broken_image_outlined,
+                    color: Colors.white54,
+                    size: 80,
+                  ),
                 ),
               ),
             ),

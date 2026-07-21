@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/player/music_player_screen.dart';
 import '../providers/player_provider.dart';
+import 'media_hero.dart';
 
 /// A capsule-shaped mini-player that floats at the bottom of the home screen
 /// when music is playing. Shows album art, track info, volume slider, and a
@@ -115,19 +116,22 @@ class _MiniPlayerCapsuleState extends ConsumerState<MiniPlayerCapsule>
                   child: Row(
                     children: [
                       // Album art
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: SizedBox(
-                          width: 44,
-                          height: 44,
-                          child: current.artworkPath != null
-                              ? Image.file(
-                                  File(current.artworkPath!),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
-                                      _artPlaceholder(scheme),
-                                )
-                              : _artPlaceholder(scheme),
+                      MediaHero(
+                        tag: mediaHeroTag(current.path),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: current.artworkPath != null
+                                ? Image.file(
+                                    File(current.artworkPath!),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) =>
+                                        _artPlaceholder(scheme),
+                                  )
+                                : _artPlaceholder(scheme),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),

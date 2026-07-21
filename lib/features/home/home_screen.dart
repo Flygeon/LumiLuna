@@ -19,8 +19,7 @@ import '../favorites/favorites_screen.dart';
 import '../history/play_history_screen.dart';
 import '../media/media_type_screen.dart';
 import '../playlists/playlist_list_screen.dart';
-import '../settings/settings_screen.dart';
-import '../trash/trash_screen.dart';
+import '../my/my_screen.dart';
 import '../../main.dart';
 import '../../services/media_scanner_service.dart';
 
@@ -187,7 +186,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     RepaintBoundary(
                         child: MediaTypeScreen(type: MediaType.audio)),
                     RepaintBoundary(child: FoldersScreen()),
-                    RepaintBoundary(child: TrashScreen()),
+                    RepaintBoundary(child: MyScreen()),
                   ],
                 ),
               ),
@@ -260,16 +259,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Navigator.of(ctx).pop();
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const PlayHistoryScreen()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings_outlined),
-              title: Text(context.l10n.settings),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
                 );
               },
             ),
@@ -484,9 +473,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               label: '浏览',
             ),
             NavigationDestination(
-              icon: const Icon(Icons.delete_outline),
-              selectedIcon: const Icon(Icons.delete),
-              label: l10n.trashTitle,
+              icon: const Icon(Icons.person_outline),
+              selectedIcon: const Icon(Icons.person),
+              label: '我的',
             ),
           ],
         ),

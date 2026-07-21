@@ -13,6 +13,7 @@ import '../../services/cache_manager.dart';
 import '../../models/media_folder.dart';
 import '../../providers/media_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../trash/trash_screen.dart';
 
 /// Provides the app's [PackageInfo] (version / build number) for the About page.
 final packageInfoProvider =
@@ -21,7 +22,10 @@ final packageInfoProvider =
 /// Settings screen: theme mode, default view, group mode, scan folders,
 /// language, cache management and an About / licenses section.
 class SettingsScreen extends ConsumerWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, this.title, this.showTrashEntry = false});
+
+  final String? title;
+  final bool showTrashEntry;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,7 +35,7 @@ class SettingsScreen extends ConsumerWidget {
     final pkg = ref.watch(packageInfoProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.settings)),
+      appBar: AppBar(title: Text(title ?? l10n.settings)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
@@ -131,6 +135,15 @@ class SettingsScreen extends ConsumerWidget {
                 onTap: () => showLicensePage(
                     context: context, applicationName: AppConstants.appName)),
           ]),
+          if (showTrashEntry)
+            ListTile(
+              leading: const Icon(Icons.delete_outline),
+              title: Text(l10n.trashTitle),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const TrashScreen()),
+              ),
+            ),
         ],
       ),
     );

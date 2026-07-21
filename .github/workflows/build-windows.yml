@@ -127,6 +127,7 @@ jobs:
   # ---------------------------------------------------------------------------
   release:
     name: Create Beta Release
+    if: ${{ false }}
     needs: [build-windows, build-android]
     runs-on: ubuntu-latest
     permissions:

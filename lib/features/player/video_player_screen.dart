@@ -5,6 +5,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import '../../l10n/l10n.dart';
 import '../../providers/media_metadata_provider.dart';
 import '../../providers/player_provider.dart';
+import '../../widgets/media_hero.dart';
 
 /// Video playback screen backed by the shared media_kit player.
 ///
@@ -52,47 +53,52 @@ class VideoPlayerScreen extends ConsumerWidget {
           fit: StackFit.expand,
           children: [
             Center(
-              child: Video(
-                controller: controller.videoController,
-                controls: (state) => MaterialVideoControlsTheme(
-                  normal: kDefaultMaterialVideoControlsThemeData.copyWith(
-                    speedUpOnLongPress: true,
-                    speedUpFactor: 2.0,
-                    primaryButtonBar: const [],
-                    bottomButtonBar: const [
-                      MaterialSkipPreviousButton(),
-                      SizedBox(width: 12),
-                      MaterialPlayOrPauseButton(iconSize: 32),
-                      SizedBox(width: 12),
-                      MaterialSkipNextButton(),
-                      Spacer(),
-                      MaterialPositionIndicator(),
-                      SizedBox(width: 12),
-                      MaterialFullscreenButton(),
-                    ],
-                    bottomButtonBarMargin:
-                        const EdgeInsets.symmetric(horizontal: 16),
+              child: MediaHero(
+                tag: current == null
+                    ? 'video-player'
+                    : mediaHeroTag(current.path),
+                child: Video(
+                  controller: controller.videoController,
+                  controls: (state) => MaterialVideoControlsTheme(
+                    normal: kDefaultMaterialVideoControlsThemeData.copyWith(
+                      speedUpOnLongPress: true,
+                      speedUpFactor: 2.0,
+                      primaryButtonBar: const [],
+                      bottomButtonBar: const [
+                        MaterialSkipPreviousButton(),
+                        SizedBox(width: 12),
+                        MaterialPlayOrPauseButton(iconSize: 32),
+                        SizedBox(width: 12),
+                        MaterialSkipNextButton(),
+                        Spacer(),
+                        MaterialPositionIndicator(),
+                        SizedBox(width: 12),
+                        MaterialFullscreenButton(),
+                      ],
+                      bottomButtonBarMargin:
+                          const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    fullscreen: kDefaultMaterialVideoControlsThemeDataFullscreen
+                        .copyWith(
+                      speedUpOnLongPress: true,
+                      speedUpFactor: 2.0,
+                      primaryButtonBar: const [],
+                      bottomButtonBar: const [
+                        MaterialSkipPreviousButton(),
+                        SizedBox(width: 12),
+                        MaterialPlayOrPauseButton(iconSize: 32),
+                        SizedBox(width: 12),
+                        MaterialSkipNextButton(),
+                        Spacer(),
+                        MaterialPositionIndicator(),
+                        SizedBox(width: 12),
+                        MaterialFullscreenButton(),
+                      ],
+                      bottomButtonBarMargin:
+                          const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    child: MaterialVideoControls(state),
                   ),
-                  fullscreen:
-                      kDefaultMaterialVideoControlsThemeDataFullscreen.copyWith(
-                    speedUpOnLongPress: true,
-                    speedUpFactor: 2.0,
-                    primaryButtonBar: const [],
-                    bottomButtonBar: const [
-                      MaterialSkipPreviousButton(),
-                      SizedBox(width: 12),
-                      MaterialPlayOrPauseButton(iconSize: 32),
-                      SizedBox(width: 12),
-                      MaterialSkipNextButton(),
-                      Spacer(),
-                      MaterialPositionIndicator(),
-                      SizedBox(width: 12),
-                      MaterialFullscreenButton(),
-                    ],
-                    bottomButtonBarMargin:
-                        const EdgeInsets.symmetric(horizontal: 16),
-                  ),
-                  child: MaterialVideoControls(state),
                 ),
               ),
             ),

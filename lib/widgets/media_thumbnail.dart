@@ -12,6 +12,7 @@ import '../models/media_type.dart';
 import '../providers/tab_provider.dart';
 import '../services/rust_scanner_service.dart';
 import 'lazy_load_widget.dart';
+import 'media_hero.dart';
 
 /// Displays a thumbnail for a [MediaItem].
 ///
@@ -34,52 +35,65 @@ class MediaThumbnail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tag = mediaHeroTag(item.path);
     if (item.type == MediaType.image) {
       // Use cached thumbnail if available
       if (item.thumbnailPath != null) {
-        return LazyLoadWidget(
+        return MediaHero(
+          tag: tag,
+          child: LazyLoadWidget(
+            placeholder: _placeholder(context, item),
+            child: Image.file(
+              File(item.thumbnailPath!),
+              fit: fit,
+              gaplessPlayback: true,
+              filterQuality: FilterQuality.low,
+              errorBuilder: (_, __, ___) => _placeholder(context, item),
+            ),
+          ),
+        );
+      }
+      // Fall back to full-size decode
+      return MediaHero(
+        tag: tag,
+        child: LazyLoadWidget(
           placeholder: _placeholder(context, item),
           child: Image.file(
-            File(item.thumbnailPath!),
+            item.file,
+            fit: fit,
+            cacheWidth: AppConstants.thumbnailCacheWidth,
+            gaplessPlayback: true,
+            filterQuality: FilterQuality.low,
+            errorBuilder: (_, __, ___) => _placeholder(context, item),
+          ),
+        ),
+      );
+    }
+    if (item.type == MediaType.video) {
+      return MediaHero(
+        tag: tag,
+        child: LazyLoadWidget(
+          placeholder: _placeholder(context, item, iconSize),
+          child: _VideoThumbnail(item: item, fit: fit, iconSize: iconSize),
+        ),
+      );
+    }
+    if (item.type == MediaType.audio && item.artworkPath != null) {
+      return MediaHero(
+        tag: tag,
+        child: LazyLoadWidget(
+          placeholder: _placeholder(context, item),
+          child: Image.file(
+            File(item.artworkPath!),
             fit: fit,
             gaplessPlayback: true,
             filterQuality: FilterQuality.low,
             errorBuilder: (_, __, ___) => _placeholder(context, item),
           ),
-        );
-      }
-      // Fall back to full-size decode
-      return LazyLoadWidget(
-        placeholder: _placeholder(context, item),
-        child: Image.file(
-          item.file,
-          fit: fit,
-          cacheWidth: AppConstants.thumbnailCacheWidth,
-          gaplessPlayback: true,
-          filterQuality: FilterQuality.low,
-          errorBuilder: (_, __, ___) => _placeholder(context, item),
         ),
       );
     }
-    if (item.type == MediaType.video) {
-      return LazyLoadWidget(
-        placeholder: _placeholder(context, item, iconSize),
-        child: _VideoThumbnail(item: item, fit: fit, iconSize: iconSize),
-      );
-    }
-    if (item.type == MediaType.audio && item.artworkPath != null) {
-      return LazyLoadWidget(
-        placeholder: _placeholder(context, item),
-        child: Image.file(
-          File(item.artworkPath!),
-          fit: fit,
-          gaplessPlayback: true,
-          filterQuality: FilterQuality.low,
-          errorBuilder: (_, __, ___) => _placeholder(context, item),
-        ),
-      );
-    }
-    return _placeholder(context, item);
+    return MediaHero(tag: tag, child: _placeholder(context, item));
   }
 }
 
