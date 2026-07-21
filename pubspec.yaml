@@ -20,6 +20,7 @@ dependencies:
   heroine: ^0.7.2
   pdfx: ^2.9.2
   yaepub: ^1.0.6
+  xml: ^7.0.1
   archive: ^4.0.9
   image: ^4.8.0
   flutter_typeahead: ^6.0.0

@@ -7,13 +7,12 @@ class MediaPermissionService {
     if (!Platform.isAndroid) return true;
 
     final permissions = <Permission>[
+      Permission.storage,
       Permission.photos,
       Permission.videos,
       Permission.audio,
     ];
     final statuses = await permissions.request();
-    return statuses.values.any(
-      (status) => status.isGranted || status.isLimited,
-    );
+    return statuses.values.any((status) => status.isGranted || status.isLimited);
   }
 }

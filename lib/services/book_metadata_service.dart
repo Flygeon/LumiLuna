@@ -8,16 +8,25 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:yaepub/yaepub.dart';
 
+import '../models/epub_html_model.dart';
+import 'epub_html_parser.dart';
+
 class ParsedEpubChapter {
   final String title;
   final String href;
   final String html;
+  final EpubHtmlDocument document;
+  final int depth;
 
-  const ParsedEpubChapter({
+  ParsedEpubChapter({
     required this.title,
     required this.href,
     required this.html,
-  });
+    this.depth = 0,
+    EpubHtmlDocument? document,
+  }) : document = document ?? EpubHtmlParser.parse(html);
+
+  String get searchText => document.text;
 }
 
 class ParsedEpubBook {
@@ -62,19 +71,27 @@ class BookMetadataService {
     final book = Book.from(
       bytes: Uint8List.fromList(await normalizeEpub(file.readAsBytes())),
     );
-    final navigation = book.navigation.flatten(level: 99);
+    final navigation = <String, ({String title, int depth})>{};
+    void collectNavigation(List<Xnav> items, int depth) {
+      for (final item in items) {
+        navigation[item.href.split('#').first] =
+            (title: item.label, depth: depth);
+        collectNavigation(item.children, depth + 1);
+      }
+    }
+
+    collectNavigation(book.navigation, 0);
     final chapters = book.spine
         .where((item) => item.linear.toLowerCase() != 'no')
         .map((item) {
       final href = item.href;
-      final nav = navigation.cast<Xnav?>().firstWhere(
-            (item) => item!.href.split('#').first == href,
-            orElse: () => null,
-          );
+      final nav = navigation[href.split('#').first];
       return ParsedEpubChapter(
-        title: nav?.label ?? '第 ${book.spine.indexOf(item) + 1} 章',
+        title: nav?.title ?? '第 ${book.spine.indexOf(item) + 1} 章',
         href: href,
         html: item.file.asText,
+        depth: nav?.depth ?? 0,
+        document: EpubHtmlParser.parse(item.file.asText),
       );
     }).toList();
     final cover =

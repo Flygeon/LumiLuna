@@ -19,6 +19,7 @@ import 'folder_watcher_provider.dart';
 ///
 /// Persists items in SQLite ([DatabaseService]) instead of a JSON cache file.
 class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
+  static const _scanTimeout = Duration(minutes: 2);
   Future<void>? _refreshTask;
   @override
   Future<List<MediaItem>> build() async {
@@ -31,7 +32,10 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
         ? folders
         : await MediaScannerService.defaultFolders();
 
-    await MediaPermissionService.requestForScanning();
+    final hasPermission = await MediaPermissionService.requestForScanning();
+    if (!hasPermission) {
+      throw StateError('Media access permission is required for scanning');
+    }
 
     if (target.isEmpty) return const [];
 
@@ -46,7 +50,7 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
     }
 
     // Database empty — perform a full scan and persist.
-    final result = await MediaScannerService.scan(target);
+    final result = await MediaScannerService.scan(target).timeout(_scanTimeout);
     await db.syncMediaItems(result.items, target, metadata: result.metadata);
     await watcher.start(target);
     return result.items;
@@ -71,7 +75,8 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
       final hashes = await db.getAllFileHashes();
       final hashesJson = jsonEncode(hashes);
       final result = await MediaScannerService.scan(folders,
-          existingHashesJson: hashesJson);
+              existingHashesJson: hashesJson)
+          .timeout(_scanTimeout);
       if (result.items.isEmpty && await db.getMediaCount() > 0) return;
       await db.syncMediaItems(result.items, folders, metadata: result.metadata);
       state = AsyncValue.data(await db.getAllMediaItems());
@@ -88,6 +93,14 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
   /// Unlike [retry], this preserves the currently-displayed data and runs the
   /// scan in the background so the UI remains interactive immediately.
   Future<void> rescan() async {
+    final hasPermission = await MediaPermissionService.requestForScanning();
+    if (!hasPermission) {
+      state = AsyncValue.error(
+        StateError('Media access permission is required for scanning'),
+        StackTrace.current,
+      );
+      return;
+    }
     final folders = ref.read(settingsProvider).scanFolders;
     final target = folders.isNotEmpty
         ? folders
@@ -95,7 +108,7 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
     if (target.isEmpty) return;
 
     final db = ref.read(appDatabaseProvider);
-    unawaited(_refreshIndex(db, target));
+    await _refreshIndex(db, target);
   }
 
   /// Retry loading from scratch (shows loading spinner).
@@ -103,6 +116,10 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
   Future<void> retry() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
+      final hasPermission = await MediaPermissionService.requestForScanning();
+      if (!hasPermission) {
+        throw StateError('Media access permission is required for scanning');
+      }
       final folders = ref.read(settingsProvider).scanFolders;
       final target = folders.isNotEmpty
           ? folders
@@ -112,7 +129,8 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
       final hashes = await db.getAllFileHashes();
       final hashesJson = jsonEncode(hashes);
       final result = await MediaScannerService.scan(target,
-          existingHashesJson: hashesJson);
+              existingHashesJson: hashesJson)
+          .timeout(_scanTimeout);
       await db.syncMediaItems(result.items, target, metadata: result.metadata);
       await ref.read(folderWatcherProvider).start(target);
       return result.items;
