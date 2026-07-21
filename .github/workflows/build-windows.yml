@@ -37,6 +37,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Generate Drift code
+        run: dart run build_runner build --delete-conflicting-outputs
+
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
         continue-on-error: true
@@ -46,6 +49,8 @@ jobs:
         working-directory: rust
 
       - name: Build Windows (release)
+        env:
+          CMAKE_POLICY_VERSION_MINIMUM: "3.5"
         run: flutter build windows --release
 
       - name: Package Windows release (zip)
@@ -90,6 +95,9 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Generate Drift code
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
