@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../l10n/l10n.dart';
-import '../trash/trash_screen.dart';
+import 'about_screen.dart';
 import 'settings_category_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key, this.title, this.showTrashEntry = true});
+  const SettingsScreen({super.key, this.title});
 
   final String? title;
-  final bool showTrashEntry;
 
   @override
   Widget build(BuildContext context) {
@@ -32,14 +31,12 @@ class SettingsScreen extends StatelessWidget {
                   builder: (_) => SettingsCategoryScreen(category: entry.$3),
                 )),
               )),
-          if (showTrashEntry)
-            _SettingsEntry(
-              title: context.l10n.trashTitle,
-              subtitle: '查看、恢复或永久删除文件',
-              icon: Icons.delete_outline,
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const TrashScreen()),
-              ),
+          _SettingsEntry(
+            title: context.l10n.about,
+            subtitle: context.l10n.aboutDesc,
+            icon: Icons.info_outline,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AboutScreen()),
             ),
         ],
       ),

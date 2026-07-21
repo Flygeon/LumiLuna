@@ -2,12 +2,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/utils/format_utils.dart';
 import '../../l10n/l10n.dart';
 import '../../models/media_folder.dart';
 import '../../providers/media_provider.dart';
 import '../../providers/settings_provider.dart';
-import '../../services/cache_manager.dart';
 
 enum SettingsCategory { image, video, music, general }
 
@@ -165,7 +163,6 @@ class _GeneralGroup extends StatelessWidget {
           subtitle: Text('${settings.scanFolders.length} 个文件夹'),
           onTap: () => _showFolders(context),
         ),
-        _CacheTile(),
       ]);
 
   Future<void> _showFolders(BuildContext context) async {
@@ -227,34 +224,5 @@ class _ThemeTile extends StatelessWidget {
           ],
           onChanged: (mode) => notifier.setThemeMode(mode!),
         ),
-      );
-}
-
-class _CacheTile extends StatefulWidget {
-  @override
-  State<_CacheTile> createState() => _CacheTileState();
-}
-
-class _CacheTileState extends State<_CacheTile> {
-  int? size;
-
-  @override
-  void initState() {
-    super.initState();
-    CacheManager.getCacheSize().then((value) {
-      if (mounted) setState(() => size = value);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => ListTile(
-        leading: const Icon(Icons.cleaning_services_outlined),
-        title: Text(context.l10n.clearCache),
-        subtitle: Text(size == null ? '计算中…' : FormatUtils.fileSize(size!)),
-        onTap: () async {
-          await CacheManager.clearAll();
-          final value = await CacheManager.getCacheSize();
-          if (mounted) setState(() => size = value);
-        },
       );
 }

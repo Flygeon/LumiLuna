@@ -19,7 +19,9 @@ class MediaHero extends StatelessWidget {
   Widget build(BuildContext context) {
     return Heroine(
       tag: tag,
-      motion: Motion.bouncySpring(),
+      motion: const MaterialSpringMotion.standardSpatialDefault(
+        snapToEnd: true,
+      ),
       flightShuttleBuilder: const FadeShuttleBuilder(),
       child: KeyedSubtree(key: ValueKey(loaded), child: child),
     );
