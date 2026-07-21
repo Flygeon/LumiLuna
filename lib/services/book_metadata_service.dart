@@ -86,7 +86,7 @@ class BookMetadataService {
         ? filePath.substring(0, filePath.lastIndexOf('/'))
         : '';
     return text.replaceAllMapped(
-        RegExp(r'(\bhref\s*=\s*["\'])([^"\']+)(["\'])',
+        RegExp(r'''(\bhref\s*=\s*["'])([^"']+)(["'])''',
             caseSensitive: false), (match) {
       final href = match.group(2)!;
       if (href.startsWith('#') || href.contains(':')) return match.group(0)!;
