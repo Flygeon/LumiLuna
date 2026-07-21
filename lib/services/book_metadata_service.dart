@@ -46,6 +46,7 @@ class BookMetadataService {
 
   static Future<List<int>> normalizeEpub(Future<List<int>> source) async {
     final archive = ZipDecoder().decodeBytes(await source);
+    final entryNames = archive.map((entry) => _epubPath(entry.name)).toSet();
     final normalized = Archive();
     for (final entry in archive) {
       final name = _epubPath(entry.name);
@@ -56,10 +57,7 @@ class BookMetadataService {
           name.toLowerCase().endsWith('.html') ||
           name.toLowerCase().endsWith('.css')) {
         var text = utf8.decode(bytes, allowMalformed: true);
-        if (name.toLowerCase().endsWith('.xhtml') ||
-            name.toLowerCase().endsWith('.html')) {
-          text = _normalizeNavigationLinks(text, name);
-        }
+        text = _normalizeNavigationLinks(text, name, entryNames);
         bytes = utf8.encode(text.replaceAll('\\', '/'));
       }
       normalized.addFile(ArchiveFile.bytes(name, bytes));
@@ -80,18 +78,34 @@ class BookMetadataService {
     return parts.join('/');
   }
 
-  static String _normalizeNavigationLinks(String text, String filePath) {
-    if (!text.contains('<nav')) return text;
+  static String _normalizeNavigationLinks(
+      String text, String filePath, Set<String> entryNames) {
+    if (!text.contains('href')) return text;
     final directory = filePath.contains('/')
         ? filePath.substring(0, filePath.lastIndexOf('/'))
         : '';
-    return text.replaceAllMapped(
-        RegExp(r'''(\bhref\s*=\s*["'])([^"']+)(["'])''',
-            caseSensitive: false), (match) {
-      final href = match.group(2)!;
-      if (href.startsWith('#') || href.contains(':')) return match.group(0)!;
-      final target = _epubPath(directory.isEmpty ? href : '$directory/$href');
-      return '${match.group(1)}$target${match.group(3)}';
+    final navigationPattern =
+        RegExp(r'<(navPoint|li)\b[^>]*>[\s\S]*?</\1\s*>', caseSensitive: false);
+    return text.replaceAllMapped(navigationPattern, (match) {
+      final block = match.group(0)!;
+      final href =
+          RegExp(r'''\bhref\s*=\s*["']([^"']+)["']''', caseSensitive: false)
+              .firstMatch(block)
+              ?.group(1);
+      if (href == null || href.startsWith('#') || href.contains(':')) {
+        return block;
+      }
+      final target = _epubPath(
+          directory.isEmpty ? href.split('#').first : '$directory/$href');
+      final hrefPath = _epubPath(href.split('#').first);
+      if (!entryNames.contains(target) &&
+          !entryNames.any((name) => name.endsWith('/$hrefPath'))) {
+        return '';
+      }
+      return block.replaceFirstMapped(
+        RegExp(r'''(\bhref\s*=\s*["'])[^"']+(["'])''', caseSensitive: false),
+        (hrefMatch) => '${hrefMatch.group(1)}$hrefPath${hrefMatch.group(2)}',
+      );
     });
   }
 
