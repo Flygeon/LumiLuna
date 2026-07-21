@@ -49,6 +49,12 @@ class SettingsService {
     await _prefs.setBool(AppConstants.prefDynamicColor, enabled);
   }
 
+  bool getAutoUpdate() => _prefs.getBool(AppConstants.prefAutoUpdate) ?? true;
+
+  Future<void> setAutoUpdate(bool enabled) async {
+    await _prefs.setBool(AppConstants.prefAutoUpdate, enabled);
+  }
+
   // ---- View mode (grid / list) ----
   bool getIsGridView() => _prefs.getBool(AppConstants.prefViewMode) ?? true;
 

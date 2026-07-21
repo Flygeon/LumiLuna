@@ -18,6 +18,7 @@ class AppSettings {
   final ThemeMode themeMode;
   final int? themeSeed;
   final bool dynamicColor;
+  final bool autoUpdate;
   final bool isGridView;
   final List<String> scanFolders;
   final GroupMode groupMode;
@@ -35,6 +36,7 @@ class AppSettings {
     required this.themeMode,
     this.themeSeed,
     this.dynamicColor = false,
+    this.autoUpdate = true,
     required this.isGridView,
     required this.scanFolders,
     required this.groupMode,
@@ -53,6 +55,7 @@ class AppSettings {
     ThemeMode? themeMode,
     int? themeSeed,
     bool? dynamicColor,
+    bool? autoUpdate,
     bool? isGridView,
     List<String>? scanFolders,
     GroupMode? groupMode,
@@ -70,6 +73,7 @@ class AppSettings {
       themeMode: themeMode ?? this.themeMode,
       themeSeed: themeSeed ?? this.themeSeed,
       dynamicColor: dynamicColor ?? this.dynamicColor,
+      autoUpdate: autoUpdate ?? this.autoUpdate,
       isGridView: isGridView ?? this.isGridView,
       scanFolders: scanFolders ?? this.scanFolders,
       groupMode: groupMode ?? this.groupMode,
@@ -92,6 +96,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
           themeMode: _service.getThemeMode(),
           themeSeed: _service.getThemeSeed(),
           dynamicColor: _service.getDynamicColor(),
+          autoUpdate: _service.getAutoUpdate(),
           isGridView: _service.getIsGridView(),
           scanFolders: _service.getScanFolders(),
           groupMode: _service.getGroupMode(),
@@ -131,6 +136,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> setDynamicColor(bool enabled) async {
     state = state.copyWith(dynamicColor: enabled);
     await _service.setDynamicColor(enabled);
+  }
+
+  Future<void> setAutoUpdate(bool enabled) async {
+    state = state.copyWith(autoUpdate: enabled);
+    await _service.setAutoUpdate(enabled);
   }
 
   Future<void> setLocale(String tag) async {

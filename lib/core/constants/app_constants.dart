@@ -92,6 +92,9 @@ class AppConstants {
   static const String prefMusicBackgroundBlur = 'pref_music_background_blur';
   static const String prefLyricsBlur = 'pref_lyrics_blur';
   static const String prefLyricsFontSize = 'pref_lyrics_font_size';
+  static const String prefAutoUpdate = 'pref_auto_update';
+
+  static const String githubRepository = 'Flygeon/LumiLuna';
 
   // Scan cache file name (stored in application support directory).
   static const String cacheFileName = 'lumiluna_cache.json';

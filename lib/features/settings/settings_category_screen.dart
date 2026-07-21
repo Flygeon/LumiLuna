@@ -138,6 +138,7 @@ class _GeneralGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) => _Group('通用', Icons.tune_outlined, [
         _ThemeTile(settings, notifier),
+        _ThemeColorTile(settings, notifier),
         SwitchListTile.adaptive(
           title: Text(context.l10n.defaultGridView),
           subtitle: Text(context.l10n.offListView),
@@ -223,6 +224,43 @@ class _ThemeTile extends StatelessWidget {
                 value: ThemeMode.dark, child: Text(context.l10n.themeDark)),
           ],
           onChanged: (mode) => notifier.setThemeMode(mode!),
+        ),
+      );
+}
+
+class _ThemeColorTile extends StatelessWidget {
+  const _ThemeColorTile(this.settings, this.notifier);
+  final AppSettings settings;
+  final SettingsNotifier notifier;
+
+  static const colors = [
+    Color(0xFF527A72),
+    Color(0xFF8C6E63),
+    Color(0xFF657A9A),
+    Color(0xFF9A6A84),
+    Color(0xFFB06A4F),
+  ];
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+        leading: const Icon(Icons.color_lens_outlined),
+        title: const Text('莫奈配色'),
+        subtitle: const Text('选择柔和的主题色'),
+        trailing: Wrap(
+          spacing: 8,
+          children: colors
+              .map((color) => GestureDetector(
+                    onTap: () => notifier.setThemeSeed(color.toARGB32()),
+                    child: CircleAvatar(
+                      radius: 14,
+                      backgroundColor: color,
+                      child: settings.themeSeed == color.toARGB32()
+                          ? const Icon(Icons.check,
+                              size: 16, color: Colors.white)
+                          : null,
+                    ),
+                  ))
+              .toList(),
         ),
       );
 }

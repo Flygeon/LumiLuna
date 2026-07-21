@@ -6,6 +6,8 @@ import '../../core/constants/app_constants.dart';
 import '../../core/utils/format_utils.dart';
 import '../../l10n/l10n.dart';
 import '../../services/cache_manager.dart';
+import '../../services/github_update_service.dart';
+import '../../providers/settings_provider.dart';
 
 final packageInfoProvider =
     FutureProvider<PackageInfo>((ref) => PackageInfo.fromPlatform());
@@ -16,6 +18,7 @@ class AboutScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final info = ref.watch(packageInfoProvider);
+    final settings = ref.watch(settingsProvider);
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.about)),
       body: ListView(
@@ -65,12 +68,79 @@ class AboutScreen extends ConsumerWidget {
                     applicationName: AppConstants.appName,
                   ),
                 ),
+                SwitchListTile.adaptive(
+                  secondary: const Icon(Icons.sync_outlined),
+                  title: const Text('自动检查更新'),
+                  subtitle: const Text('启动应用时检查 GitHub 最新版本'),
+                  value: settings.autoUpdate,
+                  onChanged: ref.read(settingsProvider.notifier).setAutoUpdate,
+                ),
+                ListTile(
+                  leading: const Icon(Icons.system_update_outlined),
+                  title: const Text('检查更新'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _checkUpdate(context, ref, info),
+                ),
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _checkUpdate(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<PackageInfo> info,
+  ) async {
+    final current = info.valueOrNull?.version;
+    if (current == null) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('正在检查更新…')),
+    );
+    final release = await GithubUpdateService.checkForUpdate(current);
+    if (!context.mounted) return;
+    if (release == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('当前已是最新版本')),
+      );
+      return;
+    }
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('发现新版本 ${release.version}'),
+        content: SingleChildScrollView(
+          child: Text(release.body.isEmpty ? release.name : release.body),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('稍后提醒'),
+          ),
+          FilledButton.tonal(
+            onPressed: () async {
+              await _openRelease(release.url);
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+            },
+            child: const Text('查看详情'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              await _openRelease(release.url);
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+            },
+            child: const Text('立即更新'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openRelease(String url) async {
+    final process = await Process.start('cmd', ['/c', 'start', '', url]);
+    await process.exitCode;
   }
 
   Future<void> _clearCache(BuildContext context) async {
