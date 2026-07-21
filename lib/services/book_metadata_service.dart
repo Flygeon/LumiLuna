@@ -46,24 +46,53 @@ class BookMetadataService {
 
   static Future<List<int>> normalizeEpub(Future<List<int>> source) async {
     final archive = ZipDecoder().decodeBytes(await source);
-    // #region debug-point A:archive-entries
-    (() async { final client = HttpClient(); try { final config = await File('.dbg/epub-manifest-missing.env').readAsString(); final url = RegExp(r'DEBUG_SERVER_URL=(.+)').firstMatch(config)?.group(1); final session = RegExp(r'DEBUG_SESSION_ID=(.+)').firstMatch(config)?.group(1); if (url != null && session != null) { final request = await client.postUrl(Uri.parse(url)); request.headers.contentType = ContentType.json; request.write(jsonEncode({'sessionId': session, 'runId': 'pre-fix', 'hypothesisId': 'A', 'location': 'book_metadata_service.dart:50', 'msg': '[DEBUG] EPUB archive entries captured', 'data': {'entries': archive.map((entry) => entry.name).toList()}})); await request.close(); } } catch (_) {} finally { client.close(); } })();
-    // #endregion
     final normalized = Archive();
     for (final entry in archive) {
-      var name = entry.name.replaceAll('\\', '/');
+      final name = _epubPath(entry.name);
       List<int> bytes = entry.readBytes() ?? Uint8List(0);
       if (name.toLowerCase().endsWith('.opf') ||
           name.toLowerCase().endsWith('.ncx') ||
           name.toLowerCase().endsWith('.xhtml') ||
           name.toLowerCase().endsWith('.html') ||
           name.toLowerCase().endsWith('.css')) {
-        final text = utf8.decode(bytes, allowMalformed: true);
+        var text = utf8.decode(bytes, allowMalformed: true);
+        if (name.toLowerCase().endsWith('.xhtml') ||
+            name.toLowerCase().endsWith('.html')) {
+          text = _normalizeNavigationLinks(text, name);
+        }
         bytes = utf8.encode(text.replaceAll('\\', '/'));
       }
       normalized.addFile(ArchiveFile.bytes(name, bytes));
     }
     return ZipEncoder().encodeBytes(normalized);
+  }
+
+  static String _epubPath(String value) {
+    final parts = <String>[];
+    for (final part in Uri.decodeFull(value.replaceAll('\\', '/')).split('/')) {
+      if (part.isEmpty || part == '.') continue;
+      if (part == '..') {
+        if (parts.isNotEmpty) parts.removeLast();
+      } else {
+        parts.add(part);
+      }
+    }
+    return parts.join('/');
+  }
+
+  static String _normalizeNavigationLinks(String text, String filePath) {
+    if (!text.contains('<nav')) return text;
+    final directory = filePath.contains('/')
+        ? filePath.substring(0, filePath.lastIndexOf('/'))
+        : '';
+    return text.replaceAllMapped(
+        RegExp(r'(\bhref\s*=\s*["\'])([^"\']+)(["\'])',
+            caseSensitive: false), (match) {
+      final href = match.group(2)!;
+      if (href.startsWith('#') || href.contains(':')) return match.group(0)!;
+      final target = _epubPath(directory.isEmpty ? href : '$directory/$href');
+      return '${match.group(1)}$target${match.group(3)}';
+    });
   }
 
   Future<String> coverCachePath(File file) async {
