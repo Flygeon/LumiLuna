@@ -49,7 +49,7 @@ class BookMetadataService {
     final normalized = Archive();
     for (final entry in archive) {
       var name = entry.name.replaceAll('\\', '/');
-      var bytes = entry.readBytes();
+      List<int> bytes = entry.readBytes() ?? Uint8List(0);
       if (name.toLowerCase().endsWith('.opf') ||
           name.toLowerCase().endsWith('.ncx') ||
           name.toLowerCase().endsWith('.xhtml') ||

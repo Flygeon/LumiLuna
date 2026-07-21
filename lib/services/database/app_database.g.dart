@@ -3534,6 +3534,677 @@ class PlayHistoryCompanion extends UpdateCompanion<PlayHistoryRow> {
   }
 }
 
+class $BookReadingStatesTable extends BookReadingStates
+    with TableInfo<$BookReadingStatesTable, BookReadingStateRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BookReadingStatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _mediaPathMeta =
+      const VerificationMeta('mediaPath');
+  @override
+  late final GeneratedColumn<String> mediaPath = GeneratedColumn<String>(
+      'media_path', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES media_items (path)'));
+  static const VerificationMeta _coverPathMeta =
+      const VerificationMeta('coverPath');
+  @override
+  late final GeneratedColumn<String> coverPath = GeneratedColumn<String>(
+      'cover_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _progressMeta =
+      const VerificationMeta('progress');
+  @override
+  late final GeneratedColumn<double> progress = GeneratedColumn<double>(
+      'progress', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _epubCfiMeta =
+      const VerificationMeta('epubCfi');
+  @override
+  late final GeneratedColumn<String> epubCfi = GeneratedColumn<String>(
+      'epub_cfi', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _pdfPageMeta =
+      const VerificationMeta('pdfPage');
+  @override
+  late final GeneratedColumn<int> pdfPage = GeneratedColumn<int>(
+      'pdf_page', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [mediaPath, coverPath, progress, epubCfi, pdfPage, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'book_reading_states';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<BookReadingStateRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('media_path')) {
+      context.handle(_mediaPathMeta,
+          mediaPath.isAcceptableOrUnknown(data['media_path']!, _mediaPathMeta));
+    } else if (isInserting) {
+      context.missing(_mediaPathMeta);
+    }
+    if (data.containsKey('cover_path')) {
+      context.handle(_coverPathMeta,
+          coverPath.isAcceptableOrUnknown(data['cover_path']!, _coverPathMeta));
+    }
+    if (data.containsKey('progress')) {
+      context.handle(_progressMeta,
+          progress.isAcceptableOrUnknown(data['progress']!, _progressMeta));
+    }
+    if (data.containsKey('epub_cfi')) {
+      context.handle(_epubCfiMeta,
+          epubCfi.isAcceptableOrUnknown(data['epub_cfi']!, _epubCfiMeta));
+    }
+    if (data.containsKey('pdf_page')) {
+      context.handle(_pdfPageMeta,
+          pdfPage.isAcceptableOrUnknown(data['pdf_page']!, _pdfPageMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {mediaPath};
+  @override
+  BookReadingStateRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BookReadingStateRow(
+      mediaPath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}media_path'])!,
+      coverPath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}cover_path']),
+      progress: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}progress'])!,
+      epubCfi: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}epub_cfi']),
+      pdfPage: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}pdf_page']),
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $BookReadingStatesTable createAlias(String alias) {
+    return $BookReadingStatesTable(attachedDatabase, alias);
+  }
+}
+
+class BookReadingStateRow extends DataClass
+    implements Insertable<BookReadingStateRow> {
+  final String mediaPath;
+  final String? coverPath;
+  final double progress;
+  final String? epubCfi;
+  final int? pdfPage;
+  final String updatedAt;
+  const BookReadingStateRow(
+      {required this.mediaPath,
+      this.coverPath,
+      required this.progress,
+      this.epubCfi,
+      this.pdfPage,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['media_path'] = Variable<String>(mediaPath);
+    if (!nullToAbsent || coverPath != null) {
+      map['cover_path'] = Variable<String>(coverPath);
+    }
+    map['progress'] = Variable<double>(progress);
+    if (!nullToAbsent || epubCfi != null) {
+      map['epub_cfi'] = Variable<String>(epubCfi);
+    }
+    if (!nullToAbsent || pdfPage != null) {
+      map['pdf_page'] = Variable<int>(pdfPage);
+    }
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  BookReadingStatesCompanion toCompanion(bool nullToAbsent) {
+    return BookReadingStatesCompanion(
+      mediaPath: Value(mediaPath),
+      coverPath: coverPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(coverPath),
+      progress: Value(progress),
+      epubCfi: epubCfi == null && nullToAbsent
+          ? const Value.absent()
+          : Value(epubCfi),
+      pdfPage: pdfPage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pdfPage),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory BookReadingStateRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BookReadingStateRow(
+      mediaPath: serializer.fromJson<String>(json['mediaPath']),
+      coverPath: serializer.fromJson<String?>(json['coverPath']),
+      progress: serializer.fromJson<double>(json['progress']),
+      epubCfi: serializer.fromJson<String?>(json['epubCfi']),
+      pdfPage: serializer.fromJson<int?>(json['pdfPage']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'mediaPath': serializer.toJson<String>(mediaPath),
+      'coverPath': serializer.toJson<String?>(coverPath),
+      'progress': serializer.toJson<double>(progress),
+      'epubCfi': serializer.toJson<String?>(epubCfi),
+      'pdfPage': serializer.toJson<int?>(pdfPage),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  BookReadingStateRow copyWith(
+          {String? mediaPath,
+          Value<String?> coverPath = const Value.absent(),
+          double? progress,
+          Value<String?> epubCfi = const Value.absent(),
+          Value<int?> pdfPage = const Value.absent(),
+          String? updatedAt}) =>
+      BookReadingStateRow(
+        mediaPath: mediaPath ?? this.mediaPath,
+        coverPath: coverPath.present ? coverPath.value : this.coverPath,
+        progress: progress ?? this.progress,
+        epubCfi: epubCfi.present ? epubCfi.value : this.epubCfi,
+        pdfPage: pdfPage.present ? pdfPage.value : this.pdfPage,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  BookReadingStateRow copyWithCompanion(BookReadingStatesCompanion data) {
+    return BookReadingStateRow(
+      mediaPath: data.mediaPath.present ? data.mediaPath.value : this.mediaPath,
+      coverPath: data.coverPath.present ? data.coverPath.value : this.coverPath,
+      progress: data.progress.present ? data.progress.value : this.progress,
+      epubCfi: data.epubCfi.present ? data.epubCfi.value : this.epubCfi,
+      pdfPage: data.pdfPage.present ? data.pdfPage.value : this.pdfPage,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BookReadingStateRow(')
+          ..write('mediaPath: $mediaPath, ')
+          ..write('coverPath: $coverPath, ')
+          ..write('progress: $progress, ')
+          ..write('epubCfi: $epubCfi, ')
+          ..write('pdfPage: $pdfPage, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(mediaPath, coverPath, progress, epubCfi, pdfPage, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BookReadingStateRow &&
+          other.mediaPath == this.mediaPath &&
+          other.coverPath == this.coverPath &&
+          other.progress == this.progress &&
+          other.epubCfi == this.epubCfi &&
+          other.pdfPage == this.pdfPage &&
+          other.updatedAt == this.updatedAt);
+}
+
+class BookReadingStatesCompanion extends UpdateCompanion<BookReadingStateRow> {
+  final Value<String> mediaPath;
+  final Value<String?> coverPath;
+  final Value<double> progress;
+  final Value<String?> epubCfi;
+  final Value<int?> pdfPage;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const BookReadingStatesCompanion({
+    this.mediaPath = const Value.absent(),
+    this.coverPath = const Value.absent(),
+    this.progress = const Value.absent(),
+    this.epubCfi = const Value.absent(),
+    this.pdfPage = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BookReadingStatesCompanion.insert({
+    required String mediaPath,
+    this.coverPath = const Value.absent(),
+    this.progress = const Value.absent(),
+    this.epubCfi = const Value.absent(),
+    this.pdfPage = const Value.absent(),
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  })  : mediaPath = Value(mediaPath),
+        updatedAt = Value(updatedAt);
+  static Insertable<BookReadingStateRow> custom({
+    Expression<String>? mediaPath,
+    Expression<String>? coverPath,
+    Expression<double>? progress,
+    Expression<String>? epubCfi,
+    Expression<int>? pdfPage,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (mediaPath != null) 'media_path': mediaPath,
+      if (coverPath != null) 'cover_path': coverPath,
+      if (progress != null) 'progress': progress,
+      if (epubCfi != null) 'epub_cfi': epubCfi,
+      if (pdfPage != null) 'pdf_page': pdfPage,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BookReadingStatesCompanion copyWith(
+      {Value<String>? mediaPath,
+      Value<String?>? coverPath,
+      Value<double>? progress,
+      Value<String?>? epubCfi,
+      Value<int?>? pdfPage,
+      Value<String>? updatedAt,
+      Value<int>? rowid}) {
+    return BookReadingStatesCompanion(
+      mediaPath: mediaPath ?? this.mediaPath,
+      coverPath: coverPath ?? this.coverPath,
+      progress: progress ?? this.progress,
+      epubCfi: epubCfi ?? this.epubCfi,
+      pdfPage: pdfPage ?? this.pdfPage,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (mediaPath.present) {
+      map['media_path'] = Variable<String>(mediaPath.value);
+    }
+    if (coverPath.present) {
+      map['cover_path'] = Variable<String>(coverPath.value);
+    }
+    if (progress.present) {
+      map['progress'] = Variable<double>(progress.value);
+    }
+    if (epubCfi.present) {
+      map['epub_cfi'] = Variable<String>(epubCfi.value);
+    }
+    if (pdfPage.present) {
+      map['pdf_page'] = Variable<int>(pdfPage.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BookReadingStatesCompanion(')
+          ..write('mediaPath: $mediaPath, ')
+          ..write('coverPath: $coverPath, ')
+          ..write('progress: $progress, ')
+          ..write('epubCfi: $epubCfi, ')
+          ..write('pdfPage: $pdfPage, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $BookBookmarksTable extends BookBookmarks
+    with TableInfo<$BookBookmarksTable, BookBookmarkRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BookBookmarksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _mediaPathMeta =
+      const VerificationMeta('mediaPath');
+  @override
+  late final GeneratedColumn<String> mediaPath = GeneratedColumn<String>(
+      'media_path', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES media_items (path)'));
+  static const VerificationMeta _locatorMeta =
+      const VerificationMeta('locator');
+  @override
+  late final GeneratedColumn<String> locator = GeneratedColumn<String>(
+      'locator', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+      'title', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _excerptMeta =
+      const VerificationMeta('excerpt');
+  @override
+  late final GeneratedColumn<String> excerpt = GeneratedColumn<String>(
+      'excerpt', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [mediaPath, locator, title, excerpt, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'book_bookmarks';
+  @override
+  VerificationContext validateIntegrity(Insertable<BookBookmarkRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('media_path')) {
+      context.handle(_mediaPathMeta,
+          mediaPath.isAcceptableOrUnknown(data['media_path']!, _mediaPathMeta));
+    } else if (isInserting) {
+      context.missing(_mediaPathMeta);
+    }
+    if (data.containsKey('locator')) {
+      context.handle(_locatorMeta,
+          locator.isAcceptableOrUnknown(data['locator']!, _locatorMeta));
+    } else if (isInserting) {
+      context.missing(_locatorMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+          _titleMeta, title.isAcceptableOrUnknown(data['title']!, _titleMeta));
+    }
+    if (data.containsKey('excerpt')) {
+      context.handle(_excerptMeta,
+          excerpt.isAcceptableOrUnknown(data['excerpt']!, _excerptMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {mediaPath, locator};
+  @override
+  BookBookmarkRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BookBookmarkRow(
+      mediaPath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}media_path'])!,
+      locator: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}locator'])!,
+      title: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}title']),
+      excerpt: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}excerpt']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $BookBookmarksTable createAlias(String alias) {
+    return $BookBookmarksTable(attachedDatabase, alias);
+  }
+}
+
+class BookBookmarkRow extends DataClass implements Insertable<BookBookmarkRow> {
+  final String mediaPath;
+  final String locator;
+  final String? title;
+  final String? excerpt;
+  final String createdAt;
+  const BookBookmarkRow(
+      {required this.mediaPath,
+      required this.locator,
+      this.title,
+      this.excerpt,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['media_path'] = Variable<String>(mediaPath);
+    map['locator'] = Variable<String>(locator);
+    if (!nullToAbsent || title != null) {
+      map['title'] = Variable<String>(title);
+    }
+    if (!nullToAbsent || excerpt != null) {
+      map['excerpt'] = Variable<String>(excerpt);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    return map;
+  }
+
+  BookBookmarksCompanion toCompanion(bool nullToAbsent) {
+    return BookBookmarksCompanion(
+      mediaPath: Value(mediaPath),
+      locator: Value(locator),
+      title:
+          title == null && nullToAbsent ? const Value.absent() : Value(title),
+      excerpt: excerpt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(excerpt),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory BookBookmarkRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BookBookmarkRow(
+      mediaPath: serializer.fromJson<String>(json['mediaPath']),
+      locator: serializer.fromJson<String>(json['locator']),
+      title: serializer.fromJson<String?>(json['title']),
+      excerpt: serializer.fromJson<String?>(json['excerpt']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'mediaPath': serializer.toJson<String>(mediaPath),
+      'locator': serializer.toJson<String>(locator),
+      'title': serializer.toJson<String?>(title),
+      'excerpt': serializer.toJson<String?>(excerpt),
+      'createdAt': serializer.toJson<String>(createdAt),
+    };
+  }
+
+  BookBookmarkRow copyWith(
+          {String? mediaPath,
+          String? locator,
+          Value<String?> title = const Value.absent(),
+          Value<String?> excerpt = const Value.absent(),
+          String? createdAt}) =>
+      BookBookmarkRow(
+        mediaPath: mediaPath ?? this.mediaPath,
+        locator: locator ?? this.locator,
+        title: title.present ? title.value : this.title,
+        excerpt: excerpt.present ? excerpt.value : this.excerpt,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  BookBookmarkRow copyWithCompanion(BookBookmarksCompanion data) {
+    return BookBookmarkRow(
+      mediaPath: data.mediaPath.present ? data.mediaPath.value : this.mediaPath,
+      locator: data.locator.present ? data.locator.value : this.locator,
+      title: data.title.present ? data.title.value : this.title,
+      excerpt: data.excerpt.present ? data.excerpt.value : this.excerpt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BookBookmarkRow(')
+          ..write('mediaPath: $mediaPath, ')
+          ..write('locator: $locator, ')
+          ..write('title: $title, ')
+          ..write('excerpt: $excerpt, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(mediaPath, locator, title, excerpt, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BookBookmarkRow &&
+          other.mediaPath == this.mediaPath &&
+          other.locator == this.locator &&
+          other.title == this.title &&
+          other.excerpt == this.excerpt &&
+          other.createdAt == this.createdAt);
+}
+
+class BookBookmarksCompanion extends UpdateCompanion<BookBookmarkRow> {
+  final Value<String> mediaPath;
+  final Value<String> locator;
+  final Value<String?> title;
+  final Value<String?> excerpt;
+  final Value<String> createdAt;
+  final Value<int> rowid;
+  const BookBookmarksCompanion({
+    this.mediaPath = const Value.absent(),
+    this.locator = const Value.absent(),
+    this.title = const Value.absent(),
+    this.excerpt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BookBookmarksCompanion.insert({
+    required String mediaPath,
+    required String locator,
+    this.title = const Value.absent(),
+    this.excerpt = const Value.absent(),
+    required String createdAt,
+    this.rowid = const Value.absent(),
+  })  : mediaPath = Value(mediaPath),
+        locator = Value(locator),
+        createdAt = Value(createdAt);
+  static Insertable<BookBookmarkRow> custom({
+    Expression<String>? mediaPath,
+    Expression<String>? locator,
+    Expression<String>? title,
+    Expression<String>? excerpt,
+    Expression<String>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (mediaPath != null) 'media_path': mediaPath,
+      if (locator != null) 'locator': locator,
+      if (title != null) 'title': title,
+      if (excerpt != null) 'excerpt': excerpt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BookBookmarksCompanion copyWith(
+      {Value<String>? mediaPath,
+      Value<String>? locator,
+      Value<String?>? title,
+      Value<String?>? excerpt,
+      Value<String>? createdAt,
+      Value<int>? rowid}) {
+    return BookBookmarksCompanion(
+      mediaPath: mediaPath ?? this.mediaPath,
+      locator: locator ?? this.locator,
+      title: title ?? this.title,
+      excerpt: excerpt ?? this.excerpt,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (mediaPath.present) {
+      map['media_path'] = Variable<String>(mediaPath.value);
+    }
+    if (locator.present) {
+      map['locator'] = Variable<String>(locator.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (excerpt.present) {
+      map['excerpt'] = Variable<String>(excerpt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BookBookmarksCompanion(')
+          ..write('mediaPath: $mediaPath, ')
+          ..write('locator: $locator, ')
+          ..write('title: $title, ')
+          ..write('excerpt: $excerpt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3547,6 +4218,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PlaylistItemsTable playlistItems = $PlaylistItemsTable(this);
   late final $ScanFoldersTable scanFolders = $ScanFoldersTable(this);
   late final $PlayHistoryTable playHistory = $PlayHistoryTable(this);
+  late final $BookReadingStatesTable bookReadingStates =
+      $BookReadingStatesTable(this);
+  late final $BookBookmarksTable bookBookmarks = $BookBookmarksTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3560,7 +4234,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         playlists,
         playlistItems,
         scanFolders,
-        playHistory
+        playHistory,
+        bookReadingStates,
+        bookBookmarks
       ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules(
@@ -3715,6 +4391,38 @@ final class $$MediaItemsTableReferences
             (f) => f.mediaPath.path.sqlEquals($_itemColumn<String>('path')!));
 
     final cache = $_typedResult.readTableOrNull(_playHistoryRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$BookReadingStatesTable, List<BookReadingStateRow>>
+      _bookReadingStatesRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.bookReadingStates,
+              aliasName: 'media_items__path__book_reading_states__media_path');
+
+  $$BookReadingStatesTableProcessedTableManager get bookReadingStatesRefs {
+    final manager = $$BookReadingStatesTableTableManager(
+            $_db, $_db.bookReadingStates)
+        .filter(
+            (f) => f.mediaPath.path.sqlEquals($_itemColumn<String>('path')!));
+
+    final cache =
+        $_typedResult.readTableOrNull(_bookReadingStatesRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$BookBookmarksTable, List<BookBookmarkRow>>
+      _bookBookmarksRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.bookBookmarks,
+              aliasName: 'media_items__path__book_bookmarks__media_path');
+
+  $$BookBookmarksTableProcessedTableManager get bookBookmarksRefs {
+    final manager = $$BookBookmarksTableTableManager($_db, $_db.bookBookmarks)
+        .filter(
+            (f) => f.mediaPath.path.sqlEquals($_itemColumn<String>('path')!));
+
+    final cache = $_typedResult.readTableOrNull(_bookBookmarksRefsTable($_db));
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
@@ -3896,6 +4604,48 @@ class $$MediaItemsTableFilterComposer
             $$PlayHistoryTableFilterComposer(
               $db: $db,
               $table: $db.playHistory,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> bookReadingStatesRefs(
+      Expression<bool> Function($$BookReadingStatesTableFilterComposer f) f) {
+    final $$BookReadingStatesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.path,
+        referencedTable: $db.bookReadingStates,
+        getReferencedColumn: (t) => t.mediaPath,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$BookReadingStatesTableFilterComposer(
+              $db: $db,
+              $table: $db.bookReadingStates,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> bookBookmarksRefs(
+      Expression<bool> Function($$BookBookmarksTableFilterComposer f) f) {
+    final $$BookBookmarksTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.path,
+        referencedTable: $db.bookBookmarks,
+        getReferencedColumn: (t) => t.mediaPath,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$BookBookmarksTableFilterComposer(
+              $db: $db,
+              $table: $db.bookBookmarks,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -4187,6 +4937,49 @@ class $$MediaItemsTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> bookReadingStatesRefs<T extends Object>(
+      Expression<T> Function($$BookReadingStatesTableAnnotationComposer a) f) {
+    final $$BookReadingStatesTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.path,
+            referencedTable: $db.bookReadingStates,
+            getReferencedColumn: (t) => t.mediaPath,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$BookReadingStatesTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.bookReadingStates,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
+
+  Expression<T> bookBookmarksRefs<T extends Object>(
+      Expression<T> Function($$BookBookmarksTableAnnotationComposer a) f) {
+    final $$BookBookmarksTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.path,
+        referencedTable: $db.bookBookmarks,
+        getReferencedColumn: (t) => t.mediaPath,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$BookBookmarksTableAnnotationComposer(
+              $db: $db,
+              $table: $db.bookBookmarks,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$MediaItemsTableTableManager extends RootTableManager<
@@ -4204,7 +4997,9 @@ class $$MediaItemsTableTableManager extends RootTableManager<
         {bool mediaTagsRefs,
         bool collectionItemsRefs,
         bool playlistItemsRefs,
-        bool playHistoryRefs})> {
+        bool playHistoryRefs,
+        bool bookReadingStatesRefs,
+        bool bookBookmarksRefs})> {
   $$MediaItemsTableTableManager(_$AppDatabase db, $MediaItemsTable table)
       : super(TableManagerState(
           db: db,
@@ -4353,14 +5148,18 @@ class $$MediaItemsTableTableManager extends RootTableManager<
               {mediaTagsRefs = false,
               collectionItemsRefs = false,
               playlistItemsRefs = false,
-              playHistoryRefs = false}) {
+              playHistoryRefs = false,
+              bookReadingStatesRefs = false,
+              bookBookmarksRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
                 if (mediaTagsRefs) db.mediaTags,
                 if (collectionItemsRefs) db.collectionItems,
                 if (playlistItemsRefs) db.playlistItems,
-                if (playHistoryRefs) db.playHistory
+                if (playHistoryRefs) db.playHistory,
+                if (bookReadingStatesRefs) db.bookReadingStates,
+                if (bookBookmarksRefs) db.bookBookmarks
               ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
@@ -4416,6 +5215,32 @@ class $$MediaItemsTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem:
                             (item, referencedItems) => referencedItems
                                 .where((e) => e.mediaPath == item.path),
+                        typedResults: items),
+                  if (bookReadingStatesRefs)
+                    await $_getPrefetchedData<MediaItemRow, $MediaItemsTable,
+                            BookReadingStateRow>(
+                        currentTable: table,
+                        referencedTable: $$MediaItemsTableReferences
+                            ._bookReadingStatesRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$MediaItemsTableReferences(db, table, p0)
+                                .bookReadingStatesRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.mediaPath == item.path),
+                        typedResults: items),
+                  if (bookBookmarksRefs)
+                    await $_getPrefetchedData<MediaItemRow, $MediaItemsTable,
+                            BookBookmarkRow>(
+                        currentTable: table,
+                        referencedTable: $$MediaItemsTableReferences
+                            ._bookBookmarksRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$MediaItemsTableReferences(db, table, p0)
+                                .bookBookmarksRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.mediaPath == item.path),
                         typedResults: items)
                 ];
               },
@@ -4439,7 +5264,9 @@ typedef $$MediaItemsTableProcessedTableManager = ProcessedTableManager<
         {bool mediaTagsRefs,
         bool collectionItemsRefs,
         bool playlistItemsRefs,
-        bool playHistoryRefs})>;
+        bool playHistoryRefs,
+        bool bookReadingStatesRefs,
+        bool bookBookmarksRefs})>;
 typedef $$TagsTableCreateCompanionBuilder = TagsCompanion Function({
   Value<int> id,
   required String name,
@@ -6649,6 +7476,574 @@ typedef $$PlayHistoryTableProcessedTableManager = ProcessedTableManager<
     (PlayHistoryRow, $$PlayHistoryTableReferences),
     PlayHistoryRow,
     PrefetchHooks Function({bool mediaPath})>;
+typedef $$BookReadingStatesTableCreateCompanionBuilder
+    = BookReadingStatesCompanion Function({
+  required String mediaPath,
+  Value<String?> coverPath,
+  Value<double> progress,
+  Value<String?> epubCfi,
+  Value<int?> pdfPage,
+  required String updatedAt,
+  Value<int> rowid,
+});
+typedef $$BookReadingStatesTableUpdateCompanionBuilder
+    = BookReadingStatesCompanion Function({
+  Value<String> mediaPath,
+  Value<String?> coverPath,
+  Value<double> progress,
+  Value<String?> epubCfi,
+  Value<int?> pdfPage,
+  Value<String> updatedAt,
+  Value<int> rowid,
+});
+
+final class $$BookReadingStatesTableReferences extends BaseReferences<
+    _$AppDatabase, $BookReadingStatesTable, BookReadingStateRow> {
+  $$BookReadingStatesTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $MediaItemsTable _mediaPathTable(_$AppDatabase db) => db.mediaItems
+      .createAlias('book_reading_states__media_path__media_items__path');
+
+  $$MediaItemsTableProcessedTableManager get mediaPath {
+    final $_column = $_itemColumn<String>('media_path')!;
+
+    final manager = $$MediaItemsTableTableManager($_db, $_db.mediaItems)
+        .filter((f) => f.path.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_mediaPathTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$BookReadingStatesTableFilterComposer
+    extends Composer<_$AppDatabase, $BookReadingStatesTable> {
+  $$BookReadingStatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get coverPath => $composableBuilder(
+      column: $table.coverPath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get progress => $composableBuilder(
+      column: $table.progress, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get epubCfi => $composableBuilder(
+      column: $table.epubCfi, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get pdfPage => $composableBuilder(
+      column: $table.pdfPage, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  $$MediaItemsTableFilterComposer get mediaPath {
+    final $$MediaItemsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.mediaPath,
+        referencedTable: $db.mediaItems,
+        getReferencedColumn: (t) => t.path,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$MediaItemsTableFilterComposer(
+              $db: $db,
+              $table: $db.mediaItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$BookReadingStatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $BookReadingStatesTable> {
+  $$BookReadingStatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get coverPath => $composableBuilder(
+      column: $table.coverPath, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get progress => $composableBuilder(
+      column: $table.progress, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get epubCfi => $composableBuilder(
+      column: $table.epubCfi, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get pdfPage => $composableBuilder(
+      column: $table.pdfPage, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  $$MediaItemsTableOrderingComposer get mediaPath {
+    final $$MediaItemsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.mediaPath,
+        referencedTable: $db.mediaItems,
+        getReferencedColumn: (t) => t.path,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$MediaItemsTableOrderingComposer(
+              $db: $db,
+              $table: $db.mediaItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$BookReadingStatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BookReadingStatesTable> {
+  $$BookReadingStatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get coverPath =>
+      $composableBuilder(column: $table.coverPath, builder: (column) => column);
+
+  GeneratedColumn<double> get progress =>
+      $composableBuilder(column: $table.progress, builder: (column) => column);
+
+  GeneratedColumn<String> get epubCfi =>
+      $composableBuilder(column: $table.epubCfi, builder: (column) => column);
+
+  GeneratedColumn<int> get pdfPage =>
+      $composableBuilder(column: $table.pdfPage, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$MediaItemsTableAnnotationComposer get mediaPath {
+    final $$MediaItemsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.mediaPath,
+        referencedTable: $db.mediaItems,
+        getReferencedColumn: (t) => t.path,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$MediaItemsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.mediaItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$BookReadingStatesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $BookReadingStatesTable,
+    BookReadingStateRow,
+    $$BookReadingStatesTableFilterComposer,
+    $$BookReadingStatesTableOrderingComposer,
+    $$BookReadingStatesTableAnnotationComposer,
+    $$BookReadingStatesTableCreateCompanionBuilder,
+    $$BookReadingStatesTableUpdateCompanionBuilder,
+    (BookReadingStateRow, $$BookReadingStatesTableReferences),
+    BookReadingStateRow,
+    PrefetchHooks Function({bool mediaPath})> {
+  $$BookReadingStatesTableTableManager(
+      _$AppDatabase db, $BookReadingStatesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BookReadingStatesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BookReadingStatesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BookReadingStatesTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> mediaPath = const Value.absent(),
+            Value<String?> coverPath = const Value.absent(),
+            Value<double> progress = const Value.absent(),
+            Value<String?> epubCfi = const Value.absent(),
+            Value<int?> pdfPage = const Value.absent(),
+            Value<String> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              BookReadingStatesCompanion(
+            mediaPath: mediaPath,
+            coverPath: coverPath,
+            progress: progress,
+            epubCfi: epubCfi,
+            pdfPage: pdfPage,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String mediaPath,
+            Value<String?> coverPath = const Value.absent(),
+            Value<double> progress = const Value.absent(),
+            Value<String?> epubCfi = const Value.absent(),
+            Value<int?> pdfPage = const Value.absent(),
+            required String updatedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              BookReadingStatesCompanion.insert(
+            mediaPath: mediaPath,
+            coverPath: coverPath,
+            progress: progress,
+            epubCfi: epubCfi,
+            pdfPage: pdfPage,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$BookReadingStatesTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({mediaPath = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (mediaPath) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.mediaPath,
+                    referencedTable:
+                        $$BookReadingStatesTableReferences._mediaPathTable(db),
+                    referencedColumn: $$BookReadingStatesTableReferences
+                        ._mediaPathTable(db)
+                        .path,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$BookReadingStatesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $BookReadingStatesTable,
+    BookReadingStateRow,
+    $$BookReadingStatesTableFilterComposer,
+    $$BookReadingStatesTableOrderingComposer,
+    $$BookReadingStatesTableAnnotationComposer,
+    $$BookReadingStatesTableCreateCompanionBuilder,
+    $$BookReadingStatesTableUpdateCompanionBuilder,
+    (BookReadingStateRow, $$BookReadingStatesTableReferences),
+    BookReadingStateRow,
+    PrefetchHooks Function({bool mediaPath})>;
+typedef $$BookBookmarksTableCreateCompanionBuilder = BookBookmarksCompanion
+    Function({
+  required String mediaPath,
+  required String locator,
+  Value<String?> title,
+  Value<String?> excerpt,
+  required String createdAt,
+  Value<int> rowid,
+});
+typedef $$BookBookmarksTableUpdateCompanionBuilder = BookBookmarksCompanion
+    Function({
+  Value<String> mediaPath,
+  Value<String> locator,
+  Value<String?> title,
+  Value<String?> excerpt,
+  Value<String> createdAt,
+  Value<int> rowid,
+});
+
+final class $$BookBookmarksTableReferences extends BaseReferences<_$AppDatabase,
+    $BookBookmarksTable, BookBookmarkRow> {
+  $$BookBookmarksTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $MediaItemsTable _mediaPathTable(_$AppDatabase db) => db.mediaItems
+      .createAlias('book_bookmarks__media_path__media_items__path');
+
+  $$MediaItemsTableProcessedTableManager get mediaPath {
+    final $_column = $_itemColumn<String>('media_path')!;
+
+    final manager = $$MediaItemsTableTableManager($_db, $_db.mediaItems)
+        .filter((f) => f.path.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_mediaPathTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$BookBookmarksTableFilterComposer
+    extends Composer<_$AppDatabase, $BookBookmarksTable> {
+  $$BookBookmarksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get locator => $composableBuilder(
+      column: $table.locator, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get excerpt => $composableBuilder(
+      column: $table.excerpt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  $$MediaItemsTableFilterComposer get mediaPath {
+    final $$MediaItemsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.mediaPath,
+        referencedTable: $db.mediaItems,
+        getReferencedColumn: (t) => t.path,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$MediaItemsTableFilterComposer(
+              $db: $db,
+              $table: $db.mediaItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$BookBookmarksTableOrderingComposer
+    extends Composer<_$AppDatabase, $BookBookmarksTable> {
+  $$BookBookmarksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get locator => $composableBuilder(
+      column: $table.locator, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get excerpt => $composableBuilder(
+      column: $table.excerpt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  $$MediaItemsTableOrderingComposer get mediaPath {
+    final $$MediaItemsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.mediaPath,
+        referencedTable: $db.mediaItems,
+        getReferencedColumn: (t) => t.path,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$MediaItemsTableOrderingComposer(
+              $db: $db,
+              $table: $db.mediaItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$BookBookmarksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BookBookmarksTable> {
+  $$BookBookmarksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get locator =>
+      $composableBuilder(column: $table.locator, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get excerpt =>
+      $composableBuilder(column: $table.excerpt, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$MediaItemsTableAnnotationComposer get mediaPath {
+    final $$MediaItemsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.mediaPath,
+        referencedTable: $db.mediaItems,
+        getReferencedColumn: (t) => t.path,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$MediaItemsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.mediaItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$BookBookmarksTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $BookBookmarksTable,
+    BookBookmarkRow,
+    $$BookBookmarksTableFilterComposer,
+    $$BookBookmarksTableOrderingComposer,
+    $$BookBookmarksTableAnnotationComposer,
+    $$BookBookmarksTableCreateCompanionBuilder,
+    $$BookBookmarksTableUpdateCompanionBuilder,
+    (BookBookmarkRow, $$BookBookmarksTableReferences),
+    BookBookmarkRow,
+    PrefetchHooks Function({bool mediaPath})> {
+  $$BookBookmarksTableTableManager(_$AppDatabase db, $BookBookmarksTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BookBookmarksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BookBookmarksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BookBookmarksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> mediaPath = const Value.absent(),
+            Value<String> locator = const Value.absent(),
+            Value<String?> title = const Value.absent(),
+            Value<String?> excerpt = const Value.absent(),
+            Value<String> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              BookBookmarksCompanion(
+            mediaPath: mediaPath,
+            locator: locator,
+            title: title,
+            excerpt: excerpt,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String mediaPath,
+            required String locator,
+            Value<String?> title = const Value.absent(),
+            Value<String?> excerpt = const Value.absent(),
+            required String createdAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              BookBookmarksCompanion.insert(
+            mediaPath: mediaPath,
+            locator: locator,
+            title: title,
+            excerpt: excerpt,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$BookBookmarksTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({mediaPath = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (mediaPath) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.mediaPath,
+                    referencedTable:
+                        $$BookBookmarksTableReferences._mediaPathTable(db),
+                    referencedColumn:
+                        $$BookBookmarksTableReferences._mediaPathTable(db).path,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$BookBookmarksTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $BookBookmarksTable,
+    BookBookmarkRow,
+    $$BookBookmarksTableFilterComposer,
+    $$BookBookmarksTableOrderingComposer,
+    $$BookBookmarksTableAnnotationComposer,
+    $$BookBookmarksTableCreateCompanionBuilder,
+    $$BookBookmarksTableUpdateCompanionBuilder,
+    (BookBookmarkRow, $$BookBookmarksTableReferences),
+    BookBookmarkRow,
+    PrefetchHooks Function({bool mediaPath})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6670,4 +8065,8 @@ class $AppDatabaseManager {
       $$ScanFoldersTableTableManager(_db, _db.scanFolders);
   $$PlayHistoryTableTableManager get playHistory =>
       $$PlayHistoryTableTableManager(_db, _db.playHistory);
+  $$BookReadingStatesTableTableManager get bookReadingStates =>
+      $$BookReadingStatesTableTableManager(_db, _db.bookReadingStates);
+  $$BookBookmarksTableTableManager get bookBookmarks =>
+      $$BookBookmarksTableTableManager(_db, _db.bookBookmarks);
 }
