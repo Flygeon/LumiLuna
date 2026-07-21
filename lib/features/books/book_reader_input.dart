@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 
 class BookReaderInput extends StatelessWidget {
   final Widget child;
@@ -21,7 +22,7 @@ class BookReaderInput extends StatelessWidget {
     return Listener(
       onPointerSignal: (event) {
         if (event is PointerScrollEvent) {
-          final delta = axis == Axis.horizontal ? event.scrollDelta.dy : event.scrollDelta.dy;
+          final delta = event.scrollDelta.dy;
           onScroll?.call(delta);
         }
       },

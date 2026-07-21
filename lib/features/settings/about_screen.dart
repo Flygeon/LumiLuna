@@ -41,7 +41,7 @@ class AboutScreen extends ConsumerWidget {
                 const SizedBox(height: 4),
                 info.when(
                   data: (value) => Text(
-                      '${context.l10n.version}: ${value.version} (${value.buildNumber})'),
+                      '${context.l10n.version}: ${value.version}'),
                   loading: () => const Text('…'),
                   error: (_, __) => const SizedBox.shrink(),
                 ),

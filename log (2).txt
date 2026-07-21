@@ -1,0 +1,66 @@
+Run flutter build windows --release
+Building Windows application...                                 
+CMake Warning (dev) at flutter/ephemeral/.plugin_symlinks/media_kit_libs_windows_video/windows/CMakeLists.txt:90 (add_custom_command):
+  Exactly one of PRE_BUILD, PRE_LINK, or POST_BUILD must be given.  Assuming
+  POST_BUILD to preserve backward compatibility.
+  Policy CMP0175 is not set: add_custom_command() rejects invalid arguments.
+  Run "cmake --help-policy CMP0175" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+CMake Warning (dev) at flutter/ephemeral/.plugin_symlinks/media_kit_libs_windows_video/windows/CMakeLists.txt:126 (add_custom_command):
+  Exactly one of PRE_BUILD, PRE_LINK, or POST_BUILD must be given.  Assuming
+  POST_BUILD to preserve backward compatibility.
+  Policy CMP0175 is not set: add_custom_command() rejects invalid arguments.
+  Run "cmake --help-policy CMP0175" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+CMake Deprecation Warning at CMakeLists.txt:4 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+lib/providers/media_provider.dart(81,7): error G6814800A: Expected a class member, but got 'catch'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(81,13): error G25387D61: Expected an identifier, but got '('. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(170,1): error G85CCD27E: Expected a declaration, but got '}'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/folder_watcher_provider.dart(10,55): error GE5CFE876: The method 'reloadFromDatabase' isn't defined for the type 'MediaNotifier'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/features/home/home_screen.dart(401,67): error GE5CFE876: The method 'rescan' isn't defined for the type 'MediaNotifier'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(70,5): error G951CEA2F: A try block must be followed by an 'on', 'catch', or 'finally' clause. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(77,16): error G44692867: A value of type 'List<MediaItem>' can't be returned from an async function with return type 'Future<void>'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(79,31): error G4127D1E8: The getter 'result' isn't defined for the type 'MediaNotifier'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(79,64): error G4127D1E8: The getter 'result' isn't defined for the type 'MediaNotifier'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(85,25): error GC9768DF9: Undefined name 'ref'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(86,5): error GC3CEBF4A: Setter not found: 'state'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(94,21): error GC9768DF9: Undefined name 'ref'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(100,16): error GC9768DF9: Undefined name 'ref'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(101,15): error G311314CC: Method not found: '_refreshIndex'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(107,5): error GC3CEBF4A: Setter not found: 'state'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(109,23): error GC9768DF9: Undefined name 'ref'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(114,18): error GC9768DF9: Undefined name 'ref'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(120,13): error GC9768DF9: Undefined name 'ref'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(108,5): error GC3CEBF4A: Setter not found: 'state'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(127,19): error GC9768DF9: Undefined name 'state'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(132,5): error GC3CEBF4A: Setter not found: 'state'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(133,16): error GC9768DF9: Undefined name 'ref'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(139,19): error GC9768DF9: Undefined name 'state'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(155,5): error GC3CEBF4A: Setter not found: 'state'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(156,16): error GC9768DF9: Undefined name 'ref'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(162,19): error GC9768DF9: Undefined name 'state'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(166,5): error GC3CEBF4A: Setter not found: 'state'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/providers/media_provider.dart(167,16): error GC9768DF9: Undefined name 'ref'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/features/folders/folders_screen.dart(49,63): error GE5CFE876: The method 'retry' isn't defined for the type 'MediaNotifier'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/features/folders/folders_screen.dart(59,69): error GE5CFE876: The method 'rescan' isn't defined for the type 'MediaNotifier'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/features/favorites/favorites_screen.dart(34,57): error GE5CFE876: The method 'retry' isn't defined for the type 'MediaNotifier'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/features/media/media_type_screen.dart(66,55): error GE5CFE876: The method 'retry' isn't defined for the type 'MediaNotifier'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/features/media/media_type_screen.dart(85,67): error GE5CFE876: The method 'rescan' isn't defined for the type 'MediaNotifier'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/widgets/media_context_sheet.dart(150,44): error GE5CFE876: The method 'toggleFavorite' isn't defined for the type 'MediaNotifier'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/widgets/media_context_sheet.dart(192,46): error GE5CFE876: The method 'renameItem' isn't defined for the type 'MediaNotifier'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/widgets/media_context_sheet.dart(233,48): error GE5CFE876: The method 'removeItem' isn't defined for the type 'MediaNotifier'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/widgets/batch_action_bar.dart(127,44): error GE5CFE876: The method 'reloadFromDatabase' isn't defined for the type 'MediaNotifier'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/widgets/batch_action_bar.dart(157,46): error GE5CFE876: The method 'reloadFromDatabase' isn't defined for the type 'MediaNotifier'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/features/books/book_reader_input.dart(23,22): error GA90C48DA: 'PointerScrollEvent' isn't a type. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/features/settings/settings_category_screen.dart(195,58): error GE5CFE876: The method 'rescan' isn't defined for the type 'MediaNotifier'. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+C:\Program Files\Microsoft Visual Studio\18\Enterprise\MSBuild\Microsoft\VC\v180\Microsoft.CppCommon.targets(254,5): error MSB8066: Custom build for 'D:\a\LumiLuna\LumiLuna\build\windows\x64\CMakeFiles\6f841c9482ae270197082d51ca2040e6\flutter_windows.dll.rule;D:\a\LumiLuna\LumiLuna\build\windows\x64\CMakeFiles\70e7620b4836f695cd20d6b63c7302a8\flutter_assemble.rule;D:\a\LumiLuna\LumiLuna\windows\flutter\CMakeLists.txt' exited with code 1. [D:\a\LumiLuna\LumiLuna\build\windows\x64\flutter\flutter_assemble.vcxproj]
+Building Windows application...                                   122.1s
+Build process failed.
+Error: Process completed with exit code 1.
