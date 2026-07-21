@@ -9,6 +9,7 @@ import '../../models/collection.dart';
 import '../../models/media_item.dart';
 import '../../models/media_metadata.dart';
 import '../../models/media_type.dart';
+import '../../models/book_reading_state.dart';
 import '../../models/playlist.dart';
 import '../../models/tag.dart';
 
@@ -148,6 +149,31 @@ class PlayHistory extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+@DataClassName('BookReadingStateRow')
+class BookReadingStates extends Table {
+  TextColumn get mediaPath => text().references(MediaItems, #path)();
+  TextColumn? get coverPath => text().nullable()();
+  RealColumn get progress => real().withDefault(const Constant(0))();
+  TextColumn? get epubCfi => text().nullable()();
+  IntColumn? get pdfPage => integer().nullable()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {mediaPath};
+}
+
+@DataClassName('BookBookmarkRow')
+class BookBookmarks extends Table {
+  TextColumn get mediaPath => text().references(MediaItems, #path)();
+  TextColumn get locator => text()();
+  TextColumn? get title => text().nullable()();
+  TextColumn? get excerpt => text().nullable()();
+  TextColumn get createdAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {mediaPath, locator};
+}
+
 // ---------------------------------------------------------------------------
 // Database class
 // ---------------------------------------------------------------------------
@@ -168,6 +194,8 @@ class PlayHistory extends Table {
     PlaylistItems,
     ScanFolders,
     PlayHistory,
+    BookReadingStates,
+    BookBookmarks,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -176,7 +204,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration {
@@ -212,6 +240,10 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(mediaItems, mediaItems.videoHeight);
           await m.addColumn(mediaItems, mediaItems.videoCodec);
           await m.addColumn(mediaItems, mediaItems.videoFps);
+        }
+        if (from < 6) {
+          await m.createTable(bookReadingStates);
+          await m.createTable(bookBookmarks);
         }
       },
       beforeOpen: (details) async {
@@ -393,8 +425,10 @@ class AppDatabase extends _$AppDatabase {
       for (final row in existingRows) {
         existingMap[row.path] = row;
       }
-      final metaMap =
-          {if (metadata != null) for (final m in metadata) m.mediaPath: m};
+      final metaMap = {
+        if (metadata != null)
+          for (final m in metadata) m.mediaPath: m
+      };
       final now = DateTime.now().toIso8601String();
       await batch((b) {
         for (final item in items) {
@@ -480,9 +514,12 @@ class AppDatabase extends _$AppDatabase {
   Future<void> removeMediaItems(List<String> paths) async {
     for (final path in paths) {
       await transaction(() async {
-        await (delete(collectionItems)..where((t) => t.mediaPath.equals(path))).go();
-        await (delete(playlistItems)..where((t) => t.mediaPath.equals(path))).go();
-        await (delete(playHistory)..where((t) => t.mediaPath.equals(path))).go();
+        await (delete(collectionItems)..where((t) => t.mediaPath.equals(path)))
+            .go();
+        await (delete(playlistItems)..where((t) => t.mediaPath.equals(path)))
+            .go();
+        await (delete(playHistory)..where((t) => t.mediaPath.equals(path)))
+            .go();
         // MediaTags has ON DELETE CASCADE, but explicit delete is safer
         await (delete(mediaTags)..where((t) => t.mediaPath.equals(path))).go();
         await (delete(mediaItems)..where((t) => t.path.equals(path))).go();
@@ -922,6 +959,71 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  Future<BookReadingState?> getBookReadingState(String mediaPath) async {
+    final row = await (select(bookReadingStates)
+          ..where((t) => t.mediaPath.equals(mediaPath)))
+        .getSingleOrNull();
+    if (row == null) return null;
+    return BookReadingState(
+      mediaPath: row.mediaPath,
+      coverPath: row.coverPath,
+      progress: row.progress,
+      epubCfi: row.epubCfi,
+      pdfPage: row.pdfPage,
+      updatedAt: DateTime.parse(row.updatedAt),
+    );
+  }
+
+  Future<void> saveBookReadingState(BookReadingState state) async {
+    await into(bookReadingStates).insert(
+      BookReadingStatesCompanion(
+        mediaPath: Value(state.mediaPath),
+        coverPath: Value(state.coverPath),
+        progress: Value(state.progress.clamp(0, 1)),
+        epubCfi: Value(state.epubCfi),
+        pdfPage: Value(state.pdfPage),
+        updatedAt: Value(state.updatedAt.toIso8601String()),
+      ),
+      mode: InsertMode.insertOrReplace,
+    );
+  }
+
+  Future<List<BookBookmark>> getBookBookmarks(String mediaPath) async {
+    final rows = await (select(bookBookmarks)
+          ..where((t) => t.mediaPath.equals(mediaPath))
+          ..orderBy([(t) => OrderingTerm(expression: t.createdAt)]))
+        .get();
+    return rows
+        .map((row) => BookBookmark(
+              mediaPath: row.mediaPath,
+              locator: row.locator,
+              title: row.title,
+              excerpt: row.excerpt,
+              createdAt: DateTime.parse(row.createdAt),
+            ))
+        .toList();
+  }
+
+  Future<void> saveBookBookmark(BookBookmark bookmark) async {
+    await into(bookBookmarks).insert(
+      BookBookmarksCompanion(
+        mediaPath: Value(bookmark.mediaPath),
+        locator: Value(bookmark.locator),
+        title: Value(bookmark.title),
+        excerpt: Value(bookmark.excerpt),
+        createdAt: Value(bookmark.createdAt.toIso8601String()),
+      ),
+      mode: InsertMode.insertOrReplace,
+    );
+  }
+
+  Future<void> deleteBookBookmark(String mediaPath, String locator) async {
+    await (delete(bookBookmarks)
+          ..where((t) => t.mediaPath.equals(mediaPath))
+          ..where((t) => t.locator.equals(locator)))
+        .go();
+  }
+
   Future<List<MediaItem>> getPlayHistory(
       {int limit = 100, int offset = 0}) async {
     // Deduplicate by media path: each media appears at most once, positioned
@@ -999,7 +1101,8 @@ class AppDatabase extends _$AppDatabase {
 
   /// Update the metadata columns for an existing media item.
   Future<void> upsertMediaMetadata(MediaMetadata metadata) async {
-    await (update(mediaItems)..where((t) => t.path.equals(metadata.mediaPath))).write(
+    await (update(mediaItems)..where((t) => t.path.equals(metadata.mediaPath)))
+        .write(
       MediaItemsCompanion(
         imageWidth: Value(metadata.imageWidth),
         imageHeight: Value(metadata.imageHeight),
@@ -1020,7 +1123,8 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// Batch update metadata for multiple items.
-  Future<void> upsertMediaMetadataBatch(List<MediaMetadata> metadataList) async {
+  Future<void> upsertMediaMetadataBatch(
+      List<MediaMetadata> metadataList) async {
     if (metadataList.isEmpty) return;
     await batch((b) {
       for (final m in metadataList) {

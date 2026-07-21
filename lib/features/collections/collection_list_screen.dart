@@ -23,7 +23,8 @@ class CollectionListScreen extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.collections_bookmark, size: 64, color: scheme.outline),
+                  Icon(Icons.collections_bookmark,
+                      size: 64, color: scheme.outline),
                   const SizedBox(height: 16),
                   Text('暂无收藏集', style: Theme.of(context).textTheme.bodyLarge),
                   const SizedBox(height: 8),
@@ -39,10 +40,12 @@ class CollectionListScreen extends ConsumerWidget {
               return ListTile(
                 leading: CircleAvatar(
                   backgroundColor: scheme.primaryContainer,
-                  child: Icon(Icons.collections_bookmark, color: scheme.primary),
+                  child:
+                      Icon(Icons.collections_bookmark, color: scheme.primary),
                 ),
                 title: Text(col.name),
-                subtitle: Text('${col.itemCount} 项 · 更新于 ${_formatDate(col.updatedAt)}'),
+                subtitle: Text(
+                    '${col.itemCount} 项 · 更新于 ${_formatDate(col.updatedAt)}'),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete_outline),
                   onPressed: () async {
@@ -52,8 +55,12 @@ class CollectionListScreen extends ConsumerWidget {
                         title: const Text('删除收藏集'),
                         content: Text('确定删除"${col.name}"吗？'),
                         actions: [
-                          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('取消')),
-                          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('删除')),
+                          TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(false),
+                              child: const Text('取消')),
+                          TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(true),
+                              child: const Text('删除')),
                         ],
                       ),
                     );
@@ -63,7 +70,8 @@ class CollectionListScreen extends ConsumerWidget {
                   },
                 ),
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => CollectionDetailScreen(collection: col)),
+                  MaterialPageRoute(
+                      builder: (_) => CollectionDetailScreen(collection: col)),
                 ),
               );
             },
@@ -93,7 +101,9 @@ class CollectionListScreen extends ConsumerWidget {
           decoration: const InputDecoration(hintText: '收藏集名称'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('取消')),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('取消')),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('创建'),

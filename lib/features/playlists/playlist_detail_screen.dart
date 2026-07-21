@@ -16,7 +16,8 @@ class PlaylistDetailScreen extends ConsumerStatefulWidget {
   const PlaylistDetailScreen({super.key, required this.playlist});
 
   @override
-  ConsumerState<PlaylistDetailScreen> createState() => _PlaylistDetailScreenState();
+  ConsumerState<PlaylistDetailScreen> createState() =>
+      _PlaylistDetailScreenState();
 }
 
 class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
@@ -124,13 +125,17 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
               index: index,
               child: const Icon(Icons.drag_handle),
             ),
-            title: Text(item.title ?? item.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-            subtitle: Text(item.artist ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
+            title: Text(item.title ?? item.name,
+                maxLines: 1, overflow: TextOverflow.ellipsis),
+            subtitle: Text(item.artist ?? '',
+                maxLines: 1, overflow: TextOverflow.ellipsis),
             trailing: IconButton(
               icon: const Icon(Icons.remove_circle_outline),
               onPressed: () {
                 setState(() => _items.removeAt(index));
-                ref.read(playlistManagerProvider).removeItem(playlistId, item.path);
+                ref
+                    .read(playlistManagerProvider)
+                    .removeItem(playlistId, item.path);
                 _persistOrder(playlistId);
               },
             ),
@@ -142,9 +147,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
 
   void _persistOrder(int playlistId) {
     ref.read(playlistManagerProvider).reorder(
-      playlistId,
-      _items.map((e) => e.path).toList(),
-    );
+          playlistId,
+          _items.map((e) => e.path).toList(),
+        );
   }
 
   void _playAll() {
@@ -161,7 +166,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     final audioItems = _items.where((i) => i.type == MediaType.audio).toList();
     final idx = audioItems.indexWhere((i) => i.path == _items[index].path);
     if (idx >= 0) {
-      ref.read(playbackControllerProvider.notifier).openPlaylist(audioItems, idx);
+      ref
+          .read(playbackControllerProvider.notifier)
+          .openPlaylist(audioItems, idx);
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const MusicPlayerScreen()),
       );
@@ -172,9 +179,13 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     // Fetch all audio items that are not already in this playlist.
     final allMedia = ref.read(mediaProvider);
     final existingPaths = _items.map((e) => e.path).toSet();
-    final candidates = allMedia.valueOrNull?.where(
-      (m) => m.type == MediaType.audio && !existingPaths.contains(m.path),
-    ).toList() ?? [];
+    final candidates = allMedia.valueOrNull
+            ?.where(
+              (m) =>
+                  m.type == MediaType.audio && !existingPaths.contains(m.path),
+            )
+            .toList() ??
+        [];
 
     if (candidates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -190,9 +201,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
 
     if (selected != null && selected.isNotEmpty) {
       ref.read(playlistManagerProvider).addItems(
-        playlistId,
-        selected.map((e) => e.path).toList(),
-      );
+            playlistId,
+            selected.map((e) => e.path).toList(),
+          );
       setState(() => _items.addAll(selected));
     }
   }
@@ -211,7 +222,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
               onTap: () {
                 Navigator.of(ctx).pop();
                 setState(() => _items.removeAt(index));
-                ref.read(playlistManagerProvider).removeItem(playlistId, item.path);
+                ref
+                    .read(playlistManagerProvider)
+                    .removeItem(playlistId, item.path);
               },
             ),
           ],
@@ -256,7 +269,8 @@ class _AddMusicDialogState extends State<_AddMusicDialog> {
                   }
                 });
               },
-              title: Text(item.title ?? item.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+              title: Text(item.title ?? item.name,
+                  maxLines: 1, overflow: TextOverflow.ellipsis),
               subtitle: item.artist != null ? Text(item.artist!) : null,
               dense: true,
             );

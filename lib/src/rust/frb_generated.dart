@@ -92,7 +92,10 @@ abstract class RustLibApi extends BaseApi {
   Future<String> crateApiMediaScanPing();
 
   Future<List<RustMediaItem>> crateApiMediaScanScanMedia(
-      {required List<String> folders, required int maxDepth, required String cacheDir, required String existingHashesJson});
+      {required List<String> folders,
+      required int maxDepth,
+      required String cacheDir,
+      required String existingHashesJson});
 
   Future<List<RustMediaItem>> crateApiMediaScanScanMediaBatch(
       {required List<String> folders,
@@ -228,7 +231,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   Future<List<RustMediaItem>> crateApiMediaScanScanMedia(
-      {required List<String> folders, required int maxDepth, required String cacheDir, required String existingHashesJson}) {
+      {required List<String> folders,
+      required int maxDepth,
+      required String cacheDir,
+      required String existingHashesJson}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
@@ -279,7 +285,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeErrorData: null,
       ),
       constMeta: kCrateApiMediaScanScanMediaBatchConstMeta,
-      argValues: [folders, maxDepth, cacheDir, existingHashesJson, offset, limit],
+      argValues: [
+        folders,
+        maxDepth,
+        cacheDir,
+        existingHashesJson,
+        offset,
+        limit
+      ],
       apiImpl: this,
     ));
   }
@@ -287,7 +300,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiMediaScanScanMediaBatchConstMeta =>
       const TaskConstMeta(
         debugName: "scan_media_batch",
-        argNames: ["folders", "maxDepth", "cacheDir", "existingHashesJson", "offset", "limit"],
+        argNames: [
+          "folders",
+          "maxDepth",
+          "cacheDir",
+          "existingHashesJson",
+          "offset",
+          "limit"
+        ],
       );
 
   @override
@@ -321,7 +341,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiMediaScanScanMediaBatchesConstMeta =>
       const TaskConstMeta(
         debugName: "scan_media_batches",
-        argNames: ["folders", "maxDepth", "cacheDir", "existingHashesJson", "batchSize"],
+        argNames: [
+          "folders",
+          "maxDepth",
+          "cacheDir",
+          "existingHashesJson",
+          "batchSize"
+        ],
       );
 
   @override

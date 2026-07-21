@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 enum MediaType {
   image,
   video,
-  audio;
+  audio,
+  book;
 
   /// Representative icon for the media type.
   IconData get icon {
@@ -15,6 +16,8 @@ enum MediaType {
         return Icons.movie_outlined;
       case MediaType.audio:
         return Icons.music_note_outlined;
+      case MediaType.book:
+        return Icons.menu_book_outlined;
     }
   }
 
@@ -26,6 +29,8 @@ enum MediaType {
         return Icons.movie;
       case MediaType.audio:
         return Icons.music_note;
+      case MediaType.book:
+        return Icons.menu_book;
     }
   }
 }

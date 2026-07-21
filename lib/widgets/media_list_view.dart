@@ -83,7 +83,9 @@ class MediaListView extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              trailing: selected ? Icon(Icons.check_circle, color: scheme.primary) : Icon(item.type.icon),
+              trailing: selected
+                  ? Icon(Icons.check_circle, color: scheme.primary)
+                  : Icon(item.type.icon),
               onTap: () => onTap(index),
             ),
           ),

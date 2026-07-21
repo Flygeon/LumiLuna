@@ -54,11 +54,11 @@ class Lyrics {
         final minutes = int.parse(tm.group(1)!);
         final seconds = int.parse(tm.group(2)!);
         final msStr = tm.group(3);
-        final ms = msStr != null
-            ? int.parse(msStr) * (msStr.length == 2 ? 10 : 1)
-            : 0;
+        final ms =
+            msStr != null ? int.parse(msStr) * (msStr.length == 2 ? 10 : 1) : 0;
         result.add(LyricsLine(
-          timestamp: Duration(minutes: minutes, seconds: seconds, milliseconds: ms),
+          timestamp:
+              Duration(minutes: minutes, seconds: seconds, milliseconds: ms),
           text: text,
         ));
       }

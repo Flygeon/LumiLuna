@@ -70,10 +70,10 @@ class FolderWatcherService {
 
     try {
       final sub = dir.watch(recursive: true).listen(
-        (event) => _onFileEvent(event, folderPath),
-        onError: (_) {},
-        cancelOnError: false,
-      );
+            (event) => _onFileEvent(event, folderPath),
+            onError: (_) {},
+            cancelOnError: false,
+          );
       _subscriptions.add(sub);
       _watched.add(dir);
     } catch (_) {

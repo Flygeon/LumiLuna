@@ -22,6 +22,8 @@ String mediaTypeName(BuildContext context, MediaType type) {
       return l.typeVideo;
     case MediaType.audio:
       return l.typeMusic;
+    case MediaType.book:
+      return '图书';
   }
 }
 

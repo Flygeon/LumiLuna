@@ -79,7 +79,8 @@ class MediaScannerService {
   /// Audio metadata is enriched in parallel on worker isolates.
   /// [existingHashesJson] is a JSON map of path → fileHash used to skip
   /// unchanged files during Rust scanning. Pass `'{}'` for a full scan.
-  static Future<ScanResult> scan(List<String> folders, {String existingHashesJson = '{}'}) async {
+  static Future<ScanResult> scan(List<String> folders,
+      {String existingHashesJson = '{}'}) async {
     if (folders.isEmpty) return const ScanResult([], []);
 
     final cacheDir = await getTemporaryDirectory();

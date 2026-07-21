@@ -29,8 +29,7 @@ class FormatUtils {
   static String monthKey(DateTime dt) => DateFormat('yyyy-MM').format(dt);
 
   /// Month label, e.g. "2026年7月".
-  static String monthLabel(DateTime dt) =>
-      '${dt.year}年${dt.month}月';
+  static String monthLabel(DateTime dt) => '${dt.year}年${dt.month}月';
 
   /// Duration as mm:ss or h:mm:ss.
   static String duration(Duration d) {

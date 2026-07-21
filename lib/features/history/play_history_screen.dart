@@ -36,10 +36,12 @@ class PlayHistoryScreen extends ConsumerWidget {
                   actions: [
                     TextButton(
                         onPressed: () => Navigator.of(ctx).pop(false),
-                        child: Text(MaterialLocalizations.of(ctx).cancelButtonLabel)),
+                        child: Text(
+                            MaterialLocalizations.of(ctx).cancelButtonLabel)),
                     TextButton(
                         onPressed: () => Navigator.of(ctx).pop(true),
-                        child: Text(MaterialLocalizations.of(ctx).okButtonLabel)),
+                        child:
+                            Text(MaterialLocalizations.of(ctx).okButtonLabel)),
                   ],
                 ),
               );

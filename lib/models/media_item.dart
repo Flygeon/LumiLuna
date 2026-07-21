@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'media_type.dart';
+import '../core/constants/app_constants.dart';
 
 /// A single media file discovered on disk.
 class MediaItem {
@@ -118,49 +119,7 @@ class MediaItem {
   }
 
   static MediaType? _typeForExt(String ext) {
-    const image = {
-      'jpg',
-      'jpeg',
-      'png',
-      'gif',
-      'bmp',
-      'webp',
-      'heic',
-      'heif',
-      'tiff',
-      'tif',
-      'ico',
-    };
-    const video = {
-      'mp4',
-      'mkv',
-      'avi',
-      'mov',
-      'wmv',
-      'flv',
-      'webm',
-      'm4v',
-      'mpeg',
-      'mpg',
-      'ts',
-      '3gp',
-    };
-    const audio = {
-      'mp3',
-      'flac',
-      'wav',
-      'aac',
-      'm4a',
-      'ogg',
-      'wma',
-      'opus',
-      'aiff',
-      'ape',
-    };
-    if (image.contains(ext)) return MediaType.image;
-    if (video.contains(ext)) return MediaType.video;
-    if (audio.contains(ext)) return MediaType.audio;
-    return null;
+    return AppConstants.typeForExtension(ext);
   }
 
   /// Serialize this item to a JSON-compatible map.

@@ -144,4 +144,25 @@ class SettingsService {
   Future<void> setLyricsFontSize(double size) async {
     await _prefs.setDouble(AppConstants.prefLyricsFontSize, size);
   }
+
+  String getBookTheme() =>
+      _prefs.getString(AppConstants.prefBookTheme) ?? 'light';
+
+  Future<void> setBookTheme(String theme) async {
+    await _prefs.setString(AppConstants.prefBookTheme, theme);
+  }
+
+  double getBookFontSize() =>
+      _prefs.getDouble(AppConstants.prefBookFontSize) ?? 16.0;
+
+  Future<void> setBookFontSize(double size) async {
+    await _prefs.setDouble(AppConstants.prefBookFontSize, size);
+  }
+
+  String getBookLayout() =>
+      _prefs.getString(AppConstants.prefBookLayout) ?? 'scroll';
+
+  Future<void> setBookLayout(String layout) async {
+    await _prefs.setString(AppConstants.prefBookLayout, layout);
+  }
 }

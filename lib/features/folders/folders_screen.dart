@@ -10,6 +10,9 @@ import '../../widgets/async_view.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/media_thumbnail.dart';
 import 'folder_detail_screen.dart';
+import '../books/book_shelf_view.dart';
+
+enum _BrowseType { media, books }
 
 /// Library grouping view: shows folders / albums / date buckets as cards.
 class FoldersScreen extends ConsumerWidget {
@@ -21,50 +24,70 @@ class FoldersScreen extends ConsumerWidget {
     final grouped = ref.watch(groupedMediaProvider);
     final mode = ref.watch(settingsProvider.select((s) => s.groupMode));
 
+    final browseType = ref.watch(_browseTypeProvider);
     return Column(
       children: [
-        _GroupModeSelector(mode: mode),
-        Expanded(
-          child: AsyncView<List<MediaFolder>>(
-            value: grouped,
-            onRetry: () => ref.read(mediaProvider.notifier).retry(),
-            builder: (folders) {
-              if (folders.isEmpty) {
-                return EmptyState(
-                  icon: Icons.folder_outlined,
-                  title: l10n.noGroups,
-                  message: l10n.addFolderHint,
-                );
-              }
-              return RefreshIndicator(
-                onRefresh: () => ref.read(mediaProvider.notifier).rescan(),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final columns =
-                        (constraints.maxWidth / 200).floor().clamp(2, 6);
-                    return GridView.builder(
-                      padding: const EdgeInsets.all(10),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: columns,
-                        mainAxisSpacing: 10,
-                        crossAxisSpacing: 10,
-                        childAspectRatio: 0.85,
-                      ),
-                      itemCount: folders.length,
-                      itemBuilder: (context, index) => _FolderCard(
-                        folder: folders[index],
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+          child: SegmentedButton<_BrowseType>(
+            segments: const [
+              ButtonSegment(value: _BrowseType.media, label: Text('媒体')),
+              ButtonSegment(value: _BrowseType.books, label: Text('图书')),
+            ],
+            selected: {browseType},
+            onSelectionChanged: (value) =>
+                ref.read(_browseTypeProvider.notifier).state = value.first,
           ),
         ),
+        if (browseType == _BrowseType.books)
+          const Expanded(child: BookShelfView())
+        else ...[
+          _GroupModeSelector(mode: mode),
+          Expanded(
+            child: AsyncView<List<MediaFolder>>(
+              value: grouped,
+              onRetry: () => ref.read(mediaProvider.notifier).retry(),
+              builder: (folders) {
+                if (folders.isEmpty) {
+                  return EmptyState(
+                    icon: Icons.folder_outlined,
+                    title: l10n.noGroups,
+                    message: l10n.addFolderHint,
+                  );
+                }
+                return RefreshIndicator(
+                  onRefresh: () => ref.read(mediaProvider.notifier).rescan(),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final columns =
+                          (constraints.maxWidth / 200).floor().clamp(2, 6);
+                      return GridView.builder(
+                        padding: const EdgeInsets.all(10),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: columns,
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                          childAspectRatio: 0.85,
+                        ),
+                        itemCount: folders.length,
+                        itemBuilder: (context, index) => _FolderCard(
+                          folder: folders[index],
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ],
     );
   }
 }
+
+final _browseTypeProvider =
+    StateProvider<_BrowseType>((ref) => _BrowseType.media);
 
 class _GroupModeSelector extends ConsumerWidget {
   final GroupMode mode;

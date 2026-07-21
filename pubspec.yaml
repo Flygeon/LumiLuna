@@ -18,6 +18,8 @@ dependencies:
   flutter_riverpod: ^2.5.1
   flutter_animate: ^4.5.2
   heroine: ^0.7.2
+  pdfx: ^2.9.2
+  epub_pro: ^5.6.0
   flutter_typeahead: ^6.0.0
 
   # Unified audio + video playback (native Windows support)

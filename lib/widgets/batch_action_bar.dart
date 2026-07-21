@@ -46,8 +46,7 @@ class BatchActionBar extends ConsumerWidget {
           children: [
             // Header — count + cancel/clear-all buttons.
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Row(
                 children: [
                   Text('已选 $count 项',
@@ -57,8 +56,7 @@ class BatchActionBar extends ConsumerWidget {
                   if (count > 0)
                     TextButton(
                       onPressed: notifier.clearSelection,
-                      child: const Text('全部取消',
-                          style: TextStyle(fontSize: 12)),
+                      child: const Text('全部取消', style: TextStyle(fontSize: 12)),
                     ),
                   TextButton(
                     onPressed: notifier.endSelection,
@@ -74,8 +72,8 @@ class BatchActionBar extends ConsumerWidget {
               height: 56,
               child: ListView(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   _ActionChip(

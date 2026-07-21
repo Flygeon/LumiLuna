@@ -21,11 +21,10 @@ class TrashEntry {
     required this.trashLocation,
   });
 
-  String get fileName =>
-      originalPath.split(Platform.pathSeparator).last;
+  String get fileName => originalPath.split(Platform.pathSeparator).last;
 
-  String get originalFolder =>
-      originalPath.substring(0, originalPath.lastIndexOf(Platform.pathSeparator));
+  String get originalFolder => originalPath.substring(
+      0, originalPath.lastIndexOf(Platform.pathSeparator));
 
   Map<String, dynamic> toJson() => {
         'originalPath': originalPath,
@@ -56,14 +55,16 @@ class TrashManager {
 
   static Future<Directory> _trashDir() async {
     final dir = await getApplicationSupportDirectory();
-    final trash = Directory('${dir.path}${Platform.pathSeparator}${AppConstants.trashDirName}');
+    final trash = Directory(
+        '${dir.path}${Platform.pathSeparator}${AppConstants.trashDirName}');
     await trash.create(recursive: true);
     return trash;
   }
 
   static Future<File> _manifestFile() async {
     final dir = await getApplicationSupportDirectory();
-    return File('${dir.path}${Platform.pathSeparator}${AppConstants.trashManifestName}');
+    return File(
+        '${dir.path}${Platform.pathSeparator}${AppConstants.trashManifestName}');
   }
 
   static Future<List<TrashEntry>> _readManifest() async {
@@ -72,7 +73,10 @@ class TrashManager {
     try {
       final raw = await file.readAsString();
       final list = jsonDecode(raw) as List;
-      return list.cast<Map<String, dynamic>>().map(TrashEntry.fromJson).toList();
+      return list
+          .cast<Map<String, dynamic>>()
+          .map(TrashEntry.fromJson)
+          .toList();
     } catch (_) {
       return [];
     }
@@ -80,7 +84,8 @@ class TrashManager {
 
   static Future<void> _writeManifest(List<TrashEntry> entries) async {
     final file = await _manifestFile();
-    await file.writeAsString(jsonEncode(entries.map((e) => e.toJson()).toList()));
+    await file
+        .writeAsString(jsonEncode(entries.map((e) => e.toJson()).toList()));
   }
 
   // ---------------------------------------------------------------------------
@@ -110,7 +115,8 @@ class TrashManager {
     // Fallback: move to app-internal trash directory.
     try {
       final trash = await _trashDir();
-      final unique = '${DateTime.now().millisecondsSinceEpoch}_${_randomString(6)}';
+      final unique =
+          '${DateTime.now().millisecondsSinceEpoch}_${_randomString(6)}';
       final ext = item.extension.isNotEmpty ? '.${item.extension}' : '';
       final dest = '${trash.path}${Platform.pathSeparator}$unique$ext';
       // On Android (scoped storage) and some Windows edge cases, File.rename
@@ -226,8 +232,7 @@ class TrashManager {
   static Future<bool> _sendToRecycleBinWindows(String path) async {
     // Escape single quotes for the PowerShell string.
     final safePath = path.replaceAll("'", "''");
-    final script =
-        "Add-Type -AssemblyName Microsoft.VisualBasic; "
+    final script = "Add-Type -AssemblyName Microsoft.VisualBasic; "
         "[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile('$safePath', 'SendToRecycleBin')";
     try {
       final result = await Process.run(
@@ -244,6 +249,7 @@ class TrashManager {
   static String _randomString(int length) {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     final rng = Random();
-    return List.generate(length, (_) => chars[rng.nextInt(chars.length)]).join();
+    return List.generate(length, (_) => chars[rng.nextInt(chars.length)])
+        .join();
   }
 }

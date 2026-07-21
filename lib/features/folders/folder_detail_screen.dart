@@ -24,8 +24,7 @@ class FolderDetailScreen extends ConsumerStatefulWidget {
   const FolderDetailScreen({super.key, required this.folder});
 
   @override
-  ConsumerState<FolderDetailScreen> createState() =>
-      _FolderDetailScreenState();
+  ConsumerState<FolderDetailScreen> createState() => _FolderDetailScreenState();
 }
 
 class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
@@ -90,7 +89,9 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
 
   void _onItemTap(List<MediaItem> items, int index, SelectionState sel) {
     if (sel.isSelecting) {
-      ref.read(selectionProvider(_selectionId).notifier).toggle(items[index].path);
+      ref
+          .read(selectionProvider(_selectionId).notifier)
+          .toggle(items[index].path);
     } else {
       openMedia(context, ref, items, index);
     }

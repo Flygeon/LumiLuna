@@ -51,6 +51,8 @@ class AppConstants {
     'ape',
   };
 
+  static const Set<String> bookExtensions = {'epub', 'pdf'};
+
   /// Resolve a media type from a file extension (lowercase, no dot).
   /// Returns null when the extension is not a recognised media file.
   static MediaType? typeForExtension(String ext) {
@@ -58,12 +60,17 @@ class AppConstants {
     if (imageExtensions.contains(e)) return MediaType.image;
     if (videoExtensions.contains(e)) return MediaType.video;
     if (audioExtensions.contains(e)) return MediaType.audio;
+    if (bookExtensions.contains(e)) return MediaType.book;
     return null;
   }
 
   /// All recognised extensions combined.
-  static Set<String> get allExtensions =>
-      {...imageExtensions, ...videoExtensions, ...audioExtensions};
+  static Set<String> get allExtensions => {
+        ...imageExtensions,
+        ...videoExtensions,
+        ...audioExtensions,
+        ...bookExtensions
+      };
 
   // Grid layout: target tile width used to compute responsive column count.
   static const double gridTargetTileWidth = 180;
@@ -93,6 +100,9 @@ class AppConstants {
   static const String prefLyricsBlur = 'pref_lyrics_blur';
   static const String prefLyricsFontSize = 'pref_lyrics_font_size';
   static const String prefAutoUpdate = 'pref_auto_update';
+  static const String prefBookTheme = 'pref_book_theme';
+  static const String prefBookFontSize = 'pref_book_font_size';
+  static const String prefBookLayout = 'pref_book_layout';
 
   static const String githubRepository = 'Flygeon/LumiLuna';
 

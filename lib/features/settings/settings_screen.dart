@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../l10n/l10n.dart';
 import 'about_screen.dart';
 import 'settings_category_screen.dart';
+import 'book_settings_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key, this.title});
@@ -31,6 +32,14 @@ class SettingsScreen extends StatelessWidget {
                   builder: (_) => SettingsCategoryScreen(category: entry.$3),
                 )),
               )),
+          _SettingsEntry(
+            title: '图书设置',
+            subtitle: '阅读主题、字体大小和页面布局',
+            icon: Icons.menu_book_outlined,
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const BookSettingsScreen(),
+            )),
+          ),
           _SettingsEntry(
             title: context.l10n.about,
             subtitle: context.l10n.aboutDesc,

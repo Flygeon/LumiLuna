@@ -52,8 +52,12 @@ class PlaylistListScreen extends ConsumerWidget {
                         title: const Text('删除播放列表'),
                         content: Text('确定删除"${pl.name}"吗？'),
                         actions: [
-                          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('取消')),
-                          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('删除')),
+                          TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(false),
+                              child: const Text('取消')),
+                          TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(true),
+                              child: const Text('删除')),
                         ],
                       ),
                     );
@@ -63,7 +67,8 @@ class PlaylistListScreen extends ConsumerWidget {
                   },
                 ),
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => PlaylistDetailScreen(playlist: pl)),
+                  MaterialPageRoute(
+                      builder: (_) => PlaylistDetailScreen(playlist: pl)),
                 ),
               );
             },
@@ -90,7 +95,9 @@ class PlaylistListScreen extends ConsumerWidget {
           decoration: const InputDecoration(hintText: '播放列表名称'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('取消')),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('取消')),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('创建'),

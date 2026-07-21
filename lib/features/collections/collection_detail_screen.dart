@@ -27,9 +27,12 @@ class CollectionDetailScreen extends ConsumerWidget {
               icon: const Icon(Icons.playlist_play),
               tooltip: '播放全部',
               onPressed: () {
-                final audioItems = items.where((i) => i.type == MediaType.audio).toList();
+                final audioItems =
+                    items.where((i) => i.type == MediaType.audio).toList();
                 if (audioItems.isNotEmpty) {
-                  ref.read(playbackControllerProvider.notifier).openPlaylist(audioItems, 0);
+                  ref
+                      .read(playbackControllerProvider.notifier)
+                      .openPlaylist(audioItems, 0);
                 }
               },
             ),
@@ -74,7 +77,9 @@ class CollectionDetailScreen extends ConsumerWidget {
               title: const Text('从收藏集移除'),
               onTap: () {
                 Navigator.of(ctx).pop();
-                ref.read(collectionManagerProvider).removeItem(collection.id!, item.path);
+                ref
+                    .read(collectionManagerProvider)
+                    .removeItem(collection.id!, item.path);
               },
             ),
           ],

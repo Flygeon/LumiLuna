@@ -231,7 +231,8 @@ Duration? _nextStart(List<_ParsedLine> lines, int index) {
 /// 西里尔文等其他语言的既有逐行显示逻辑。
 bool _isChineseTranslation(String text) {
   final hasHan = RegExp(r'[\u4e00-\u9fff]').hasMatch(text);
-  final hasJapaneseKana = RegExp(r'[\u3040-\u309f\u30a0-\u30ff]').hasMatch(text);
+  final hasJapaneseKana =
+      RegExp(r'[\u3040-\u309f\u30a0-\u30ff]').hasMatch(text);
   return hasHan && !hasJapaneseKana;
 }
 
@@ -284,7 +285,8 @@ List<LyricLine> _removeInlineTranslationRows(
   for (var i = 0; i < parsedLines.length - 1; i++) {
     if (_findInlineTranslation(parsedLines, i) != null) {
       final translationRow = parsedLines[i + 1];
-      removedKeys.add('${translationRow.start.inMicroseconds}|${translationRow.text}');
+      removedKeys
+          .add('${translationRow.start.inMicroseconds}|${translationRow.text}');
     }
   }
   if (removedKeys.isEmpty) return lines;

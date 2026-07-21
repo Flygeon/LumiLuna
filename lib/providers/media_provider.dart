@@ -70,7 +70,8 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
     try {
       final hashes = await db.getAllFileHashes();
       final hashesJson = jsonEncode(hashes);
-      final result = await MediaScannerService.scan(folders, existingHashesJson: hashesJson);
+      final result = await MediaScannerService.scan(folders,
+          existingHashesJson: hashesJson);
       await db.syncMediaItems(result.items, folders, metadata: result.metadata);
       state = AsyncValue.data(await db.getAllMediaItems());
     } catch (_) {}
@@ -109,7 +110,8 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
       final db = ref.read(appDatabaseProvider);
       final hashes = await db.getAllFileHashes();
       final hashesJson = jsonEncode(hashes);
-      final result = await MediaScannerService.scan(target, existingHashesJson: hashesJson);
+      final result = await MediaScannerService.scan(target,
+          existingHashesJson: hashesJson);
       await db.syncMediaItems(result.items, target, metadata: result.metadata);
       await ref.read(folderWatcherProvider).start(target);
       return result.items;

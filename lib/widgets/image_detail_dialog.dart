@@ -101,8 +101,7 @@ class ImageDetailDialog extends ConsumerWidget {
                   if (metadata?.imageFNumber != null) {
                     exifRows.add(_InfoRow(
                       label: '光圈',
-                      value:
-                          'f/${metadata!.imageFNumber!.toStringAsFixed(1)}',
+                      value: 'f/${metadata!.imageFNumber!.toStringAsFixed(1)}',
                     ));
                   }
                   if (metadata?.imageGpsLat != null &&
@@ -131,8 +130,7 @@ class ImageDetailDialog extends ConsumerWidget {
                     children: [
                       const Divider(height: 24),
                       _SectionHeader(
-                          title: 'EXIF 元数据',
-                          icon: Icons.camera_alt_outlined),
+                          title: 'EXIF 元数据', icon: Icons.camera_alt_outlined),
                       ...exifRows,
                     ],
                   );

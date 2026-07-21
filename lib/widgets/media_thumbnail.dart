@@ -106,6 +106,7 @@ Widget _placeholder(BuildContext context, MediaItem item,
     MediaType.image => (scheme.primaryContainer, scheme.onPrimaryContainer),
     MediaType.video => (scheme.tertiaryContainer, scheme.onTertiaryContainer),
     MediaType.audio => (scheme.secondaryContainer, scheme.onSecondaryContainer),
+    MediaType.book => (scheme.surfaceContainerHighest, scheme.onSurfaceVariant),
   };
   return Container(
     color: bg,

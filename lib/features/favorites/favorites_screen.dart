@@ -15,6 +15,7 @@ import '../../widgets/media_list_view.dart';
 import '../player/image_viewer_screen.dart';
 import '../player/music_player_screen.dart';
 import '../player/video_player_screen.dart';
+import '../books/book_reader_screen.dart';
 
 /// Displays all media items the user has marked as favourites.
 class FavoritesScreen extends ConsumerWidget {
@@ -106,6 +107,11 @@ void openMedia(
           .openPlaylist(tracks, start < 0 ? 0 : start);
       Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => const MusicPlayerScreen(),
+      ));
+      break;
+    case MediaType.book:
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => BookReaderScreen(item: item),
       ));
       break;
   }

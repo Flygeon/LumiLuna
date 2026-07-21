@@ -25,7 +25,8 @@ final startupErrorProvider = Provider<String?>((ref) => null);
 /// Append a crash record to `crash_log.txt` in the app support directory so
 /// the user can inspect it after a release-mode crash (where there is no
 /// console attached to see stderr).
-Future<void> _writeCrashLog(String kind, Object error, StackTrace? stack) async {
+Future<void> _writeCrashLog(
+    String kind, Object error, StackTrace? stack) async {
   try {
     final dir = await getApplicationSupportDirectory();
     final file = File('${dir.path}${Platform.pathSeparator}crash_log.txt');

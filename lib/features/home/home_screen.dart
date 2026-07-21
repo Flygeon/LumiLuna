@@ -105,6 +105,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         return Icons.movie_outlined;
       case MediaType.audio:
         return Icons.music_note_outlined;
+      case MediaType.book:
+        return Icons.menu_book_outlined;
     }
     return Icons.description_outlined;
   }

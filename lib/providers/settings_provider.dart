@@ -13,6 +13,10 @@ enum MediaSortMode { modified, name, size, duration }
 
 enum MediaLayoutDensity { standard, compact }
 
+enum BookTheme { light, dark, sepia }
+
+enum BookLayout { scroll, paginated }
+
 /// App-wide user settings (theme, view mode, scan folders, grouping).
 class AppSettings {
   final ThemeMode themeMode;
@@ -31,6 +35,9 @@ class AppSettings {
   final bool musicBackgroundBlur;
   final bool lyricsBlur;
   final double lyricsFontSize;
+  final BookTheme bookTheme;
+  final double bookFontSize;
+  final BookLayout bookLayout;
 
   const AppSettings({
     required this.themeMode,
@@ -49,6 +56,9 @@ class AppSettings {
     this.musicBackgroundBlur = true,
     this.lyricsBlur = true,
     this.lyricsFontSize = 16.0,
+    this.bookTheme = BookTheme.light,
+    this.bookFontSize = 16.0,
+    this.bookLayout = BookLayout.scroll,
   });
 
   AppSettings copyWith({
@@ -68,6 +78,9 @@ class AppSettings {
     bool? musicBackgroundBlur,
     bool? lyricsBlur,
     double? lyricsFontSize,
+    BookTheme? bookTheme,
+    double? bookFontSize,
+    BookLayout? bookLayout,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -86,6 +99,9 @@ class AppSettings {
       musicBackgroundBlur: musicBackgroundBlur ?? this.musicBackgroundBlur,
       lyricsBlur: lyricsBlur ?? this.lyricsBlur,
       lyricsFontSize: lyricsFontSize ?? this.lyricsFontSize,
+      bookTheme: bookTheme ?? this.bookTheme,
+      bookFontSize: bookFontSize ?? this.bookFontSize,
+      bookLayout: bookLayout ?? this.bookLayout,
     );
   }
 }
@@ -112,6 +128,15 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
           musicBackgroundBlur: _service.getMusicBackgroundBlur(),
           lyricsBlur: _service.getLyricsBlur(),
           lyricsFontSize: _service.getLyricsFontSize(),
+          bookTheme: BookTheme.values.firstWhere(
+            (theme) => theme.name == _service.getBookTheme(),
+            orElse: () => BookTheme.light,
+          ),
+          bookFontSize: _service.getBookFontSize(),
+          bookLayout: BookLayout.values.firstWhere(
+            (layout) => layout.name == _service.getBookLayout(),
+            orElse: () => BookLayout.scroll,
+          ),
         ));
 
   static MediaLayoutDensity _layoutDensity(String value) =>
@@ -221,6 +246,21 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> setLyricsFontSize(double size) async {
     state = state.copyWith(lyricsFontSize: size);
     await _service.setLyricsFontSize(size);
+  }
+
+  Future<void> setBookTheme(BookTheme theme) async {
+    state = state.copyWith(bookTheme: theme);
+    await _service.setBookTheme(theme.name);
+  }
+
+  Future<void> setBookFontSize(double size) async {
+    state = state.copyWith(bookFontSize: size);
+    await _service.setBookFontSize(size);
+  }
+
+  Future<void> setBookLayout(BookLayout layout) async {
+    state = state.copyWith(bookLayout: layout);
+    await _service.setBookLayout(layout.name);
   }
 }
 

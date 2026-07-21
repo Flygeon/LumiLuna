@@ -91,9 +91,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     // Navigate to home with a fade transition.
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => onboardingCompleted
-            ? const HomeScreen()
-            : const OnboardingScreen(),
+        pageBuilder: (_, __, ___) =>
+            onboardingCompleted ? const HomeScreen() : const OnboardingScreen(),
         transitionsBuilder: (_, anim, __, child) => FadeTransition(
           opacity: anim,
           child: child,

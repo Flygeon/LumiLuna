@@ -23,6 +23,7 @@ import '../../widgets/media_list_view.dart';
 import '../player/image_viewer_screen.dart';
 import '../player/music_player_screen.dart';
 import '../player/video_player_screen.dart';
+import '../books/book_reader_screen.dart';
 
 /// Generic tab body listing all media of a single [MediaType], honouring the
 /// current search query and grid/list preference, and opening the appropriate
@@ -55,6 +56,7 @@ class _MediaTypeScreenState extends ConsumerState<MediaTypeScreen> {
       MediaType.image => settings.imageLayoutDensity,
       MediaType.video => settings.videoLayoutDensity,
       MediaType.audio => MediaLayoutDensity.standard,
+      MediaType.book => MediaLayoutDensity.standard,
     };
     final sel = ref.watch(selectionProvider(_selectionId));
     final l10n = context.l10n;
@@ -212,6 +214,14 @@ Future<void> openMedia(
       if (!context.mounted) return;
       Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => const MusicPlayerScreen(),
+      ));
+      break;
+    case MediaType.book:
+      ref.read(appDatabaseProvider).recordPlay(item.path).then(
+            (_) => ref.invalidate(playHistoryProvider),
+          );
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => BookReaderScreen(item: item),
       ));
       break;
   }

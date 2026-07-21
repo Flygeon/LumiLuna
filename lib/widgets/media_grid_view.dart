@@ -38,9 +38,7 @@ class MediaGridView extends StatelessWidget {
       builder: (context, constraints) {
         final compact = density == MediaLayoutDensity.compact;
         final targetWidth = compact ? 110.0 : AppConstants.gridTargetTileWidth;
-        final columns = (constraints.maxWidth / targetWidth)
-            .floor()
-            .clamp(
+        final columns = (constraints.maxWidth / targetWidth).floor().clamp(
               AppConstants.gridMinColumns.toInt(),
               AppConstants.gridMaxColumns.toInt(),
             );
@@ -66,12 +64,10 @@ class MediaGridView extends StatelessWidget {
               compact: compact,
               selected: selectedPaths.contains(items[index].path),
               onTap: () => onTap(index),
-              onSecondaryTap: onSecondaryTap != null
-                  ? () => onSecondaryTap!(index)
-                  : null,
-              onLongPress: onLongPress != null
-                  ? () => onLongPress!(index)
-                  : null,
+              onSecondaryTap:
+                  onSecondaryTap != null ? () => onSecondaryTap!(index) : null,
+              onLongPress:
+                  onLongPress != null ? () => onLongPress!(index) : null,
             ),
           ),
         );
@@ -141,7 +137,7 @@ class _GridTile extends StatelessWidget {
               if (item.type != MediaType.image && !selected)
                 Center(
                   child: Container(
-                        padding: EdgeInsets.all(compact ? 5 : 8),
+                    padding: EdgeInsets.all(compact ? 5 : 8),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.45),
                       shape: BoxShape.circle,
@@ -161,8 +157,8 @@ class _GridTile extends StatelessWidget {
                 child: selected
                     ? const SizedBox.shrink()
                     : Container(
-                        padding: EdgeInsets.fromLTRB(
-                            compact ? 4 : 8, compact ? 8 : 16, compact ? 4 : 8, compact ? 3 : 6),
+                        padding: EdgeInsets.fromLTRB(compact ? 4 : 8,
+                            compact ? 8 : 16, compact ? 4 : 8, compact ? 3 : 6),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
