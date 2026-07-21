@@ -37,6 +37,25 @@ class BookSettingsScreen extends ConsumerWidget {
                   ),
                 ),
                 ListTile(
+                  leading: const Icon(Icons.swap_vert),
+                  title: const Text('翻页模式'),
+                  trailing: SegmentedButton<BookPageMode>(
+                    segments: const [
+                      ButtonSegment(
+                        value: BookPageMode.horizontal,
+                        label: Text('左右'),
+                      ),
+                      ButtonSegment(
+                        value: BookPageMode.vertical,
+                        label: Text('上下'),
+                      ),
+                    ],
+                    selected: {settings.bookPageMode},
+                    onSelectionChanged: (value) =>
+                        notifier.setBookPageMode(value.first),
+                  ),
+                ),
+                ListTile(
                   leading: const Icon(Icons.text_fields),
                   title: Text('字体大小 ${settings.bookFontSize.toInt()}'),
                 ),

@@ -17,6 +17,8 @@ enum BookTheme { light, dark, sepia }
 
 enum BookLayout { scroll, paginated }
 
+enum BookPageMode { horizontal, vertical }
+
 /// App-wide user settings (theme, view mode, scan folders, grouping).
 class AppSettings {
   final ThemeMode themeMode;
@@ -38,6 +40,7 @@ class AppSettings {
   final BookTheme bookTheme;
   final double bookFontSize;
   final BookLayout bookLayout;
+  final BookPageMode bookPageMode;
 
   const AppSettings({
     required this.themeMode,
@@ -59,6 +62,7 @@ class AppSettings {
     this.bookTheme = BookTheme.light,
     this.bookFontSize = 16.0,
     this.bookLayout = BookLayout.scroll,
+    this.bookPageMode = BookPageMode.horizontal,
   });
 
   AppSettings copyWith({
@@ -81,6 +85,7 @@ class AppSettings {
     BookTheme? bookTheme,
     double? bookFontSize,
     BookLayout? bookLayout,
+    BookPageMode? bookPageMode,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -102,6 +107,7 @@ class AppSettings {
       bookTheme: bookTheme ?? this.bookTheme,
       bookFontSize: bookFontSize ?? this.bookFontSize,
       bookLayout: bookLayout ?? this.bookLayout,
+      bookPageMode: bookPageMode ?? this.bookPageMode,
     );
   }
 }
@@ -136,6 +142,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
           bookLayout: BookLayout.values.firstWhere(
             (layout) => layout.name == _service.getBookLayout(),
             orElse: () => BookLayout.scroll,
+          ),
+          bookPageMode: BookPageMode.values.firstWhere(
+            (mode) => mode.name == _service.getBookPageMode(),
+            orElse: () => BookPageMode.horizontal,
           ),
         ));
 
@@ -261,6 +271,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> setBookLayout(BookLayout layout) async {
     state = state.copyWith(bookLayout: layout);
     await _service.setBookLayout(layout.name);
+  }
+
+  Future<void> setBookPageMode(BookPageMode mode) async {
+    state = state.copyWith(bookPageMode: mode);
+    await _service.setBookPageMode(mode.name);
   }
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/media_item.dart';
+import '../../models/media_type.dart';
 import '../../providers/media_provider.dart';
 import 'book_reader_screen.dart';
 
@@ -11,7 +12,7 @@ class BookShelfView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final books = ref.watch(mediaProvider).whenData(
-          (items) => items.where((item) => item.type.name == 'book').toList(),
+          (items) => items.where((item) => item.type == MediaType.book).toList(),
         );
     return books.when(
       loading: () => const Center(child: CircularProgressIndicator()),

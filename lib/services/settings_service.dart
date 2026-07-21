@@ -165,4 +165,11 @@ class SettingsService {
   Future<void> setBookLayout(String layout) async {
     await _prefs.setString(AppConstants.prefBookLayout, layout);
   }
+
+  String getBookPageMode() =>
+      _prefs.getString(AppConstants.prefBookPageMode) ?? 'horizontal';
+
+  Future<void> setBookPageMode(String mode) async {
+    await _prefs.setString(AppConstants.prefBookPageMode, mode);
+  }
 }

@@ -103,6 +103,7 @@ class AppConstants {
   static const String prefBookTheme = 'pref_book_theme';
   static const String prefBookFontSize = 'pref_book_font_size';
   static const String prefBookLayout = 'pref_book_layout';
+  static const String prefBookPageMode = 'pref_book_page_mode';
 
   static const String githubRepository = 'Flygeon/LumiLuna';
 

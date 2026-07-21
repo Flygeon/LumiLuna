@@ -415,6 +415,7 @@ class AppDatabase extends _$AppDatabase {
               return path == folder || path.startsWith('$folder/');
             }))
         .where((row) => !currentPaths.contains(_normalizePath(row.path)))
+        .where((row) => !File(row.path).existsSync())
         .map((row) => row.path)
         .toList();
     await transaction(() async {

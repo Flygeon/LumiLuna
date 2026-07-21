@@ -72,6 +72,10 @@ class MediaNotifier extends AsyncNotifier<List<MediaItem>> {
       final hashesJson = jsonEncode(hashes);
       final result = await MediaScannerService.scan(folders,
           existingHashesJson: hashesJson);
+      if (result.items.isEmpty && await db.getMediaCount() > 0) return;
+      await db.syncMediaItems(result.items, folders, metadata: result.metadata);
+        return await db.getAllMediaItems();
+      }
       await db.syncMediaItems(result.items, folders, metadata: result.metadata);
       state = AsyncValue.data(await db.getAllMediaItems());
     } catch (_) {}
