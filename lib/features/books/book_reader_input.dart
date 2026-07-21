@@ -26,18 +26,20 @@ class BookReaderInput extends StatelessWidget {
           onScroll?.call(delta);
         }
       },
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapUp: (details) {
-          final width = MediaQuery.sizeOf(context).width;
-          final height = MediaQuery.sizeOf(context).height;
-          if (axis == Axis.horizontal) {
-            details.localPosition.dx < width / 2 ? onPrevious() : onNext();
-          } else {
-            details.localPosition.dy < height / 2 ? onPrevious() : onNext();
-          }
-        },
-        child: child,
+      child: LayoutBuilder(
+        builder: (context, constraints) => GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTapUp: (details) {
+            final width = constraints.maxWidth;
+            final height = constraints.maxHeight;
+            if (axis == Axis.horizontal) {
+              details.localPosition.dx < width / 2 ? onPrevious() : onNext();
+            } else {
+              details.localPosition.dy < height / 2 ? onPrevious() : onNext();
+            }
+          },
+          child: child,
+        ),
       ),
     );
   }

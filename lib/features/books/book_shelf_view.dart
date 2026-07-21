@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/media_item.dart';
@@ -12,7 +13,8 @@ class BookShelfView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final books = ref.watch(mediaProvider).whenData(
-          (items) => items.where((item) => item.type == MediaType.book).toList(),
+          (items) =>
+              items.where((item) => item.type == MediaType.book).toList(),
         );
     return books.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -33,7 +35,11 @@ class BookShelfView extends ConsumerWidget {
                 childAspectRatio: 0.62,
               ),
               itemCount: items.length,
-              itemBuilder: (_, index) => _BookCard(item: items[index]),
+              itemBuilder: (_, index) => _BookCard(
+                item: items[index],
+                onReturned: () =>
+                    ref.read(mediaProvider.notifier).reloadFromDatabase(),
+              ),
             );
           },
         );
@@ -44,8 +50,9 @@ class BookShelfView extends ConsumerWidget {
 
 class _BookCard extends StatelessWidget {
   final MediaItem item;
+  final VoidCallback onReturned;
 
-  const _BookCard({required this.item});
+  const _BookCard({required this.item, required this.onReturned});
 
   @override
   Widget build(BuildContext context) {
@@ -53,9 +60,12 @@ class _BookCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => BookReaderScreen(item: item),
-        )),
+        onTap: () async {
+          await Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => BookReaderScreen(item: item),
+          ));
+          onReturned();
+        },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -63,15 +73,12 @@ class _BookCard extends StatelessWidget {
               child: Container(
                 color: scheme.primaryContainer,
                 alignment: Alignment.center,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.menu_book, size: 52, color: scheme.primary),
-                    const SizedBox(height: 8),
-                    Text(item.extension.toUpperCase(),
-                        style: TextStyle(color: scheme.primary)),
-                  ],
-                ),
+                child: item.thumbnailPath != null
+                    ? Image.file(File(item.thumbnailPath!),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            _BookPlaceholder(item, scheme))
+                    : _BookPlaceholder(item, scheme),
               ),
             ),
             Container(
@@ -90,3 +97,13 @@ class _BookCard extends StatelessWidget {
     );
   }
 }
+
+Widget _BookPlaceholder(MediaItem item, ColorScheme scheme) => Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.menu_book, size: 52, color: scheme.primary),
+        const SizedBox(height: 8),
+        Text(item.extension.toUpperCase(),
+            style: TextStyle(color: scheme.primary)),
+      ],
+    );

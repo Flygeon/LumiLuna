@@ -390,7 +390,7 @@ class AppDatabase extends _$AppDatabase {
                 Value(existing?.isFavorite ?? (item.isFavorite ? 1 : 0)),
             folderPath: Value(item.folderPath),
             scannedAt: Value(now),
-            thumbnailPath: Value(item.thumbnailPath),
+            thumbnailPath: Value(item.thumbnailPath ?? existing?.thumbnailPath),
           ),
           mode: InsertMode.insertOrReplace,
         );
@@ -458,7 +458,8 @@ class AppDatabase extends _$AppDatabase {
                   Value(existing2?.isFavorite ?? (item.isFavorite ? 1 : 0)),
               folderPath: Value(item.folderPath),
               scannedAt: Value(now),
-              thumbnailPath: Value(item.thumbnailPath),
+              thumbnailPath:
+                  Value(item.thumbnailPath ?? existing2?.thumbnailPath),
               imageWidth: Value(meta?.imageWidth ?? existing2?.imageWidth),
               imageHeight: Value(meta?.imageHeight ?? existing2?.imageHeight),
               imageDateTaken:
@@ -485,6 +486,12 @@ class AppDatabase extends _$AppDatabase {
       });
       if (stale.isNotEmpty) await removeMediaItems(stale);
     });
+  }
+
+  Future<void> updateMediaThumbnail(String path, String thumbnailPath) async {
+    await (update(mediaItems)..where((t) => t.path.equals(path))).write(
+      MediaItemsCompanion(thumbnailPath: Value(thumbnailPath)),
+    );
   }
 
   Future<Set<String>> findDuplicateMediaPaths(List<MediaItem> items) async {

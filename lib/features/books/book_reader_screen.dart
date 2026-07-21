@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:epub_pro/epub_pro.dart';
+import 'package:image/image.dart' as img;
 
 import '../../models/media_item.dart';
 import '../../providers/settings_provider.dart';
 import '../../main.dart';
 import '../../models/book_reading_state.dart';
+import '../../services/book_metadata_service.dart';
 import 'book_reader_input.dart';
 
 class BookReaderScreen extends ConsumerStatefulWidget {
@@ -40,13 +42,38 @@ class _BookReaderScreenState extends ConsumerState<BookReaderScreen> {
   }
 
   Future<void> _loadPdf() async {
-    _savedState = await ref.read(appDatabaseProvider).getBookReadingState(widget.item.path);
+    _savedState = await ref
+        .read(appDatabaseProvider)
+        .getBookReadingState(widget.item.path);
     final initialPage = _savedState?.pdfPage ?? 1;
     final document = PdfDocument.openFile(widget.item.path);
-    _pdfController = PdfController(document: document, initialPage: initialPage);
+    _pdfController =
+        PdfController(document: document, initialPage: initialPage);
     final loaded = await document;
+    await _cachePdfCover(loaded);
     if (!mounted) return;
     setState(() => _pdfPageCount = loaded.pagesCount);
+  }
+
+  Future<void> _cachePdfCover(PdfDocument document) async {
+    try {
+      final page = await document.getPage(1);
+      final image = await page.render(
+          width: 360,
+          height: 520,
+          format: PdfPageImageFormat.jpeg,
+          quality: 85);
+      await page.close();
+      if (image == null) return;
+      final path =
+          await BookMetadataService().coverCachePath(File(widget.item.path));
+      final file = File(path);
+      if (!await file.exists())
+        await file.writeAsBytes(image.bytes, flush: true);
+      await ref
+          .read(appDatabaseProvider)
+          .updateMediaThumbnail(widget.item.path, path);
+    } catch (_) {}
   }
 
   Future<void> _saveProgress({int? page}) async {
@@ -67,7 +94,22 @@ class _BookReaderScreenState extends ConsumerState<BookReaderScreen> {
       _savedState = await ref
           .read(appDatabaseProvider)
           .getBookReadingState(widget.item.path);
-      final book = await EpubReader.readBook(await File(widget.item.path).readAsBytes());
+      final book = await EpubReader.readBook(
+          await BookMetadataService.normalizeEpub(
+              File(widget.item.path).readAsBytes()));
+      if (book.coverImage != null) {
+        final path =
+            await BookMetadataService().coverCachePath(File(widget.item.path));
+        final coverFile = File(path);
+        if (!await coverFile.exists()) {
+          await coverFile.writeAsBytes(
+              img.encodeJpg(book.coverImage!, quality: 85),
+              flush: true);
+        }
+        await ref
+            .read(appDatabaseProvider)
+            .updateMediaThumbnail(widget.item.path, path);
+      }
       if (!mounted) return;
       setState(() {
         _epubBook = book;
@@ -76,8 +118,7 @@ class _BookReaderScreenState extends ConsumerState<BookReaderScreen> {
             : 0;
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_epubScrollController.hasClients &&
-            _savedState?.progress != null) {
+        if (_epubScrollController.hasClients && _savedState?.progress != null) {
           _epubScrollController.jumpTo(
             _epubScrollController.position.maxScrollExtent *
                 _savedState!.progress.clamp(0, 1),
@@ -133,9 +174,10 @@ class _BookReaderScreenState extends ConsumerState<BookReaderScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : PdfView(
                     controller: _pdfController!,
-                    scrollDirection: settings.bookPageMode == BookPageMode.horizontal
-                        ? Axis.horizontal
-                        : Axis.vertical,
+                    scrollDirection:
+                        settings.bookPageMode == BookPageMode.horizontal
+                            ? Axis.horizontal
+                            : Axis.vertical,
                     onPageChanged: (page) {
                       _pdfPage = page;
                       _saveProgress(page: page);
@@ -149,7 +191,7 @@ class _BookReaderScreenState extends ConsumerState<BookReaderScreen> {
   void _previous() {
     if (widget.item.extension == 'pdf') {
       _pdfController?.previousPage(
-        duration: const Duration(milliseconds: 220), curve: Curves.easeOut);
+          duration: const Duration(milliseconds: 220), curve: Curves.easeOut);
     } else if (_epubBook != null) {
       _epubScrollController.animateTo(
         (_epubScrollController.offset - MediaQuery.sizeOf(context).height * .8)
@@ -163,7 +205,7 @@ class _BookReaderScreenState extends ConsumerState<BookReaderScreen> {
   void _next() {
     if (widget.item.extension == 'pdf') {
       _pdfController?.nextPage(
-        duration: const Duration(milliseconds: 220), curve: Curves.easeOut);
+          duration: const Duration(milliseconds: 220), curve: Curves.easeOut);
     } else if (_epubBook != null) {
       _epubScrollController.animateTo(
         (_epubScrollController.offset + MediaQuery.sizeOf(context).height * .8)
@@ -204,7 +246,8 @@ class _BookReaderScreenState extends ConsumerState<BookReaderScreen> {
                   style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 12),
               Text(_plainText(chapter.htmlContent ?? ''),
-                  style: TextStyle(fontSize: settings.bookFontSize, height: 1.7)),
+                  style:
+                      TextStyle(fontSize: settings.bookFontSize, height: 1.7)),
             ],
           ),
         );
@@ -212,6 +255,8 @@ class _BookReaderScreenState extends ConsumerState<BookReaderScreen> {
     );
   }
 
-  String _plainText(String html) =>
-      html.replaceAll(RegExp(r'<[^>]*>'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+  String _plainText(String html) => html
+      .replaceAll(RegExp(r'<[^>]*>'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
 }
